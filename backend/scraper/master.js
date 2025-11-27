@@ -1,10 +1,26 @@
 // runner.js
-import scrapeProducts from "./xcite.js"; // Adjust path as necessary
+import scrapeProducts from "./noon.js"; // Adjust path as necessary
 
 const SCRAPING_JOBS = [
   {
-    url: "https://www.xcite.com/televisions/c",
-    category: "televisions",
+    url: "https://www.noon.com/kuwait-en/acer/apple/asus/dell/hp/lenovo/msi/?q=laptops",
+    category: "laptops",
+  },
+  {
+    url: "https://www.noon.com/kuwait-en/apple/huawei/samsung/xiaomi/?q=tablets",
+    category: "tablets",
+  },
+  {
+    url: "https://www.noon.com/kuwait-en/dell/hp/?q=desktops",
+    category: "desktops",
+  },
+  {
+    url: "https://www.noon.com/kuwait-en/anker/bose/huawei/jbl/lenovo/microsoft/oneplus/philips/samsung/sony/?q=headphones",
+    category: "headphones",
+  },
+  {
+    url: "https://www.noon.com/kuwait-en/apple/bose/huawei/jbl/lenovo/philips/samsung/sony/?q=earphones",
+    category: "earphones",
   },
 ];
 
