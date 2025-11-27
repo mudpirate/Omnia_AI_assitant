@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id        String @id @default(cuid())
+  storeName String
+  title     String
+
+ 
+  category String // example: "Laptops", "Mobile Phones", "Headphones"
+
+  price      Float
+  imageUrl   String   @default("https://example.com/placeholder-image.png")
+  productUrl String   @default("https://example.com/placeholder-product-url")
+  scrapedAt  DateTime @default(now())
+  lastSeenAt DateTime @updatedAt
+
+  couponId String?
+  coupon   Coupon? @relation(fields: [couponId], references: [id], onDelete: SetNull, name: "CouponProducts")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([storeName, productUrl], map: "uniq_store_producturl")
+  @@index([storeName], map: "idx_product_store")
+  @@index([category], map: "idx_product_category") // NEW INDEX
+  @@index([price], map: "idx_product_price")
+  @@index([updatedAt], map: "idx_product_updated_at")
+}
+
+model Coupon {
+  id         String    @id @default(cuid())
+  storeName  String
+  title      String
+  code       String
+  expiryDate DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  products Product[] @relation(name: "CouponProducts")
+
+  @@unique([storeName, code], map: "uniq_store_code")
+  @@index([expiryDate], map: "idx_coupon_expiry")
+  @@index([storeName], map: "idx_coupon_store")
+}
