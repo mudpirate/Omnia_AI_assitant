@@ -23,7 +23,16 @@ app.use(express.urlencoded({ limit: "20mb", extended: true }));
 const PRODUCT_CATEGORIES = {
   MOBILE_PHONE: {
     name: "mobile_phone",
-    keywords: ["phone", "mobile", "smartphone", "android", "cellular", "5g"],
+    keywords: [
+      "phone",
+      "mobile",
+      "smartphone",
+      "cell phone",
+      "cellular",
+      "samsung",
+      "galaxy",
+      "android",
+    ],
     brands: [
       "samsung",
       "xiaomi",
@@ -41,8 +50,6 @@ const PRODUCT_CATEGORIES = {
       "infinix",
       "redmi",
       "poco",
-      "apple",
-      "iphone",
     ],
     specs: ["gb", "ram", "camera", "mp", "mah", "inch", "display", "5g", "4g"],
     exclude: [
@@ -50,7 +57,7 @@ const PRODUCT_CATEGORIES = {
       "cover",
       "protector",
       "screen guard",
-      "glass",
+      "tempered glass",
       "charger",
       "cable",
       "holder",
@@ -59,9 +66,26 @@ const PRODUCT_CATEGORIES = {
       "pouch",
       "headphone",
       "earphone",
+      "earbuds",
+      "airpods",
+      "earpods",
+      "speaker",
+      "tablet",
+      "tab",
+      "controller",
+      "microphone",
+      "mic",
       "watch",
+      "smartwatch",
       "band",
       "strap",
+      "shell",
+      "bumper",
+      "skin",
+      "sticker",
+      "mount",
+      "cradle",
+      "dock",
     ],
     required: [
       "phone",
@@ -70,21 +94,22 @@ const PRODUCT_CATEGORIES = {
       "galaxy",
       "pixel",
       "android",
-      "iphone",
-      "samsung",
-      "xiaomi",
-      "redmi",
-      "honor",
-      "infinix",
-      "tecno",
-      "oneplus",
-      "huawei",
-      "realme",
+      "5g phone",
+      "4g phone",
     ],
   },
   LAPTOP: {
     name: "laptop",
-    keywords: ["laptop", "notebook", "ultrabook", "macbook", "gaming"],
+    keywords: [
+      "laptop",
+      "notebook",
+      "ultrabook",
+      "chromebook",
+      "macbook",
+      "gaming laptop",
+      "workstation",
+      "2-in-1 laptop",
+    ],
     brands: [
       "dell",
       "hp",
@@ -96,17 +121,36 @@ const PRODUCT_CATEGORIES = {
       "apple",
       "microsoft",
       "surface",
+      "alienware",
+      "thinkpad",
+      "pavilion",
+      "predator",
+      "rog",
+      "legion",
+      "ideapad",
     ],
     specs: [
       "intel",
       "amd",
       "ryzen",
-      "core",
+      "core i",
+      "processor",
+      "cpu",
       "ssd",
+      "hdd",
       "ram",
+      "gb",
+      "tb",
       "nvidia",
       "rtx",
       "gtx",
+      "graphics",
+      "gpu",
+      "display",
+      "inch",
+      "hz",
+      "fhd",
+      "4k",
     ],
     exclude: [
       "bag",
@@ -117,21 +161,35 @@ const PRODUCT_CATEGORIES = {
       "mouse",
       "keyboard",
       "stand",
+      "cooler",
+      "cooling pad",
+      "skin",
       "sticker",
+      "backpack",
+      "cable",
+      "dock",
     ],
     required: [
       "laptop",
       "notebook",
+      "ultrabook",
+      "chromebook",
       "macbook",
       "workstation",
-      "convertible",
-      "matebook",
-      "surface",
     ],
   },
   HEADPHONE: {
     name: "headphone",
-    keywords: ["headphone", "headphones", "headset", "over-ear"],
+    keywords: [
+      "headphone",
+      "headphones",
+      "headset",
+      "over-ear",
+      "on-ear",
+      "gaming headset",
+      "studio headphones",
+      "wireless headphones",
+    ],
     brands: [
       "sony",
       "bose",
@@ -139,65 +197,222 @@ const PRODUCT_CATEGORIES = {
       "sennheiser",
       "beats",
       "anker",
+      "soundcore",
+      "jabra",
+      "skullcandy",
+      "audio-technica",
       "logitech",
       "hyperx",
       "razer",
+      "corsair",
+      "steelseries",
     ],
-    specs: ["wireless", "bluetooth", "noise cancelling", "anc", "mic"],
+    specs: [
+      "wireless",
+      "bluetooth",
+      "noise cancelling",
+      "anc",
+      "bass",
+      "mic",
+      "microphone",
+      "battery",
+      "playtime",
+      "hours",
+      "driver",
+      "mm",
+      "over-ear",
+      "on-ear",
+    ],
     exclude: [
       "case only",
-      "pouch",
-      "stand",
-      "cable",
+      "pouch only",
+      "stand only",
+      "holder only",
+      "adapter only",
+      "cable only",
+      "replacement pads",
+      "cushion only",
+      "foam tips",
       "earbuds",
       "earpods",
       "in-ear",
     ],
-    required: ["headphone", "headphones", "headset", "over-ear"],
+    required: ["headphone", "headphones", "headset", "over-ear", "on-ear"],
   },
   EARPHONE: {
     name: "earphone",
-    keywords: ["earphone", "earphones", "earbuds", "airpods", "tws", "buds"],
-    brands: ["apple", "samsung", "sony", "jbl", "anker", "xiaomi", "huawei"],
-    specs: ["wireless", "bluetooth", "tws", "anc", "noise cancelling"],
+    keywords: [
+      "earphone",
+      "earphones",
+      "earbuds",
+      "earpods",
+      "airpods",
+      "tws",
+      "wireless earbuds",
+      "true wireless",
+      "in-ear",
+    ],
+    brands: [
+      "apple",
+      "samsung",
+      "sony",
+      "jbl",
+      "anker",
+      "soundcore",
+      "jabra",
+      "beats",
+      "bose",
+      "xiaomi",
+      "realme",
+      "oppo",
+      "oneplus",
+      "nothing",
+      "huawei",
+    ],
+    specs: [
+      "wireless",
+      "bluetooth",
+      "tws",
+      "true wireless",
+      "anc",
+      "noise cancelling",
+      "battery",
+      "playtime",
+      "hours",
+      "in-ear",
+      "bass",
+      "mic",
+    ],
+    exclude: [
+      "case only",
+      "pouch only",
+      "holder only",
+      "adapter only",
+      "cable only",
+      "replacement tips",
+      "foam tips only",
+      "headphone",
+      "headset",
+      "over-ear",
+      "on-ear",
+    ],
+    required: [
+      "earphone",
+      "earbuds",
+      "earpods",
+      "airpods",
+      "tws",
+      "wireless earbuds",
+      "in-ear",
+      "true wireless",
+    ],
+  },
+  DESKTOP: {
+    name: "desktop",
+    keywords: [
+      "desktop",
+      "pc",
+      "computer",
+      "gaming pc",
+      "workstation pc",
+      "tower",
+      "mini pc",
+      "all-in-one",
+    ],
+    brands: [
+      "dell",
+      "hp",
+      "lenovo",
+      "asus",
+      "acer",
+      "msi",
+      "alienware",
+      "cyberpowerpc",
+      "corsair",
+      "nzxt",
+      "apple",
+      "imac",
+    ],
+    specs: [
+      "intel",
+      "amd",
+      "ryzen",
+      "core i",
+      "processor",
+      "cpu",
+      "ssd",
+      "hdd",
+      "ram",
+      "gb",
+      "tb",
+      "nvidia",
+      "rtx",
+      "gtx",
+      "graphics",
+      "gpu",
+      "tower",
+      "atx",
+    ],
+    exclude: [
+      "monitor",
+      "keyboard",
+      "mouse",
+      "speaker",
+      "case only",
+      "cable",
+      "adapter",
+      "stand",
+      "riser",
+      "pad",
+    ],
+    required: ["desktop", "pc", "computer", "tower", "all-in-one", "mini pc"],
+  },
+  TABLET: {
+    name: "tablet",
+    keywords: ["tablet", "ipad", "tab", "galaxy tab", "surface tablet"],
+    brands: [
+      "apple",
+      "samsung",
+      "microsoft",
+      "lenovo",
+      "huawei",
+      "xiaomi",
+      "amazon",
+      "fire",
+      "surface",
+    ],
+    specs: [
+      "inch",
+      "display",
+      "storage",
+      "gb",
+      "wifi",
+      "cellular",
+      "lte",
+      "5g",
+      "stylus",
+      "pencil",
+    ],
     exclude: [
       "case",
       "cover",
       "protector",
-      "strap",
-      "headphone",
-      "headset",
-      "over-ear",
+      "screen guard",
+      "tempered glass",
+      "stand",
+      "holder",
+      "keyboard only",
+      "stylus only",
+      "charger",
+      "cable",
+      "adapter",
     ],
-    required: ["earphone", "earbuds", "earpods", "airpods", "tws", "buds"],
-  },
-  DESKTOP: {
-    name: "desktop",
-    keywords: ["desktop", "pc", "computer", "tower", "all-in-one", "aio"],
-    brands: ["dell", "hp", "lenovo", "asus", "acer", "msi", "apple", "imac"],
-    specs: ["intel", "amd", "ryzen", "rtx", "gtx"],
-    exclude: ["monitor", "keyboard", "mouse", "speaker", "cable"],
-    required: [
-      "desktop",
-      "pc",
-      "computer",
-      "tower",
-      "all-in-one",
-      "imac",
-      "mac mini",
-    ],
-  },
-  TABLET: {
-    name: "tablet",
-    keywords: ["tablet", "ipad", "tab"],
-    brands: ["apple", "samsung", "lenovo", "huawei", "xiaomi"],
-    specs: ["inch", "display", "wifi", "lte", "cellular"],
-    exclude: ["case", "cover", "screen", "keyboard", "pen", "stylus"],
-    required: ["tablet", "ipad", "tab", "pad"],
+    required: ["tablet", "ipad", "tab"],
   },
 };
 
-const STORE_NAMES = ["xcite", "jarir", "best.kw", "noon.kw", "noon", "best"];
+// Store names to search for (case-insensitive)
+const STORE_NAMES = ["xcite", "best.kw", "noon.kw", "noon", "best"];
 
 // --- HELPER FUNCTIONS ---
 
@@ -206,6 +421,7 @@ function extractStoreName(userMessage) {
   for (const store of STORE_NAMES) {
     const pattern = new RegExp(`\\b${store}(?:\\s+store|\\s+shop|\\b)`, "i");
     if (pattern.test(msg)) {
+      console.log(`[Store Extraction] Found store: ${store}`);
       if (store.startsWith("noon")) return "Noon.kw";
       if (store.startsWith("best")) return "Best.kw";
       return store;
@@ -216,6 +432,7 @@ function extractStoreName(userMessage) {
     const wordAfterFrom = fromMatch[1].toLowerCase().replace(/[.,]/g, "");
     for (const store of STORE_NAMES) {
       if (wordAfterFrom.includes(store.split(".")[0])) {
+        console.log(`[Store Extraction] Found store via 'from': ${store}`);
         if (store.startsWith("noon")) return "Noon.kw";
         if (store.startsWith("best")) return "Best.kw";
         return store;
@@ -231,19 +448,15 @@ function extractPriceRange(userMessage) {
     /(?:under|below|less than|max|maximum)\s*(\d+)/i
   );
   if (underMatch) return { max: parseFloat(underMatch[1]), min: 0 };
-
   const rangeMatch = msg.match(
     /(?:between|from)\s*(\d+)\s*(?:and|to)\s*(\d+)/i
   );
   if (rangeMatch)
     return { min: parseFloat(rangeMatch[1]), max: parseFloat(rangeMatch[2]) };
-
   const aboveMatch = msg.match(/(?:above|over|more than|min|minimum)\s*(\d+)/i);
   if (aboveMatch) return { min: parseFloat(aboveMatch[1]), max: Infinity };
-
   const priceMatch = msg.match(/(\d+)\s*(?:kwd|dinar|kd)/i);
   if (priceMatch) return { max: parseFloat(priceMatch[1]), min: 0 };
-
   return null;
 }
 
@@ -259,11 +472,9 @@ function detectProductCategory(userMessage) {
       /\b(earphone|earphones|earbuds|airpods|earpods|tws|wireless earbuds)\b/i,
     tablet: /\b(tablet|ipad|galaxy tab)\b/i,
   };
-
   for (const [category, pattern] of Object.entries(forcePatterns)) {
     if (pattern.test(msg)) return category;
   }
-
   let categoryScores = {};
   Object.values(PRODUCT_CATEGORIES).forEach((category) => {
     categoryScores[category.name] = 0;
@@ -273,22 +484,22 @@ function detectProductCategory(userMessage) {
     category.brands.forEach((brand) => {
       if (msg.includes(brand)) categoryScores[category.name] += 5;
     });
+    category.specs.forEach((spec) => {
+      if (msg.includes(spec)) categoryScores[category.name] += 3;
+    });
   });
-
   const detectedCategory = Object.entries(categoryScores).reduce(
     (max, [cat, score]) => (score > max.score ? { category: cat, score } : max),
     { category: null, score: 0 }
   );
-
   return detectedCategory.score > 0 ? detectedCategory.category : null;
 }
 
 function extractSmartKeywords(userMessage, detectedCategory) {
   const msg = userMessage.toLowerCase().trim();
   const keywords = [];
-
   if (!detectedCategory) {
-    return msg
+    const words = msg
       .split(/\s+/)
       .filter(
         (w) =>
@@ -302,53 +513,20 @@ function extractSmartKeywords(userMessage, detectedCategory) {
             "need",
             "looking",
             "the",
-            "for",
-            "with",
           ].includes(w)
-      )
-      .slice(0, 5);
+      );
+    return words.slice(0, 5);
   }
-
   const category = Object.values(PRODUCT_CATEGORIES).find(
     (c) => c.name === detectedCategory
   );
-
-  const isAppleQuery =
-    msg.includes("iphone") ||
-    msg.includes("apple") ||
-    msg.includes("ios") ||
-    msg.includes("mac") ||
-    msg.includes("ipad");
-
-  if (
-    !isAppleQuery &&
-    (msg.includes("android") ||
-      msg.includes("smart phone") ||
-      msg.includes("smartphone"))
-  ) {
-    keywords.push(
-      "samsung",
-      "xiaomi",
-      "oppo",
-      "vivo",
-      "honor",
-      "realme",
-      "pixel",
-      "huawei"
-    );
-  }
-
+  if (!category) return ["product"];
+  keywords.push(category.keywords[0]);
   category.brands.forEach((brand) => {
     if (msg.includes(brand)) keywords.push(brand);
   });
-
-  category.keywords.forEach((kw) => {
-    if (msg.includes(kw)) keywords.push(kw);
-  });
-
   const modelMatch = msg.match(/\b(\d+)\b/g);
   if (modelMatch) modelMatch.forEach((num) => keywords.push(num));
-
   const variants = [
     "pro",
     "max",
@@ -364,27 +542,31 @@ function extractSmartKeywords(userMessage, detectedCategory) {
   variants.forEach((variant) => {
     if (msg.includes(variant)) keywords.push(variant);
   });
-
   const storageMatch = msg.match(/(\d+)(gb|tb)/gi);
   if (storageMatch) storageMatch.forEach((s) => keywords.push(s.toLowerCase()));
-
-  if (keywords.length === 0) {
-    keywords.push(category.keywords[0]);
+  if (detectedCategory === "laptop") {
+    const processors = [
+      "intel",
+      "amd",
+      "ryzen",
+      "core i3",
+      "core i5",
+      "core i7",
+      "core i9",
+    ];
+    processors.forEach((proc) => {
+      if (msg.includes(proc)) keywords.push(proc);
+    });
   }
-
-  const uniqueKeywords = [...new Set(keywords)];
-
-  // --- LOGGING ---
-  console.log(`[Keyword Extraction] User Msg: "${userMessage}"`);
-  console.log(`[Keyword Extraction] Detected Category: ${detectedCategory}`);
-  console.log(
-    `[Keyword Extraction] Extracted Keywords: ${uniqueKeywords.join(", ")}`
-  );
-
-  return uniqueKeywords;
+  if (keywords.length < 3) {
+    category.specs.forEach((spec) => {
+      if (msg.includes(spec) && keywords.length < 5) keywords.push(spec);
+    });
+  }
+  return keywords.length > 0 ? keywords : [category.keywords[0]];
 }
 
-// --- DB SEARCH (Updated with Brand Guardrails) ---
+// --- DB SEARCH ---
 async function execute_db_search(
   keywords,
   max_results = 30,
@@ -393,8 +575,7 @@ async function execute_db_search(
   storeName = null
 ) {
   const safeTake = Number.isInteger(max_results) ? max_results : 30;
-
-  let cleanedKeywords = keywords
+  const cleanedKeywords = keywords
     .map((k) => k.trim())
     .filter(
       (k) =>
@@ -404,77 +585,11 @@ async function execute_db_search(
         )
     );
 
-  // --- LOGGING ---
-  console.log(`[DB Search] Initial Keywords: ${cleanedKeywords.join(", ")}`);
-
+  if (cleanedKeywords.length === 0) return JSON.stringify([]);
   const categoryConfig = category
     ? Object.values(PRODUCT_CATEGORIES).find((c) => c.name === category)
     : null;
-
-  // --- BRAND GUARDRAILS ---
-  const APPLE_TERMS = [
-    "iphone",
-    "apple",
-    "ios",
-    "macbook",
-    "ipad",
-    "mac",
-    "airpods",
-  ];
-  const ANDROID_TERMS = [
-    "samsung",
-    "huawei",
-    "xiaomi",
-    "android",
-    "galaxy",
-    "pixel",
-    "oppo",
-    "vivo",
-    "honor",
-    "redmi",
-    "realme",
-    "tecno",
-    "infinix",
-  ];
-
-  const isAppleSearch = cleanedKeywords.some((k) => APPLE_TERMS.includes(k));
-  const isAndroidSearch = cleanedKeywords.some((k) =>
-    ANDROID_TERMS.includes(k)
-  );
-
-  let dynamicExclusions = [];
-
-  if (isAppleSearch) {
-    console.log("[DB Search] Apple intent detected. Excluding Android brands.");
-    dynamicExclusions = ANDROID_TERMS.map((term) => ({
-      NOT: { title: { contains: term, mode: "insensitive" } },
-    }));
-  } else if (isAndroidSearch) {
-    console.log("[DB Search] Android intent detected. Excluding Apple.");
-    dynamicExclusions = APPLE_TERMS.map((term) => ({
-      NOT: { title: { contains: term, mode: "insensitive" } },
-    }));
-  }
-
-  // --- GENERIC QUERY INJECTION ---
-  if (categoryConfig && !isAppleSearch && !isAndroidSearch) {
-    const hasBrand = cleanedKeywords.some((k) =>
-      categoryConfig.brands.includes(k.toLowerCase())
-    );
-    if (!hasBrand) {
-      console.log(
-        `[DB Search] Generic query detected. Injecting top brands for ${category}...`
-      );
-      cleanedKeywords.push(...categoryConfig.brands.slice(0, 10));
-    }
-  }
-
-  // --- LOGGING ---
-  console.log(
-    `[DB Search] Final Keywords sent to DB: ${cleanedKeywords.join(", ")}`
-  );
-
-  if (cleanedKeywords.length === 0) return JSON.stringify([]);
+  if (!categoryConfig) return JSON.stringify([]);
 
   try {
     const whereConditions = {
@@ -485,19 +600,14 @@ async function execute_db_search(
             { category: { contains: keyword, mode: "insensitive" } },
           ]),
         },
-        categoryConfig
-          ? {
-              OR: categoryConfig.required.map((term) => ({
-                title: { contains: term, mode: "insensitive" },
-              })),
-            }
-          : {},
-        ...(categoryConfig
-          ? categoryConfig.exclude.map((term) => ({
-              NOT: { title: { contains: term, mode: "insensitive" } },
-            }))
-          : []),
-        ...dynamicExclusions,
+        {
+          OR: categoryConfig.required.map((term) => ({
+            title: { contains: term, mode: "insensitive" },
+          })),
+        },
+        ...categoryConfig.exclude.map((term) => ({
+          NOT: { title: { contains: term, mode: "insensitive" } },
+        })),
         ...(priceRange
           ? [
               ...(priceRange.min > 0
@@ -524,20 +634,13 @@ async function execute_db_search(
         category: true,
         imageUrl: true,
         stock: true,
+        description: true,
       },
       orderBy: { price: "desc" },
       take: Math.min(safeTake, 100),
     });
 
-    // --- LOGGING ---
-    console.log(`[DB Search] Total Results Found: ${results.length}`);
-    if (results.length > 0) {
-      console.log(
-        `[DB Search] Top 3 results:`,
-        results.slice(0, 20).map((p) => p.title)
-      );
-    }
-
+    console.log(`[DB Search] Found ${results.length} products`);
     return JSON.stringify(results);
   } catch (dbError) {
     console.error("Prisma DB Error:", dbError);
@@ -569,7 +672,7 @@ async function classifyIntent(userMessage) {
   return "MEDIUM";
 }
 
-// --- FILTERING (Strict Stock + Data Cleanliness) ---
+// --- FILTERING (Strict Stock Check) ---
 function filterAndRankProducts(
   products,
   userQuery,
@@ -586,24 +689,11 @@ function filterAndRankProducts(
   const categoryConfig = category
     ? Object.values(PRODUCT_CATEGORIES).find((c) => c.name === category)
     : null;
-
   let outOfStockFound = false;
 
-  // STRICT filtering
   let filteredProducts = products.filter((product) => {
     const title = product.title.toLowerCase();
-
-    // 1. Valid Data Check
-    if (
-      !product.title ||
-      !product.productUrl ||
-      !product.imageUrl ||
-      product.imageUrl.includes("placeholder")
-    ) {
-      return false;
-    }
-
-    // 2. Relevance Check
+    const productStore = product.storeName.toLowerCase();
     let hasRequiredTerm = true;
     let hasExcludedTerm = false;
     if (categoryConfig) {
@@ -614,28 +704,24 @@ function filterAndRankProducts(
         title.includes(term.toLowerCase())
       );
     }
-
-    // 3. Price & Store
     let withinPriceRange = true;
     if (priceRange)
       withinPriceRange =
         product.price >= priceRange.min && product.price <= priceRange.max;
     let matchesStore = true;
     if (storeName)
-      matchesStore = product.storeName
-        .toLowerCase()
-        .includes(storeName.toLowerCase());
+      matchesStore = productStore.includes(storeName.toLowerCase());
 
     const isRelevant =
       hasRequiredTerm && !hasExcludedTerm && withinPriceRange && matchesStore;
     if (!isRelevant) return false;
 
-    // 4. STRICT STOCK CHECK
+    // 4. STOCK CHECK (Strict)
+    // Only return products that are IN_STOCK
     if (product.stock !== "IN_STOCK") {
       outOfStockFound = true;
       return false; // Remove OOS items
     }
-
     return true;
   });
 
@@ -643,12 +729,10 @@ function filterAndRankProducts(
     `[Filtering] In-Stock: ${filteredProducts.length}, OOS matches found: ${outOfStockFound}`
   );
 
-  // Scoring
   const scoredProducts = filteredProducts.map((product) => {
     let score = 0;
     const title = product.title.toLowerCase();
     if (title.includes(query)) score += 100;
-    if (title.includes("2024") || title.includes("2025")) score += 20;
     if (hasCheapest) score += 10000 / (product.price + 1);
     else score += product.price / 10;
     return { ...product, score };
@@ -659,10 +743,46 @@ function filterAndRankProducts(
     return hasCheapest ? a.price - b.price : b.price - a.price;
   });
 
-  return {
-    products: scoredProducts.slice(0, productCount),
-    outOfStockFound: outOfStockFound,
-  };
+  let selectedProducts = [];
+  if (storeName) {
+    selectedProducts = scoredProducts.slice(0, productCount);
+  } else {
+    // Diversity logic simplified for snippet
+    const storeCount = { xcite: 0, jarir: 0, "best.kw": 0, "noon.kw": 0 };
+    const maxPerStore = Math.ceil(productCount / 4);
+    for (const product of scoredProducts) {
+      const productStoreName = product.storeName
+        ? product.storeName.toLowerCase()
+        : "";
+      const storeKey = productStoreName.includes("xcite")
+        ? "xcite"
+        : productStoreName.includes("jarir")
+        ? "jarir"
+        : productStoreName.includes("best")
+        ? "best.kw"
+        : productStoreName.includes("noon")
+        ? "noon.kw"
+        : null;
+      if (
+        storeKey &&
+        storeCount[storeKey] < maxPerStore &&
+        selectedProducts.length < productCount
+      ) {
+        selectedProducts.push(product);
+        storeCount[storeKey]++;
+      }
+    }
+    for (const product of scoredProducts) {
+      if (
+        !selectedProducts.includes(product) &&
+        selectedProducts.length < productCount
+      ) {
+        selectedProducts.push(product);
+      }
+    }
+  }
+
+  return { products: selectedProducts, outOfStockFound };
 }
 
 // LLM Helper
@@ -696,7 +816,7 @@ const product_search_tool_schema = {
         },
         store_name: {
           type: "string",
-          enum: ["xcite", "jarir", "best.kw", "noon.kw"],
+          enum: ["xcite", "best.kw", "noon.kw"],
         },
       },
       required: ["keywords", "max_results"],
@@ -721,7 +841,7 @@ app.post("/chat", async (req, res) => {
     if (intent === "LOW") {
       const lowIntentSystem = `You are Omnia AI... (Short friendly advice).`;
       const lowIntentResponse = await openai.chat.completions.create({
-        model: "gpt-4o",
+        model: "gpt-5.1-2025-11-13",
         messages: createLlmMessages(message, lowIntentSystem),
         temperature: 0.5,
       });
@@ -741,7 +861,7 @@ app.post("/chat", async (req, res) => {
     Extract keywords. Pass specific store to store_name param if present.`;
 
     let initialResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5.1-2025-11-13",
       messages: createLlmMessages(message, searchSystemPrompt),
       tools: [product_search_tool_schema],
       tool_choice: { type: "function", function: { name: "search_products" } },
@@ -757,7 +877,7 @@ app.post("/chat", async (req, res) => {
     ) {
       toolOutput = await execute_db_search(
         smartKeywords,
-        intent === "HIGH" ? 30 : 20,
+        intent === "HIGH" ? 50 : 30,
         detectedCategory,
         priceRange,
         storeName
@@ -789,7 +909,7 @@ app.post("/chat", async (req, res) => {
       });
     }
 
-    const productCount = intent === "MEDIUM" ? 12 : 20;
+    const productCount = intent === "MEDIUM" ? 30 : 50;
     const lastToolResponse = responseHistory[responseHistory.length - 1];
     let allProducts = [];
     try {
@@ -807,7 +927,7 @@ app.post("/chat", async (req, res) => {
           ).store_name || storeName
         : storeName;
 
-    // --- FILTER & RANK ---
+    // --- FILTER & RANK (IN_STOCK only) ---
     const { products: filteredProducts, outOfStockFound } =
       filterAndRankProducts(
         allProducts,
@@ -823,24 +943,43 @@ app.post("/chat", async (req, res) => {
       : "products";
     let finalSystemPrompt = "";
 
-    // --- RESPONSE CONSTRUCTION ---
+    // --- STRICT RULES FOR RESPONSE ---
     if (filteredProducts.length === 0) {
       if (outOfStockFound) {
+        // Case 1: Items matched keywords but were Out Of Stock
         finalSystemPrompt = `You are Omnia AI.
             The user searched for "${message}".
             We found matching products ${
-              finalStoreName ? `at ${finalStoreName}` : ""
+              finalStoreName ? `for store ${finalStoreName}` : ""
             }, BUT **ALL of them are currently OUT OF STOCK**.
-            Create a JSON response with an empty products array and a polite apology.
-            { "message": "Apology...", "intent_level": "${intent}", "products": [] }`;
+            
+            Create a JSON response with:
+            1. An empty "products" array (Do NOT invent products).
+            2. A "message" containing a polite 2-line apology stating that the requested item is currently out of stock.
+            
+            {
+              "message": "I apologize, but...",
+              "intent_level": "${intent}",
+              "products": []
+            }`;
       } else {
+        // Case 2: No items matched at all
         finalSystemPrompt = `You are Omnia AI.
             The user searched for "${message}".
             We could not find any products matching this query in our database.
-            Create a JSON response with an empty products array and a helpful message.
-            { "message": "I couldn't find products...", "intent_level": "${intent}", "products": [] }`;
+            
+            Create a JSON response with:
+            1. An empty "products" array.
+            2. A "message" stating we couldn't find what they are looking for.
+            
+            {
+              "message": "I couldn't find any products...",
+              "intent_level": "${intent}",
+              "products": []
+            }`;
       }
     } else {
+      // Case 3: Success (In Stock items found)
       finalSystemPrompt = `You are Omnia AI for Kuwait electronics.
       
       **USER QUERY**: "${message}"
@@ -850,25 +989,18 @@ app.post("/chat", async (req, res) => {
 
       **CRITICAL DATA INTEGRITY RULES**:
       1. You must **ONLY** return products listed in the 'Input Data' section below.
-      2. **Do NOT invent** products.
-      3. Ensure 'image_url' and 'product_url' are copied **exactly** from the input data.
-      
-      **VISUALS**:
-      Assess if the user would be able to understand the response better with the use of diagrams and trigger them. You can insert a diagram by adding the 
-
-[Image of X]
- tag where X is a contextually relevant and domain-specific query to fetch the diagram. Place the image tag immediately before or after the relevant text without disrupting the flow of the response.
+      2. **Do NOT invent**, hallucinate, or 'fill in' products that are not in the input list.
+      3. If the input list contains 3 items, your output must contain 3 items. Do not add more.
+      4. Ensure 'image_url' and 'product_url' are copied **exactly** from the input data. Do not generate fake URLs.
 
       **CONTENT GENERATION**:
       For each product:
-      - "product_description": Write a detailed 4-5 line paragraph highlighting the technical specifications based solely on the product title and your internal knowledge.
+      - "product_description": Write a detailed 4-5 line paragraph highlighting the technical specifications (Processor, RAM, Storage, Screen, Battery, etc.). 
+      - Use the provided 'db_description' as your primary source. If 'db_description' is empty, use your internal knowledge of the specific product model to generate accurate specifications.
       
       Output JSON Structure:
       {
-        "message": "Friendly intro with 
-
-[Image of X]
- tags if relevant",
+        "message": "Friendly intro",
         "intent_level": "${intent}",
         "products": [ 
           { 
@@ -877,7 +1009,7 @@ app.post("/chat", async (req, res) => {
             "price_kwd": number, 
             "product_url": "url", 
             "image_url": "url", 
-            "product_description": "Detailed specs..." 
+            "product_description": "Detailed 4-5 line specs paragraph..." 
           } 
         ]
       }
@@ -889,12 +1021,13 @@ app.post("/chat", async (req, res) => {
           storeName: p.storeName,
           productUrl: p.productUrl,
           imageUrl: p.imageUrl,
+          db_description: p.description, // Passing scraped description for LLM usage
         }))
       )}`;
     }
 
     const finalResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-5.1-2025-11-13",
       messages: [
         { role: "system", content: finalSystemPrompt },
         { role: "user", content: "Create JSON" },
