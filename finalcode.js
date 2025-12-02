@@ -591,7 +591,7 @@ app.post("/chat", async (req, res) => {
     const { vectorLiteral } = await getQueryEmbedding(message);
     const dbProducts = await executeEmbeddingSearch(vectorLiteral, 80);
 
-    const productCount = intent === "MEDIUM" ? 10 : 15;
+    const productCount = intent === "MEDIUM" ? 5 : 10;
 
     if (!dbProducts || dbProducts.length === 0) {
       return res.json({
@@ -640,9 +640,7 @@ app.post("/chat", async (req, res) => {
       **CRITICAL DATA INTEGRITY RULES**:
       1. You must **ONLY** return products listed in the 'Input Data' section below.
       2. **Do NOT invent**, hallucinate, or 'fill in' products that are not in the input list.
-    3. **MANDATORY**: You MUST return ALL ${
-      filteredProducts.length
-    } products listed in the Input Data. Do NOT summarize or pick your favorites. Return the complete list.
+      3. If the input list contains 3 items, your output must contain 3 items. Do not add more.
       4. Ensure 'image_url' and 'product_url' are copied **exactly** from the input data. Do not generate fake URLs.
 
       **CONTENT GENERATION**:
