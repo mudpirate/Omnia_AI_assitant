@@ -35,7 +35,7 @@ rl.on("line", async (line) => {
   try {
     // send to Express server
     const res = await axios.post(API_URL, {
-      message,
+      query: message,
       history,
     });
 

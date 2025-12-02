@@ -1,36 +1,35 @@
 // runner.js
 import puppeteer from "puppeteer";
 import { PrismaClient } from "@prisma/client";
-import scrapeProducts from "./jarir.js"; // Adjust path as necessary
+import scrapeProducts from "./best.js";
 
+// Define jobs with URLs and simple "hint" category names.
+// The scraper's internal logic will map these hints to strict Enums.
 const SCRAPING_JOBS = [
   {
-    url: "https://www.jarir.com/kw-en/2-in-1-laptops.html",
-    category: "lop",
+    url: "https://best.com.kw/en/c/mobiles-nn",
+    category: "mobilephones", // Will map to Category.MOBILE_PHONE
+  },
+
+  {
+    url: "hhttps://best.com.kw/en/c/laptops-nn",
+    category: "laptops", // Will map to Category.LAPTOP
+  },
+  {
+    url: "https://best.com.kw/en/c/tablets-nn",
+    category: "tablets", // Will map to Category.TABLET
+  },
+  {
+    url: "https://best.com.kw/en/c/wired-nn",
+    category: "headphones", // Will map to Category.HEADPHONE
+  },
+  {
+    url: "https://best.com.kw/en/c/wireless-nn",
+    category: "headphones", // Will map to Category.HEADPHONE
   },
   // {
-  //   url: "https://best.com.kw/en/c/tablets-nn",
-  //   category: "tablets",
-  // },
-  // {
-  //   url: "https://best.com.kw/en/c/laptops-nn?query=:relevance:allCategories:laptops-nn:category:macbooks-nn",
-  //   category: "macbooks",
-  // },
-  // {
-  //   url: "https://best.com.kw/en/c/tablets-nn?query=:relevance:allCategories:tablets-nn:category:apple-tablets-nn:brand:apple",
-  //   category: "ipads",
-  // },
-  // {
-  //   url: "https://best.com.kw/en/c/mobiles-nn",
-  //   category: "mobilephones",
-  // },
-  // {
-  //   url: "https://best.com.kw/en/c/wired-nn",
-  //   category: "headphones",
-  // },
-  // {
-  //   url: "https://best.com.kw/en/c/wireless-nn",
-  //   category: "headphones",
+  //   url: "https://www.xcite.com/apple-iphone/c",
+  //   category: "mobilephones", // Will map to Category.HEADPHONE
   // },
 ];
 
@@ -46,21 +45,27 @@ async function runAllScrapers() {
 
   try {
     // ⚡ OPTIMIZATION: Launch the Puppeteer browser ONLY ONCE
+    // This saves massive memory/CPU compared to launching it for every category
     browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      headless: true, // Set to false if you want to watch it work
+      defaultViewport: null,
+      args: ["--no-sandbox", "--disable-setuid-sandbox", "--start-maximized"],
     });
     console.log("✅ Puppeteer browser launched successfully.");
 
-    // Use Promise.all to run jobs concurrently if desired,
-    // but running them sequentially (await in loop) is safer for site stability
+    // Sequential Loop (Safer than Promise.all for avoiding anti-bot detection)
     for (const job of SCRAPING_JOBS) {
-      console.log(`\n--- Executing Job: ${job.category.toUpperCase()} ---`);
+      console.log(`\n--- 🚀 Executing Job: ${job.category.toUpperCase()} ---`);
 
-      // Pass the SHARED browser instance to the scraper
-      await scrapeProducts(browser, job.url, job.category);
-
-      console.log(`✅ Job ${job.category} finished its execution block.`);
+      try {
+        // Pass the SHARED browser instance to the scraper
+        await scrapeProducts(browser, job.url, job.category);
+        console.log(`✅ Job [${job.category}] finished successfully.`);
+      } catch (jobError) {
+        // Critical: Catch errors here so one failed category doesn't crash the whole runner
+        console.error(`❌ Job [${job.category}] FAILED to complete.`);
+        console.error(`Reason: ${jobError.message}`);
+      }
     }
 
     console.log(`\n======================================`);
@@ -71,11 +76,9 @@ async function runAllScrapers() {
     console.error(error);
   } finally {
     if (browser) {
-      // Close the browser only when ALL jobs are done
       await browser.close();
       console.log("🔒 Puppeteer browser closed.");
     }
-    // Close the database connection once, at the very end of the master script
     await prisma.$disconnect();
     console.log("🔒 Database connection closed.");
   }

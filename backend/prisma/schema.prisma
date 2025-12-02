@@ -1,62 +1,99 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"] // Enable extensions
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [vector] // Activate pgvector
 }
 
-// 1. Define the Enum for Stock Status
+// --- ENUMS (Strict Filtering) ---
 enum StockStatus {
   IN_STOCK
   OUT_OF_STOCK
 }
 
+enum StoreName {
+  XCITE
+  BEST_KW
+  NOON_KW
+  JARIR
+  BLINK
+}
+
+enum Category {
+  MOBILE_PHONE
+  LAPTOP
+  HEADPHONE
+  EARPHONE
+  TABLET
+  WATCH
+  ACCESSORY
+}
+
 model Product {
-  id           String      @id @default(cuid())
-  storeName    String
-  title        String
-  description  String     @default("")
+  id          String    @id @default(cuid())
 
-  category     String      // example: "Laptops", "Mobile Phones", "Headphones"
+  // --- 1. IDENTITY & RAW DATA ---
+  storeName   StoreName 
+  title       String    
+  // We keep the raw description purely as backup/metadata. 
+  // It is NOT used for search directly anymore.
+  description String?   @db.Text 
 
-  price        Float
-  imageUrl     String      @default("https://example.com/placeholder-image.png")
-  productUrl   String      @default("https://example.com/placeholder-product-url")
-  scrapedAt    DateTime    @default(now())
-  lastSeenAt   DateTime    @updatedAt
+  // --- 2. THE "CASCADING CONTEXT" FIELDS ---
   
-  // 2. Add the new stock field using the Enum
-  stock        StockStatus @default(IN_STOCK) // Default value is set here
+  // A. The Human-Readable String
+  // This stores the result of: [Brand] + [Title] + [Specs] + [Price]
+  // The LLM reads THIS field to generate its answer.
+  searchKey   String    @db.Text 
 
-  couponId     String?
-  coupon       Coupon?     @relation(fields: [couponId], references: [id], onDelete: SetNull, name: "CouponProducts")
+  // B. The Machine-Readable Vector
+  // This stores the embedding of 'searchKey'.
+  // 1536 is the standard dimension for OpenAI text-embedding-3-small
+  descriptionEmbedding Unsupported("vector(1536)")? 
 
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  // C. Structured Specs (For Hard Filtering)
+  // { "ram": "16GB", "storage": "1TB", "color": "Black" }
+  specs       Json?     
 
+  // --- 3. HARD FILTERS ---
+  category    Category  
+  price       Float     
+  stock       StockStatus @default(IN_STOCK)
+  brand       String
+
+  // --- 4. METADATA ---
+  imageUrl    String    @default("https://example.com/placeholder.png")
+  productUrl  String    @default("https://example.com/placeholder-url")
+  scrapedAt   DateTime  @default(now())
+  lastSeenAt  DateTime  @updatedAt
+  
+  couponId    String?
+  coupon      Coupon?   @relation(fields: [couponId], references: [id], onDelete: SetNull)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // --- INDEXES ---
   @@unique([storeName, productUrl], map: "uniq_store_producturl")
-  @@index([storeName], map: "idx_product_store")
-  @@index([category], map: "idx_product_category")
-  @@index([price], map: "idx_product_price")
-  @@index([updatedAt], map: "idx_product_updated_at")
-  // 3. (Optional but Recommended) Add an index for the new stock field
-  @@index([stock], map: "idx_product_stock")
+  @@index([storeName], map: "idx_store")
+  @@index([category], map: "idx_category") 
+  @@index([price], map: "idx_price")       
 }
 
 model Coupon {
-  id           String      @id @default(cuid())
-  storeName    String
-  title        String
-  code         String
-  expiryDate   DateTime?
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id          String    @id @default(cuid())
+  storeName   StoreName
+  title       String
+  code        String
+  expiryDate  DateTime?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  products     Product[]   @relation(name: "CouponProducts")
-
-  @@unique([storeName, code], map: "uniq_store_code")
-  @@index([expiryDate], map: "idx_coupon_expiry")
-  @@index([storeName], map: "idx_coupon_store")
+  @@unique([storeName, code])
+  @@index([expiryDate])
 }

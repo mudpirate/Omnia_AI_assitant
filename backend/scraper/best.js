@@ -1,22 +1,139 @@
 import puppeteer from "puppeteer";
-import { PrismaClient, StockStatus } from "@prisma/client";
+import { PrismaClient, StockStatus, StoreName, Category } from "@prisma/client";
+import OpenAI from "openai";
 
 // --- GLOBAL CONFIGURATION ---
 const prisma = new PrismaClient();
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); // Ensure OPENAI_API_KEY is in .env
+
 const PRODUCT_SELECTOR = "best-product-grid-item"; // Selector for product tiles
 const DOMAIN = "https://best.com.kw";
-const STORE_NAME_FIXED = "Best.kw";
+const STORE_NAME_FIXED = StoreName.BEST_KW; // Using strict Enum
 
 // --- CONCURRENCY SETTING ---
-const CONCURRENT_LIMIT = 10;
+const CONCURRENT_LIMIT = 5; // Reduced slightly to ensure OpenAI rate limits are respected
 
 // -------------------------------------------------------------------
-// --- UNIFIED FUNCTION: SCRAPE STOCK AND DESCRIPTION (BEST.KW SPECIFIC) ---
+// --- HELPER FUNCTIONS FOR AI CONTEXT & VECTORS ---
 // -------------------------------------------------------------------
 
-/**
- * Executes a dedicated page navigation to scrape both stock and description efficiently.
- *
+async function getEmbedding(text) {
+  try {
+    const response = await openai.embeddings.create({
+      model: "text-embedding-3-small",
+      input: text,
+      encoding_format: "float",
+    });
+    return response.data[0].embedding;
+  } catch (error) {
+    console.error("⚠️ OpenAI Embedding Error:", error.message);
+    return null;
+  }
+}
+
+function mapCategory(rawInput) {
+  const lower = rawInput.toLowerCase();
+
+  // 1. Check Specific Audio Categories FIRST (because they might contain "phone")
+  if (lower.includes("headphone") || lower.includes("headset"))
+    return Category.HEADPHONE;
+  if (
+    lower.includes("earphone") ||
+    lower.includes("buds") ||
+    lower.includes("airpods")
+  )
+    return Category.EARPHONE;
+
+  // 2. Check Laptops/Tablets
+  if (lower.includes("laptop") || lower.includes("macbook"))
+    return Category.LAPTOP;
+  if (
+    lower.includes("tablet") ||
+    lower.includes("ipad") ||
+    lower.includes("tab")
+  )
+    return Category.TABLET;
+  if (lower.includes("watch")) return Category.WATCH;
+
+  // 3. Check Mobile Phones LAST (Generic "phone" catch-all)
+  if (lower.includes("phone") || lower.includes("mobile"))
+    return Category.MOBILE_PHONE;
+
+  return Category.ACCESSORY;
+}
+
+function extractSpecs(title, description) {
+  const text = (title + " " + description).toLowerCase();
+  const specs = {};
+
+  const storageMatch = text.match(/(\d{3}|\d{2}|\d{1})\s?(gb|tb)/);
+  if (storageMatch) specs.storage = storageMatch[0].toUpperCase();
+
+  const ramMatch = text.match(/(\d{1,2})\s?gb\s?ram/);
+  if (ramMatch) specs.ram = ramMatch[0].toUpperCase();
+
+  const colors = [
+    "black",
+    "white",
+    "silver",
+    "gold",
+    "blue",
+    "red",
+    "green",
+    "grey",
+    "gray",
+    "titanium",
+    "purple",
+  ];
+  const foundColor = colors.find((c) => text.includes(c));
+  if (foundColor)
+    specs.color = foundColor.charAt(0).toUpperCase() + foundColor.slice(1);
+
+  return specs;
+}
+
+function extractBrand(title) {
+  const knownBrands = [
+    "Apple",
+    "Samsung",
+    "Xiaomi",
+    "Huawei",
+    "Honor",
+    "Lenovo",
+    "HP",
+    "Dell",
+    "Asus",
+    "Sony",
+    "Bose",
+    "JBL",
+    "Microsoft",
+  ];
+  const titleLower = title.toLowerCase();
+  for (const brand of knownBrands) {
+    if (titleLower.includes(brand.toLowerCase())) return brand;
+  }
+  return title.split(" ")[0];
+}
+
+function generateCascadingContext(title, brand, specs, price, description) {
+  let context = `${brand} ${title}.`;
+
+  const specList = [];
+  if (specs.ram) specList.push(`${specs.ram} RAM`);
+  if (specs.storage) specList.push(`${specs.storage} Storage`);
+  if (specs.color) specList.push(`Color: ${specs.color}`);
+
+  if (specList.length > 0) context += ` Specs: ${specList.join(", ")}.`;
+
+  context += ` Price: ${price} KWD.`;
+
+  if (description && description.length > 20) {
+    const cleanDesc = description.substring(0, 300).replace(/\s+/g, " ").trim();
+    context += ` Features: ${cleanDesc}`;
+  }
+  return context;
+}
+
 // -------------------------------------------------------------------
 // --- UNIFIED FUNCTION: SCRAPE STOCK AND DESCRIPTION (BEST.KW SPECIFIC) ---
 // -------------------------------------------------------------------
@@ -124,19 +241,18 @@ async function getStockAndDescription(browser, url) {
 
   return { stock: stockStatus, description: description };
 }
+
+// -------------------------------------------------------------------
+// --- MAIN SCRAPER ---
 // -------------------------------------------------------------------
 
 /**
  * Main function to launch the browser, navigate, scrape, and save to DB.
- *
- * @param {puppeteer.Browser} browser - The shared browser instance.
- * @param {string} TARGET_URL - The starting URL for the category or search page.
- * @param {string} CATEGORY_NAME - The category slug for the DB (e.g., 'desktops').
  */
-/**
- * Main function to launch the browser, navigate, scrape, and save to DB.
- */
-async function scrapeProducts(browser, TARGET_URL, CATEGORY_NAME) {
+async function scrapeProducts(browser, TARGET_URL, RAW_CATEGORY_NAME) {
+  // 1. Map the Category immediately
+  const STRICT_CATEGORY = mapCategory(RAW_CATEGORY_NAME);
+
   let allProductsData = [];
   let createdCount = 0;
   let updatedCount = 0;
@@ -151,7 +267,7 @@ async function scrapeProducts(browser, TARGET_URL, CATEGORY_NAME) {
 
   try {
     console.log(
-      `🚀 Starting category scrape for ${CATEGORY_NAME} at ${TARGET_URL}`
+      `🚀 Starting category scrape for ${RAW_CATEGORY_NAME} (Mapped: ${STRICT_CATEGORY}) at ${TARGET_URL}`
     );
 
     let currentUrl = TARGET_URL;
@@ -193,8 +309,7 @@ async function scrapeProducts(browser, TARGET_URL, CATEGORY_NAME) {
         // 2. Extract Data
         const pageProducts = await categoryPage.$$eval(
           PRODUCT_SELECTOR,
-          (tiles, domain, category, store) => {
-            // ... (This internal extraction logic remains exactly the same as your script) ...
+          (tiles, domain, storeEnum) => {
             const extractProductData = (tile) => {
               try {
                 const cleanPrice = (txt) =>
@@ -227,8 +342,7 @@ async function scrapeProducts(browser, TARGET_URL, CATEGORY_NAME) {
                   : 0;
 
                 return {
-                  storeName: store,
-                  category: category,
+                  storeName: storeEnum,
                   title,
                   price,
                   imageUrl,
@@ -243,7 +357,6 @@ async function scrapeProducts(browser, TARGET_URL, CATEGORY_NAME) {
               .filter((data) => data && data.price > 0 && data.title !== "N/A");
           },
           DOMAIN,
-          CATEGORY_NAME,
           STORE_NAME_FIXED
         );
 
@@ -256,7 +369,7 @@ async function scrapeProducts(browser, TARGET_URL, CATEGORY_NAME) {
           allProductsData = allProductsData.concat(pageProducts);
         }
 
-        // 3. CHECK FOR NEXT PAGE (The Fix)
+        // 3. CHECK FOR NEXT PAGE
         const nextPageInfo = await categoryPage.evaluate(() => {
           // Select the "Next" button (The right arrow)
           const nextBtn = document.querySelector(".cx-pagination a.next");
@@ -304,13 +417,14 @@ async function scrapeProducts(browser, TARGET_URL, CATEGORY_NAME) {
     if (categoryPage) await categoryPage.close();
   }
 
-  // --- THE REST OF YOUR DB SAVING LOGIC REMAINS THE SAME ---
-  // ...
+  // --- PROCESSING VALID PRODUCTS ---
+
   const validProducts = allProductsData.filter(
     (product) =>
       product.title &&
       product.title !== "N/A" &&
       product.productUrl &&
+      product.productUrl !== "N/A" &&
       product.price > 0
   );
 
@@ -320,30 +434,42 @@ async function scrapeProducts(browser, TARGET_URL, CATEGORY_NAME) {
     `\nStarting concurrent stock/description check for ${validProducts.length} valid products...`
   );
 
-  // (Keep your batch processing loop exactly as it was)
-  // ...
+  // --- CONCURRENT BATCH PROCESSING WITH VECTORS ---
 
-  // Reuse your existing productUpdateTask and batch loop here...
-  // I will just summarize the batch loop execution for brevity,
-  // ensure you paste your existing DB saving code here.
-
-  // --- CONCURRENT BATCH PROCESSING FOR STOCK/DESCRIPTION CHECK & DB SAVE ---
-  const productUpdateTask = async (product, index) => {
-    // ... (Your existing code)
+  const productUpdateTask = async (product) => {
+    // 1. Scrape Stock & Description (Using your existing logic)
     const { stock: currentStockStatus, description } =
       await getStockAndDescription(browser, product.productUrl);
+
+    // 2. Generate Intelligent Fields (Brand, Specs, SearchKey)
+    const brand = extractBrand(product.title);
+    const specs = extractSpecs(product.title, description);
+    const searchKey = generateCascadingContext(
+      product.title,
+      brand,
+      specs,
+      product.price,
+      description
+    );
+
+    // 3. Generate Vector
+    const vector = await getEmbedding(searchKey);
 
     const upsertData = {
       title: product.title,
       description: description,
-      category: product.category,
+      category: STRICT_CATEGORY, // Use Strict Enum
       price: product.price,
       imageUrl: product.imageUrl,
       stock: currentStockStatus,
       lastSeenAt: new Date(),
+      brand: brand,
+      specs: specs,
+      searchKey: searchKey,
     };
 
-    const result = await prisma.product.upsert({
+    // 4. Upsert Data (Standard Fields)
+    const record = await prisma.product.upsert({
       where: {
         storeName_productUrl: {
           storeName: product.storeName,
@@ -360,21 +486,32 @@ async function scrapeProducts(browser, TARGET_URL, CATEGORY_NAME) {
       select: { id: true, createdAt: true, title: true, stock: true },
     });
 
+    // 5. Save Vector (Raw SQL)
+    if (vector) {
+      const vectorString = `[${vector.join(",")}]`;
+      await prisma.$executeRaw`
+        UPDATE "Product"
+        SET "descriptionEmbedding" = ${vectorString}::vector
+        WHERE id = ${record.id}
+      `;
+    }
+
     return {
-      result,
+      result: record,
       status: currentStockStatus,
-      isNew: result.createdAt.getTime() > Date.now() - 5000,
+      isNew: record.createdAt.getTime() > Date.now() - 5000,
     };
   };
 
+  // --- Batch Loop ---
   for (let i = 0; i < validProducts.length; i += CONCURRENT_LIMIT) {
     const batch = validProducts.slice(i, i + CONCURRENT_LIMIT);
     console.log(
-      `\n➡️ Processing batch ${Math.ceil((i + 1) / CONCURRENT_LIMIT)}...`
+      `\n➡️ Processing batch ${Math.ceil(
+        (i + 1) / CONCURRENT_LIMIT
+      )}/${Math.ceil(validProducts.length / CONCURRENT_LIMIT)}...`
     );
-    const batchPromises = batch.map((product, indexInBatch) =>
-      productUpdateTask(product, i + indexInBatch)
-    );
+    const batchPromises = batch.map((product) => productUpdateTask(product));
     const batchResults = await Promise.allSettled(batchPromises);
 
     for (const stockResult of batchResults) {
@@ -385,18 +522,16 @@ async function scrapeProducts(browser, TARGET_URL, CATEGORY_NAME) {
         else updatedCount++;
       } else {
         errorCount++;
+        console.error(`❌ Batch Error: ${stockResult.reason}`);
       }
     }
   }
 
   // Final Summary
-  console.log(`\n=== JOB SUMMARY: ${CATEGORY_NAME} ===`);
+  console.log(`\n=== JOB SUMMARY: ${RAW_CATEGORY_NAME.toUpperCase()} ===`);
   console.log(
-    `Total Found: ${allProductsData.length} | Saved/Updated: ${
-      createdCount + updatedCount
-    }`
+    `Total Found: ${allProductsData.length} | Created: ${createdCount} | Updated: ${updatedCount} | Errors: ${errorCount}`
   );
 }
 
 export default scrapeProducts;
-// Export the main function with the new signature

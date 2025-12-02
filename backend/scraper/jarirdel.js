@@ -9,7 +9,7 @@ async function deleteJarirProducts() {
     const deleted = await prisma.product.deleteMany({
       where: {
         storeName: {
-          contains: "jarir",
+          contains: "noon.kw",
           mode: "insensitive",
         },
       },
