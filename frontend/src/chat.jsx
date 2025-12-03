@@ -92,7 +92,7 @@ const styles = `
   }
   @keyframes pulse-soft {
     0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+    50% { opacity: 0.2; }
   }
   .animate-pulse-soft {
     animation: pulse-soft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -186,7 +186,7 @@ const Message = ({ message }) => {
 
   return (
     <div
-      className={`w-full py-6 animate-fade-in-up ${
+      className={`w-full py-5 animate-fade-in-up ${
         isUser ? "bg-black" : "bg-black border-y border-zinc-900"
       }`}
     >
@@ -195,8 +195,8 @@ const Message = ({ message }) => {
         <div
           className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center border ${
             isUser
-              ? "bg-black border-white text-black"
-              : "bg-black border-zinc-800 text-white"
+              ? "bg-black border-white text-white"
+              : "bg-black border-zinc-800 text-white "
           }`}
         >
           {isUser ? (
@@ -209,14 +209,14 @@ const Message = ({ message }) => {
         {/* Content Bubble */}
         <div className="flex-1 min-w-0">
           <div
-            className={`relative px-6 py-4 rounded-2xl text-[15px] leading-7 ${
+            className={`relative px-6 py-1 rounded-2xl text-[15px] leading-7 ${
               isUser
-                ? "bg-white text-black rounded-tr-none font-medium"
+                ? "bg-black text-white rounded-tr-none  font-semibold"
                 : "text-zinc-300 rounded-tl-none"
             }`}
           >
             {/* Text Content */}
-            <p className="whitespace-pre-wrap font-sans">{message.text}</p>
+            <p className="whitespace-pre-wrap font-semibold">{message.text}</p>
           </div>
 
           {/* Product Grid */}

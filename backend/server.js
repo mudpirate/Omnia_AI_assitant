@@ -1,4 +1,3 @@
-// server.js
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -222,7 +221,136 @@ const ANDROID_TERMS = [
   "infinix",
 ];
 
-// -------------------- HELPERS --------------------
+// -------------------- NEW HELPERS: WEB SEARCH & MEMORY --------------------
+
+// 1. MEMORY: Query Rewriter
+async function generateStandaloneQuery(userMessage, history) {
+  if (!history || history.length === 0) return userMessage;
+
+  const recentHistory = history.slice(-6);
+  const conversationText = recentHistory
+    .map(
+      (msg) =>
+        `${msg.sender === "user" ? "User" : "AI"}: ${msg.text || msg.content}`
+    )
+    .join("\n");
+
+  const systemPrompt = `
+    You are a Search Query Optimizer.
+    Your job is to REWRITE the "Latest User Message" into a standalone search query by merging it with the "Chat History".
+
+    **CRITICAL RULES:**
+    1. **PRESERVE BRANDS:** If the history mentions a specific brand (e.g., "Motorola"), you MUST keep it in the new query unless user explicitly changes it.
+    2. **MERGE CONSTRAINTS:** Combine old constraints (Brand) with new constraints (Price).
+    3. **OUTPUT ONLY THE QUERY.**
+
+    **EXAMPLES:**
+    - History: "Motorola phone" -> User: "under 400"
+      -> Rewritten: "Motorola phone under 400 kwd"
+  `;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: LLM_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: `CHAT HISTORY:\n${conversationText}\n\nLATEST USER MESSAGE: "${userMessage}"`,
+        },
+      ],
+      temperature: 0.1,
+    });
+
+    const rewritten = response.choices[0].message.content.trim();
+    console.log(
+      `[Memory] Original: "${userMessage}" -> Rewritten: "${rewritten}"`
+    );
+    return rewritten;
+  } catch (error) {
+    console.error("Query Rewriter Failed:", error);
+    return userMessage;
+  }
+}
+
+// 2. WEB SEARCH: Serper.dev
+async function searchWeb(query) {
+  console.log(`[Web Search] Querying Serper.dev for: "${query}"...`);
+
+  const myHeaders = new Headers();
+  myHeaders.append("X-API-KEY", process.env.SERPER_API_KEY);
+  myHeaders.append("Content-Type", "application/json");
+
+  // Search specifically in Kuwait (gl: "kw")
+  const raw = JSON.stringify({
+    q: query,
+    gl: "kw",
+    hl: "en",
+  });
+
+  try {
+    const response = await fetch("https://google.serper.dev/search", {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow",
+    });
+
+    if (!response.ok) {
+      console.error("[Web Search] API Error:", response.statusText);
+      return null;
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("[Web Search] Fetch Failed:", error);
+    return null;
+  }
+}
+
+// 3. WEB SYNTHESIZER: GPT-4o-mini
+async function synthesizeTrendReport(serperResponse, userQuery) {
+  if (
+    !serperResponse ||
+    !serperResponse.organic ||
+    serperResponse.organic.length === 0
+  ) {
+    return "I couldn't find any recent information on that topic from the web right now.";
+  }
+
+  // Extract top 5 snippets
+  const topResults = serperResponse.organic.slice(0, 5);
+  const context = topResults
+    .map((item) => `SOURCE: ${item.title}\nSNIPPET: ${item.snippet}`)
+    .join("\n\n");
+
+  console.log("[Web Search] Synthesizing summary...");
+
+  const completion = await openai.chat.completions.create({
+    model: "gpt-5-nano",
+    messages: [
+      {
+        role: "system",
+        content: `You are Omnia AI, a helpful shopping assistant. 
+        The user asked a question that required a live web search (e.g., trends, news, or general advice).
+        I will provide you with search snippets.
+        
+        Your Job:
+        1. Synthesize these snippets into a friendly, helpful paragraph answering the user.
+        2. Mention specific product names found in the snippets if relevant.
+        3. Do NOT output JSON. Output plain text.`,
+      },
+      {
+        role: "user",
+        content: `USER QUESTION: "${userQuery}"\n\nSEARCH RESULTS:\n${context}`,
+      },
+    ],
+    temperature: 1,
+  });
+
+  return completion.choices[0].message.content;
+}
+
+// -------------------- EXISTING HELPERS --------------------
 function extractStoreName(userMessage) {
   const msg = userMessage.toLowerCase();
   for (const store of STORE_NAMES) {
@@ -296,26 +424,50 @@ function detectProductCategory(userMessage) {
   return detectedCategory.score > 0 ? detectedCategory.category : null;
 }
 
-function classifyIntent(userMessage) {
-  const msg = userMessage.toLowerCase();
-  const hasPrice = /(\d+)\s*(kwd|kd|dinar|budget|under|below|between)/i.test(
-    msg
-  );
-  const hasSpecificModel =
-    /\b(iphone|galaxy|pixel)\s*\d+/i.test(msg) ||
-    /\b\d+gb\b/i.test(msg) ||
-    /(pro max|pro|plus|ultra|fold|flip|rtx|ryzen)/i.test(msg);
-  const hasBrandAndType =
-    /(samsung|apple|iphone|dell|hp|sony|bose|lenovo|asus|acer).*(phone|laptop|headphone|earphone|tablet|desktop)/i.test(
-      msg
-    ) ||
-    /(phone|laptop|headphone|earphone|tablet|desktop).*(samsung|apple|iphone|dell|hp|sony|bose|lenovo|asus|acer)/i.test(
-      msg
-    );
+async function classifyIntent(query) {
+  const systemPrompt = `
+    You are an intent classification engine for an electronics store.
+    Analyze the user's query and categorize it into exactly one of these levels:
 
-  if (hasSpecificModel || (hasBrandAndType && hasPrice)) return "HIGH";
-  if (hasBrandAndType || hasPrice) return "MEDIUM";
-  return "LOW";
+    1. LOW:
+       - General discovery ("what's new?", "trending phones","good camera phone", "best phone", "comparison between two phones")
+       - Vague requests ("I need a phone","any good camera phone")
+       - Questions about policies ("shipping", "returns")
+    
+    2. MEDIUM:
+       - Broad category searches with constraints ("laptops under 300 kwd")
+       - Brand specific but broad ("samsung phones", "hp laptops")
+       - Feature specific ("phones with good camera")
+
+    3. HIGH:
+       - Specific product models ("iPhone 15 Pro", "Galaxy S24 Ultra")
+       - Precise specifications ("16gb ram i7 laptop")
+       - Comparisons between specific items ("Pixel 8 vs S23")
+       - Direct purchase intent ("buy iphone 15")
+
+    OUTPUT ONLY THE LABEL: "LOW", "MEDIUM", or "HIGH". Do not output anything else.
+  `;
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: LLM_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: query },
+      ],
+      temperature: 0.0, // Strict determinism
+      max_tokens: 10,
+    });
+
+    const intent = response.choices[0].message.content
+      .trim()
+      .replace(/[^a-zA-Z]/g, "")
+      .toUpperCase();
+    return ["LOW", "MEDIUM", "HIGH"].includes(intent) ? intent : "LOW";
+  } catch (e) {
+    console.error("Intent Classifier Error:", e);
+    return "LOW"; // Fail safe
+  }
 }
 
 async function getQueryEmbedding(text) {
@@ -529,17 +681,52 @@ app.post("/chat", async (req, res) => {
   // We will add the assistant response to history at the end
 
   try {
-    const detectedCategory = detectProductCategory(message);
-    const intent = classifyIntent(message);
-    const priceRange = extractPriceRange(message);
-    const storeName = extractStoreName(message);
+    // 1. CONTEXTUALIZE
+    const standaloneQuery = await generateStandaloneQuery(message, history);
+
+    const detectedCategory = detectProductCategory(standaloneQuery);
+    const intent = await classifyIntent(standaloneQuery);
+    const priceRange = extractPriceRange(standaloneQuery);
+    const storeName = extractStoreName(standaloneQuery);
 
     console.log(
       `[Chat] Intent: ${intent}, Category: ${detectedCategory}, Store: ${storeName}`
     );
 
-    // --- LOW INTENT: TEXT ONLY ---
+    // --- LOW INTENT / WEB SEARCH HANDLING ---
     if (intent === "LOW") {
+      // 1. Check if it is a Greeting or a Trend/Knowledge Query
+      const isGreeting = /^(hi|hy|hello|hey|greetings|morning|afternoon)/i.test(
+        message.trim()
+      );
+
+      if (!isGreeting) {
+        // --- WEB SEARCH PIPELINE ---
+        console.log(
+          `[Low Intent] Detected knowledge query. Triggering Web Search...`
+        );
+
+        // A. Call Serper API
+        const serperData = await searchWeb(message);
+
+        // B. Summarize with LLM
+        const webSummary = await synthesizeTrendReport(serperData, message);
+
+        // C. Return Response to Frontend (No Product Cards)
+        return res.json({
+          reply: webSummary,
+          products: [],
+          intent: "WEB_SEARCH",
+          category: detectedCategory,
+          history: [
+            ...history,
+            userMessageObject,
+            { role: "assistant", content: webSummary },
+          ],
+        });
+      }
+
+      // --- EXISTING GREETING LOGIC ---
       const lowIntentSystem = `
         You are Omnia AI, a friendly shopping assistant for Kuwait electronics.
         The user is just exploring.
@@ -640,9 +827,7 @@ app.post("/chat", async (req, res) => {
       **CRITICAL DATA INTEGRITY RULES**:
       1. You must **ONLY** return products listed in the 'Input Data' section below.
       2. **Do NOT invent**, hallucinate, or 'fill in' products that are not in the input list.
-    3. **MANDATORY**: You MUST return ALL ${
-      filteredProducts.length
-    } products listed in the Input Data. Do NOT summarize or pick your favorites. Return the complete list.
+      3. If the input list contains 5 items, your output must contain 5 items. Do not add more.
       4. Ensure 'image_url' and 'product_url' are copied **exactly** from the input data. Do not generate fake URLs.
 
       **CONTENT GENERATION**:
