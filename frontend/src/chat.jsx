@@ -116,7 +116,7 @@ const ProductCard = ({ product }) => {
   };
 
   return (
-    <div className="group relative flex flex-col sm:flex-row gap-5 p-5 bg-black  border border-zinc-800 rounded-2xl hover:border-zinc-600 transition-all duration-300">
+    <div className="group relative flex flex-col sm:flex-row gap-5 p-5 bg-black  rounded-2xl hover:border-zinc-600 transition-all duration-300">
       {/* Product Image */}
       <div className="shrink-0 w-full sm:w-36 h-36 bg-black rounded-xl border border-zinc-800 overflow-hidden flex items-center justify-center relative">
         <img
@@ -187,7 +187,7 @@ const Message = ({ message }) => {
   return (
     <div
       className={`w-full py-5 animate-fade-in-up ${
-        isUser ? "bg-black" : "bg-black border-y border-zinc-900"
+        isUser ? "bg-black" : "bg-black "
       }`}
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6 flex gap-4 sm:gap-6">

@@ -251,7 +251,7 @@ const ANDROID_TERMS = [
 async function generateStandaloneQuery(userMessage, history) {
   if (!history || history.length === 0) return userMessage;
 
-  const recentHistory = history.slice(-2); // Only look at last 2 messages
+  const recentHistory = history.slice(-1); // Only look at last 2 messages
 
   const conversationText = recentHistory
     .map((msg) => `${msg.role === "user" ? "User" : "AI"}: ${msg.content}`)
@@ -261,7 +261,7 @@ async function generateStandaloneQuery(userMessage, history) {
     You are a Query Refiner.
     Your job is to decide if the "Latest User Message" is a FOLLOW-UP or a NEW TOPIC.
 
-    **RULES:**
+
     1. **IF FOLLOW-UP:** Merge it with the history.
     2. **IF NEW TOPIC:** Ignore history and use the user message.
     3. **NO MARKDOWN:** Do NOT use bold (**), italics, or quotes. Output clean plain text only.
@@ -323,26 +323,32 @@ async function searchWeb(query) {
     // B. Check Vector Cache (Prisma/Postgres)
     // We look for a similar query stored with >92% similarity
     // This allows "price of iphone 15" to match "iphone 15 price"
-    const SIMILARITY_THRESHOLD = 0.92;
-
-    // Note: Ensure you have "WebSearchCache" model in your Prisma Schema
-    const cachedResults = await prisma.$queryRawUnsafe(`
+    const closestMatch = await prisma.$queryRawUnsafe(`
       SELECT response, 1 - (embedding <=> '${vectorLiteral}'::vector) as similarity
       FROM "WebSearchCache"
-      WHERE 1 - (embedding <=> '${vectorLiteral}'::vector) > ${SIMILARITY_THRESHOLD}
       ORDER BY similarity DESC
       LIMIT 1;
     `);
 
-    if (cachedResults.length > 0) {
+    // 2. Log the score so you can see it in your terminal
+    if (closestMatch.length > 0) {
       console.log(
-        `[Web Search] ⚡ VECTOR CACHE HIT (Similarity: ${cachedResults[0].similarity.toFixed(
+        `[Cache Inspection] Closest match similarity: ${closestMatch[0].similarity.toFixed(
           4
-        )})`
+        )}`
       );
-      return cachedResults[0].response;
     }
 
+    // 3. Apply your threshold logic
+    const SIMILARITY_THRESHOLD = 0.73; // <--- Your new setting
+
+    if (
+      closestMatch.length > 0 &&
+      closestMatch[0].similarity > SIMILARITY_THRESHOLD
+    ) {
+      console.log(`[Web Search] ⚡ VECTOR CACHE HIT`);
+      return closestMatch[0].response;
+    }
     // C. Cache Miss -> Call Serper API
     console.log(`[Web Search] 🌐 CACHE MISS. Calling Serper.dev...`);
 
@@ -429,6 +435,7 @@ async function synthesizeTrendReport(serperResponse, userQuery) {
         content: `USER QUESTION: "${userQuery}"\n\nSEARCH RESULTS:\n${context}`,
       },
     ],
+    max_completion_tokens: 80,
     temperature: 1,
   });
 
@@ -438,24 +445,31 @@ async function synthesizeTrendReport(serperResponse, userQuery) {
 // -------------------- EXISTING EXTRACTION HELPERS --------------------
 function extractStoreName(userMessage) {
   const msg = userMessage.toLowerCase();
-  for (const store of STORE_NAMES) {
-    const pattern = new RegExp(`\\b${store}(?:\\s+store|\\s+shop|\\b)`, "i");
-    if (pattern.test(msg)) {
-      if (store === "noon.kw" || store === "noon") return "noon.kw";
-      if (store === "best.kw" || store === "best") return "best.kw";
-      if (store === "xcite") return "xcite";
-      if (store === "jarir") return "jarir";
-      return store;
-    }
-  }
-  const fromMatch = msg.match(/from\s*(\S+)/i);
+
+  // 1. Check for unambiguous store names first
+  if (msg.includes("noon")) return "noon.kw";
+  if (msg.includes("xcite")) return "xcite";
+  if (msg.includes("jarir")) return "jarir";
+
+  // 2. Handle "Best" carefully (The Fix)
+  // Only return "best.kw" if the user explicitly types the domain or "best store"
+  if (msg.includes("best.kw") || msg.includes("best al-yousifi"))
+    return "best.kw";
+
+  // 3. Handle "from [store]" pattern
+  const fromMatch = msg.match(/from\s+(\w+)/i);
   if (fromMatch) {
-    const wordAfterFrom = fromMatch[1].toLowerCase().replace(/[.,]/g, "");
-    if (wordAfterFrom.includes("xcite")) return "xcite";
-    if (wordAfterFrom.includes("noon")) return "noon.kw";
-    if (wordAfterFrom.includes("best")) return "best.kw";
-    if (wordAfterFrom.includes("jarir")) return "jarir";
+    const store = fromMatch[1];
+    if (store === "noon") return "noon.kw";
+    if (store === "xcite") return "xcite";
+    if (store === "jarir") return "jarir";
+    // Only accept "best" if it follows the word "from"
+    if (store === "best") return "best.kw";
   }
+
+  // 4. Check for "best store" or "best shop" specifically
+  if (/\bbest\s+(store|shop)\b/.test(msg)) return "best.kw";
+
   return null;
 }
 
@@ -511,27 +525,101 @@ function detectProductCategory(userMessage) {
 
 async function classifyIntent(query) {
   const systemPrompt = `
-   You are an intent classification engine for an electronics store.
-   Analyze the user's query and categorize it into exactly one of these levels:
+You are an intent-classification engine for an electronics ecommerce store.
 
-   1. LOW:
-       - General discovery ("what's new?", "trending phones","good camera phone", "best phone", "comparison between two phones")
-       - Vague requests ("I need a phone","any good camera phone")
-       - Questions about policies ("shipping", "returns")
-    
-   2. MEDIUM:
-       - Broad category searches with constraints ("laptops under 300 kwd")
-       - Brand specific but broad ("samsung phones", "hp laptops")
-       - Feature specific ("phones with good camera")
+Your job:  
+Given the user query, classify it into EXACTLY one of the following labels:
 
-   3. HIGH:
-       - Specific product models ("iPhone 15 Pro", "Galaxy S24 Ultra")
-       - Precise specifications ("16gb ram i7 laptop")
-       - Comparisons between specific items ("Pixel 8 vs S23")
-       - Direct purchase intent ("buy iphone 15")
+========================================
+🔵 LOW INTENT
+========================================
+The user is *browsing*, *exploring*, or *asking vague/general questions*.
 
-   OUTPUT ONLY THE LABEL: "LOW", "MEDIUM", or "HIGH". Do not output anything else.
- `;
+Examples:
+- "what's new?"
+- "trending phones"
+- "show me popular items"
+- "good camera phone"
+- "best phone"
+- "best laptop"
+- "which phone should I buy?"
+- "compare phones" (NO models mentioned)
+- "compare Samsung and Apple phones"
+- "gaming laptops?"
+- "is shipping free?"
+- "how are your returns?"
+- "do you deliver to Kuwait?"
+- "I need a new phone"
+- "recommend a phone"
+- "any good phones under budget?"
+- "does warranty cover screen damage?"
+- "store timings?"  
+→ KEY: general, non-specific, window-shopping, policy questions.
+
+========================================
+🟠 MEDIUM INTENT
+========================================
+The user has a *clear need* but not a specific product. Usually includes:
+- price ranges
+- categories
+- brands
+- features  
+BUT NOT a specific model.
+
+Examples:
+- "laptops under 300 kwd"
+- "phones under 150"
+- "Samsung phones"
+- "Apple laptops"
+- "smartwatches for fitness"
+- "gaming laptop with RTX"
+- "phones with best battery"
+- "budget iPads"
+- "Dell laptops i5 processor"
+- "tablet for kids"
+- "noise cancelling headphones"
+- "OLED TVs 55 inch"
+→ KEY: direction is clear but no precise single product.
+
+========================================
+🔴 HIGH INTENT
+========================================
+The user is *ready to buy* or refers to **specific models/specs**.
+
+Examples:
+- Specific models:
+    - "iPhone 15 Pro Max"
+    - "Galaxy S24 Ultra"
+    - "Redmi Note 13 Pro"
+    - "AirPods Pro 2"
+- Specific spec requests:
+    - "i7 16gb ram laptop"
+    - "rtx 4060 1tb laptop"
+    - "75 inch 4k qled tv"
+- Specific comparisons:
+    - "Pixel 8 vs Galaxy S23"
+    - "iPhone 14 or 15 which is better?"
+- Purchase intent:
+    - "buy iphone 15 pro"
+    - "order macbook m3"
+    - "add ps5 to cart"
+    - "where can I buy s24 ultra?"
+
+→ KEY: highly targeted, actionable, usually one or two exact products.
+
+========================================
+RULES:
+- Output ONLY: LOW, MEDIUM, or HIGH
+- No explanations.
+- If query mentions a **specific model name** → ALWAYS HIGH
+- If ambiguous between MEDIUM and LOW → choose LOW
+- If ambiguous between HIGH and MEDIUM → choose HIGH
+  (specific > broad)
+
+========================================
+OUTPUT FORMAT:
+Only return the label: LOW / MEDIUM / HIGH.
+`;
 
   try {
     const response = await openai.chat.completions.create({
@@ -540,14 +628,13 @@ async function classifyIntent(query) {
         { role: "system", content: systemPrompt },
         { role: "user", content: query },
       ],
-      temperature: 0.0,
-      max_tokens: 10,
+      temperature: 0,
+      max_tokens: 5,
     });
 
-    const intent = response.choices[0].message.content
-      .trim()
-      .replace(/[^a-zA-Z]/g, "")
-      .toUpperCase();
+    let intent = response.choices[0].message.content.trim().toUpperCase();
+    intent = intent.replace(/[^A-Z]/g, ""); // cleanup
+
     return ["LOW", "MEDIUM", "HIGH"].includes(intent) ? intent : "LOW";
   } catch (e) {
     console.error("Intent Classifier Error:", e);
