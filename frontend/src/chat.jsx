@@ -280,6 +280,10 @@ export default function ChatApp() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  // --- ADDED: Session ID State for Memory ---
+  const [sessionId, setSessionId] = useState(null);
+
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -319,14 +323,23 @@ export default function ChatApp() {
     setIsLoading(true);
 
     try {
+      // --- UPDATED: Fetch call now sends sessionId ---
       const response = await fetch(`${API_BASE_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query }),
+        body: JSON.stringify({
+          query,
+          sessionId, // Send existing sessionId (or null if first message)
+        }),
       });
 
       if (!response.ok) throw new Error("Server error");
       const data = await response.json();
+
+      // --- ADDED: Update sessionId from backend response ---
+      if (data.sessionId) {
+        setSessionId(data.sessionId);
+      }
 
       const aiMsg = {
         id: Date.now() + 1,

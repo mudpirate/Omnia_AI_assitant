@@ -16,8 +16,10 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "ioredis": "^5.8.2",
     "openai": "^6.9.1",
     "prisma": "^6.0.0",
-    "puppeteer": "^24.31.0"
+    "puppeteer": "^24.31.0",
+    "uuid": "^13.0.0"
   }
 }

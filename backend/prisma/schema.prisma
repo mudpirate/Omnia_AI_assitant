@@ -97,3 +97,16 @@ model Coupon {
   @@unique([storeName, code])
   @@index([expiryDate])
 }
+
+// Add this to your schema.prisma file
+
+// In schema.prisma
+
+model WebSearchCache {
+  id        String   @id @default(uuid())
+  query     String
+  response  Json
+  // IMPORTANT: This requires the vector extension
+  embedding Unsupported("vector(1536)") 
+  createdAt DateTime @default(now())
+}

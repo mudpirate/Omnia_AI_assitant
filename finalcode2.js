@@ -3,8 +3,6 @@ import express from "express";
 import cors from "cors";
 import OpenAI from "openai";
 import { PrismaClient } from "@prisma/client";
-import Redis from "ioredis";
-import { v4 as uuidv4 } from "uuid";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -18,31 +16,9 @@ const openai = new OpenAI({
 
 const prisma = new PrismaClient();
 
-// Initialize Redis
-// Defaults to localhost:6379 if REDIS_URL is not set
-const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
-
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ limit: "20mb", extended: true }));
-
-// -------------------- REDIS MEMORY HELPERS --------------------
-
-// Save message to Redis List with 24h Expiry
-async function saveToMemory(sessionId, role, content) {
-  const key = `chat:${sessionId}`;
-  const message = JSON.stringify({ role, content });
-  await redis.rpush(key, message);
-  await redis.ltrim(key, -20, -1); // Keep last 20 messages only
-  await redis.expire(key, 86400); // TTL: 24 hours
-}
-
-// Fetch parsed history from Redis
-async function getMemory(sessionId) {
-  const key = `chat:${sessionId}`;
-  const rawHistory = await redis.lrange(key, 0, -1);
-  return rawHistory.map((item) => JSON.parse(item));
-}
 
 // -------------------- CATEGORY + BRAND CONFIG --------------------
 const PRODUCT_CATEGORIES = {
@@ -245,29 +221,32 @@ const ANDROID_TERMS = [
   "infinix",
 ];
 
-// -------------------- LOGIC HELPERS --------------------
+// -------------------- NEW HELPERS: WEB SEARCH & MEMORY --------------------
 
-// 1. MEMORY: Query Rewriter (Fixed to remove Markdown)
+// 1. MEMORY: Query Rewriter
 async function generateStandaloneQuery(userMessage, history) {
   if (!history || history.length === 0) return userMessage;
 
-  const recentHistory = history.slice(-2); // Only look at last 2 messages
-
+  const recentHistory = history.slice(-6);
   const conversationText = recentHistory
-    .map((msg) => `${msg.role === "user" ? "User" : "AI"}: ${msg.content}`)
+    .map(
+      (msg) =>
+        `${msg.sender === "user" ? "User" : "AI"}: ${msg.text || msg.content}`
+    )
     .join("\n");
 
   const systemPrompt = `
-    You are a Query Refiner.
-    Your job is to decide if the "Latest User Message" is a FOLLOW-UP or a NEW TOPIC.
+    You are a Search Query Optimizer.
+    Your job is to REWRITE the "Latest User Message" into a standalone search query by merging it with the "Chat History".
 
-    **RULES:**
-    1. **IF FOLLOW-UP:** Merge it with the history.
-    2. **IF NEW TOPIC:** Ignore history and use the user message.
-    3. **NO MARKDOWN:** Do NOT use bold (**), italics, or quotes. Output clean plain text only.
+    **CRITICAL RULES:**
+    1. **PRESERVE BRANDS:** If the history mentions a specific brand (e.g., "Motorola"), you MUST keep it in the new query unless user explicitly changes it.
+    2. **MERGE CONSTRAINTS:** Combine old constraints (Brand) with new constraints (Price).
+    3. **OUTPUT ONLY THE QUERY.**
 
-    **OUTPUT:**
-    Return ONLY the final search query.
+    **EXAMPLES:**
+    - History: "Motorola phone" -> User: "under 400"
+      -> Rewritten: "Motorola phone under 400 kwd"
   `;
 
   try {
@@ -280,120 +259,55 @@ async function generateStandaloneQuery(userMessage, history) {
           content: `CHAT HISTORY:\n${conversationText}\n\nLATEST USER MESSAGE: "${userMessage}"`,
         },
       ],
-      temperature: 0.0,
+      temperature: 0.1,
     });
 
-    let rewritten = response.choices[0].message.content.trim();
-
-    // --- FIX: SANITIZE THE OUTPUT ---
-    // Remove "**", "__", and surrounding quotes
-    rewritten = rewritten
-      .replace(/\*\*/g, "")
-      .replace(/__/g, "")
-      .replace(/^"|"$/g, "");
-
-    return rewritten || userMessage;
+    const rewritten = response.choices[0].message.content.trim();
+    console.log(
+      `[Memory] Original: "${userMessage}" -> Rewritten: "${rewritten}"`
+    );
+    return rewritten;
   } catch (error) {
     console.error("Query Rewriter Failed:", error);
     return userMessage;
   }
 }
 
-// -------------------- HELPER: Get Vector Embedding --------------------
-async function getQueryEmbedding(text) {
-  const embeddingRes = await openai.embeddings.create({
-    model: EMBEDDING_MODEL,
-    input: text,
-  });
-  const embedding = embeddingRes.data[0]?.embedding;
-  if (!embedding) throw new Error("Failed to generate embedding");
-  const vectorLiteral =
-    "[" + embedding.map((x) => Number(x).toFixed(6)).join(",") + "]";
-  return { embedding, vectorLiteral };
-}
-
-// -------------------- 2. WEB SEARCH (VECTOR CACHED) --------------------
+// 2. WEB SEARCH: Serper.dev
 async function searchWeb(query) {
-  console.log(`[Web Search] Processing: "${query}"...`);
+  console.log(`[Web Search] Querying Serper.dev for: "${query}"...`);
+
+  const myHeaders = new Headers();
+  myHeaders.append("X-API-KEY", process.env.SERPER_API_KEY);
+  myHeaders.append("Content-Type", "application/json");
+
+  // Search specifically in Kuwait (gl: "kw")
+  const raw = JSON.stringify({
+    q: query,
+    gl: "kw",
+    hl: "en",
+  });
 
   try {
-    // A. Generate Embedding for the Search Query
-    const { vectorLiteral } = await getQueryEmbedding(query);
-
-    // B. Check Vector Cache (Prisma/Postgres)
-    // We look for a similar query stored with >92% similarity
-    // This allows "price of iphone 15" to match "iphone 15 price"
-    const SIMILARITY_THRESHOLD = 0.92;
-
-    // Note: Ensure you have "WebSearchCache" model in your Prisma Schema
-    const cachedResults = await prisma.$queryRawUnsafe(`
-      SELECT response, 1 - (embedding <=> '${vectorLiteral}'::vector) as similarity
-      FROM "WebSearchCache"
-      WHERE 1 - (embedding <=> '${vectorLiteral}'::vector) > ${SIMILARITY_THRESHOLD}
-      ORDER BY similarity DESC
-      LIMIT 1;
-    `);
-
-    if (cachedResults.length > 0) {
-      console.log(
-        `[Web Search] ⚡ VECTOR CACHE HIT (Similarity: ${cachedResults[0].similarity.toFixed(
-          4
-        )})`
-      );
-      return cachedResults[0].response;
-    }
-
-    // C. Cache Miss -> Call Serper API
-    console.log(`[Web Search] 🌐 CACHE MISS. Calling Serper.dev...`);
-
-    const myHeaders = new Headers();
-    myHeaders.append("X-API-KEY", process.env.SERPER_API_KEY);
-    myHeaders.append("Content-Type", "application/json");
-
     const response = await fetch("https://google.serper.dev/search", {
       method: "POST",
       headers: myHeaders,
-      body: JSON.stringify({ q: query, gl: "kw", hl: "en" }),
+      body: raw,
+      redirect: "follow",
     });
 
     if (!response.ok) {
       console.error("[Web Search] API Error:", response.statusText);
       return null;
     }
-
-    const data = await response.json();
-
-    // D. Save to Vector Cache (if valid data)
-    // D. Save to Vector Cache (if valid data)
-    if (data && data.organic && data.organic.length > 0) {
-      // We use $executeRaw because Prisma doesn't support vector writes natively yet
-      await prisma.$executeRawUnsafe(
-        `
-      INSERT INTO "WebSearchCache" (id, query, response, "embedding", "createdAt")
-      VALUES (
-        gen_random_uuid(), 
-        $1, 
-        $2::jsonb,  -- <--- FIXED: Cast the text input to JSONB
-        '${vectorLiteral}'::vector, 
-        NOW()
-      )
-    `,
-        query,
-        JSON.stringify(data)
-      );
-
-      console.log(`[Web Search] 💾 Saved to Vector Cache`);
-    }
-
-    return data;
+    return await response.json();
   } catch (error) {
-    console.error("[Web Search] Error:", error);
-    // Fallback to non-cached call if DB fails
+    console.error("[Web Search] Fetch Failed:", error);
     return null;
   }
 }
 
-// 3. WEB SYNTHESIZER
+// 3. WEB SYNTHESIZER: GPT-4o-mini
 async function synthesizeTrendReport(serperResponse, userQuery) {
   if (
     !serperResponse ||
@@ -403,6 +317,7 @@ async function synthesizeTrendReport(serperResponse, userQuery) {
     return "I couldn't find any recent information on that topic from the web right now.";
   }
 
+  // Extract top 5 snippets
   const topResults = serperResponse.organic.slice(0, 5);
   const context = topResults
     .map((item) => `SOURCE: ${item.title}\nSNIPPET: ${item.snippet}`)
@@ -411,7 +326,7 @@ async function synthesizeTrendReport(serperResponse, userQuery) {
   console.log("[Web Search] Synthesizing summary...");
 
   const completion = await openai.chat.completions.create({
-    model: LLM_MODEL,
+    model: "gpt-5-nano",
     messages: [
       {
         role: "system",
@@ -435,7 +350,7 @@ async function synthesizeTrendReport(serperResponse, userQuery) {
   return completion.choices[0].message.content;
 }
 
-// -------------------- EXISTING EXTRACTION HELPERS --------------------
+// -------------------- EXISTING HELPERS --------------------
 function extractStoreName(userMessage) {
   const msg = userMessage.toLowerCase();
   for (const store of STORE_NAMES) {
@@ -511,27 +426,27 @@ function detectProductCategory(userMessage) {
 
 async function classifyIntent(query) {
   const systemPrompt = `
-   You are an intent classification engine for an electronics store.
-   Analyze the user's query and categorize it into exactly one of these levels:
+    You are an intent classification engine for an electronics store.
+    Analyze the user's query and categorize it into exactly one of these levels:
 
-   1. LOW:
+    1. LOW:
        - General discovery ("what's new?", "trending phones","good camera phone", "best phone", "comparison between two phones")
        - Vague requests ("I need a phone","any good camera phone")
        - Questions about policies ("shipping", "returns")
     
-   2. MEDIUM:
+    2. MEDIUM:
        - Broad category searches with constraints ("laptops under 300 kwd")
        - Brand specific but broad ("samsung phones", "hp laptops")
        - Feature specific ("phones with good camera")
 
-   3. HIGH:
+    3. HIGH:
        - Specific product models ("iPhone 15 Pro", "Galaxy S24 Ultra")
        - Precise specifications ("16gb ram i7 laptop")
        - Comparisons between specific items ("Pixel 8 vs S23")
        - Direct purchase intent ("buy iphone 15")
 
-   OUTPUT ONLY THE LABEL: "LOW", "MEDIUM", or "HIGH". Do not output anything else.
- `;
+    OUTPUT ONLY THE LABEL: "LOW", "MEDIUM", or "HIGH". Do not output anything else.
+  `;
 
   try {
     const response = await openai.chat.completions.create({
@@ -540,7 +455,7 @@ async function classifyIntent(query) {
         { role: "system", content: systemPrompt },
         { role: "user", content: query },
       ],
-      temperature: 0.0,
+      temperature: 0.0, // Strict determinism
       max_tokens: 10,
     });
 
@@ -551,18 +466,36 @@ async function classifyIntent(query) {
     return ["LOW", "MEDIUM", "HIGH"].includes(intent) ? intent : "LOW";
   } catch (e) {
     console.error("Intent Classifier Error:", e);
-    return "LOW";
+    return "LOW"; // Fail safe
   }
 }
 
-// -------------------- DB SEARCH (PRODUCT CATALOG) --------------------
+async function getQueryEmbedding(text) {
+  const embeddingRes = await openai.embeddings.create({
+    model: EMBEDDING_MODEL,
+    input: text,
+  });
+  const embedding = embeddingRes.data[0]?.embedding;
+  if (!embedding) throw new Error("Failed to generate embedding");
+  const vectorLiteral =
+    "[" + embedding.map((x) => Number(x).toFixed(6)).join(",") + "]";
+  return { embedding, vectorLiteral };
+}
+
+// -------------------- DB SEARCH (UPDATED TO FETCH DESCRIPTION) --------------------
 async function executeEmbeddingSearch(vectorLiteral, maxResults) {
   try {
     console.log(`[Embedding Search] Fetching top ${maxResults} products...`);
     const query = `
       SELECT
-        "title", "price", "storeName", "productUrl", "category",
-        "imageUrl", "stock", "description"
+        "title",
+        "price",
+        "storeName",
+        "productUrl",
+        "category",
+        "imageUrl",
+        "stock",
+        "description"
       FROM "Product"
       WHERE "descriptionEmbedding" IS NOT NULL
       ORDER BY "descriptionEmbedding" <#> '${vectorLiteral}'::vector ASC
@@ -590,6 +523,7 @@ function filterAndRankProducts(
   const hasCheapest = query.includes("cheapest") || query.includes("cheap");
   const queryWords = query.split(/\s+/).filter((w) => w.length > 2);
 
+  // **NEW: Extract specific model numbers from query**
   const modelNumberMatch = query.match(
     /\b(iphone|galaxy|pixel|macbook)\s*(\d+)(\s*pro)?(\s*max)?(\s*plus)?(\s*ultra)?/i
   );
@@ -635,19 +569,24 @@ function filterAndRankProducts(
     const title = (product.title || "").toLowerCase();
     const categoryField = (product.category || "").toLowerCase();
 
+    // **NEW: Massive boost for exact model match**
     if (requestedModel) {
+      // Extract model from product title
       const productModelMatch = title.match(
         /\b(iphone|galaxy|pixel|macbook)\s*(\d+)(\s*pro)?(\s*max)?(\s*plus)?(\s*ultra)?/i
       );
       if (productModelMatch) {
         const productModel = productModelMatch[0].toLowerCase();
+
+        // Exact match gets huge boost
         if (productModel === requestedModel) {
-          score += 500;
+          score += 500; // Very high score for exact match
         } else {
+          // Penalize different model numbers
           const requestedNum = requestedModel.match(/\d+/)?.[0];
           const productNum = productModel.match(/\d+/)?.[0];
           if (requestedNum !== productNum) {
-            score -= 300;
+            score -= 300; // Heavy penalty for wrong model number
           }
         }
       }
@@ -664,15 +603,6 @@ function filterAndRankProducts(
 
     queryWords.forEach((word) => {
       if (title.includes(word)) score += 50;
-      // Regex check (CRASH PROOF VERSION)
-      try {
-        const safeWord = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        if (new RegExp(`\\b${safeWord}\\b`, "i").test(title)) {
-          score += 25;
-        }
-      } catch (e) {
-        // Ignore regex errors
-      }
       if (new RegExp(`\\b${word}\\b`).test(title)) score += 25;
     });
 
@@ -688,6 +618,7 @@ function filterAndRankProducts(
       if (hasAppleBrand && !hasAndroidBrand) score -= 60;
     }
 
+    // **MODIFIED: Only boost year if no specific model requested**
     if (!requestedModel && (title.includes("2024") || title.includes("2025"))) {
       score += 20;
     }
@@ -701,6 +632,8 @@ function filterAndRankProducts(
   });
 
   scoredProducts.sort((a, b) => b.score - a.score);
+
+  // Rest of the function remains the same...
 
   let selectedProducts = [];
   if (storeName) {
@@ -740,231 +673,236 @@ function filterAndRankProducts(
 
 // -------------------- MAIN CHAT ROUTE --------------------
 app.post("/chat", async (req, res) => {
-  let { query: message, sessionId } = req.body;
+  const { query: message, history = [] } = req.body;
 
   if (!message) return res.status(400).json({ error: "Message is required." });
 
-  // Generate Session ID if missing (Critical for Memory)
-  if (!sessionId) {
-    sessionId = uuidv4();
-    console.log(`[New Session] Created: ${sessionId}`);
-  }
+  const userMessageObject = { role: "user", content: message };
+  // We will add the assistant response to history at the end
 
   try {
-    // 1. Fetch History from Redis
-    const history = await getMemory(sessionId);
-
-    // 2. Query Rewriting (Contextualization)
+    // 1. CONTEXTUALIZE
     const standaloneQuery = await generateStandaloneQuery(message, history);
 
-    // 3. Analysis
     const detectedCategory = detectProductCategory(standaloneQuery);
     const intent = await classifyIntent(standaloneQuery);
     const priceRange = extractPriceRange(standaloneQuery);
     const storeName = extractStoreName(standaloneQuery);
 
     console.log(
-      `[Chat] Session: ${sessionId} | Intent: ${intent}, Category: ${detectedCategory}, Store: ${storeName}`
+      `[Chat] Intent: ${intent}, Category: ${detectedCategory}, Store: ${storeName}`
     );
 
-    let finalResponsePayload = {};
-
-    // --- BRANCH 1: LOW INTENT / WEB SEARCH ---
+    // --- LOW INTENT / WEB SEARCH HANDLING ---
     if (intent === "LOW") {
+      // 1. Check if it is a Greeting or a Trend/Knowledge Query
       const isGreeting = /^(hi|hy|hello|hey|greetings|morning|afternoon)/i.test(
         message.trim()
       );
 
       if (!isGreeting) {
+        // --- WEB SEARCH PIPELINE ---
         console.log(
           `[Low Intent] Detected knowledge query. Triggering Web Search...`
         );
-        // MODIFIED: Uses Semantic Vector Cache
-        const serperData = await searchWeb(standaloneQuery);
-        const webSummary = await synthesizeTrendReport(
-          serperData,
-          standaloneQuery
-        );
 
-        finalResponsePayload = {
+        // A. Call Serper API
+        const serperData = await searchWeb(message);
+
+        // B. Summarize with LLM
+        const webSummary = await synthesizeTrendReport(serperData, message);
+
+        // C. Return Response to Frontend (No Product Cards)
+        return res.json({
           reply: webSummary,
           products: [],
           intent: "WEB_SEARCH",
           category: detectedCategory,
-        };
-      } else {
-        const lowIntentSystem = `
+          history: [
+            ...history,
+            userMessageObject,
+            { role: "assistant", content: webSummary },
+          ],
+        });
+      }
+
+      // --- EXISTING GREETING LOGIC ---
+      const lowIntentSystem = `
         You are Omnia AI, a friendly shopping assistant for Kuwait electronics.
+        The user is just exploring.
         Reply in a warm, human tone (2–3 short sentences).
         Ask 1–2 smart follow-up questions about category, budget, or brand.
-        Return JSON: { "message": "Your text here", "intent_level": "LOW", "products": [] }
+        Return your response in JSON format: { "message": "Your text here", "intent_level": "LOW", "products": [] }
       `;
 
-        const lowResponse = await openai.chat.completions.create({
-          model: LLM_MODEL,
-          messages: [
-            { role: "system", content: lowIntentSystem },
-            ...history.map((m) => ({ role: m.role, content: m.content })),
-            { role: "user", content: standaloneQuery },
-          ],
-          temperature: 0.7,
-          response_format: { type: "json_object" },
-        });
+      const lowResponse = await openai.chat.completions.create({
+        model: LLM_MODEL,
+        messages: [
+          { role: "system", content: lowIntentSystem },
+          ...history,
+          userMessageObject,
+        ],
+        temperature: 0.7,
+        response_format: { type: "json_object" },
+      });
 
-        const content = JSON.parse(
-          lowResponse.choices[0].message.content || "{}"
-        );
-        finalResponsePayload = {
-          reply: content.message || "How can I help you today?",
-          products: [],
-          intent: "LOW",
-          category: detectedCategory,
-        };
-      }
-    }
-    // --- BRANCH 2: MEDIUM / HIGH INTENT ---
-    else {
-      let searchQuery = standaloneQuery;
-      const modelMatch = message.match(
-        /\b(iphone|galaxy|pixel)\s*(\d+)(\s*pro)?(\s*max)?/i
+      const content = JSON.parse(
+        lowResponse.choices[0].message.content || "{}"
       );
-      if (modelMatch) {
-        searchQuery = `${modelMatch[0]} ${message}`;
-      }
 
-      const { vectorLiteral } = await getQueryEmbedding(searchQuery);
-      const dbProducts = await executeEmbeddingSearch(vectorLiteral, 80);
-      const productCount = intent === "MEDIUM" ? 10 : 15;
+      return res.json({
+        reply: content.message || "How can I help you today?",
+        products: [],
+        intent: "LOW",
+        category: detectedCategory,
+        history: [
+          ...history,
+          userMessageObject,
+          { role: "assistant", content: content.message },
+        ],
+      });
+    }
 
-      if (!dbProducts || dbProducts.length === 0) {
-        finalResponsePayload = {
-          reply:
-            "I couldn't find any products matching that description. Could you try adjusting your search?",
-          products: [],
-          intent,
-        };
-      } else {
-        let filteredProducts = filterAndRankProducts(
-          dbProducts,
-          searchQuery,
-          productCount,
-          detectedCategory,
-          priceRange,
-          storeName
-        );
+    // In /chat route, before calling getQueryEmbedding
+    let searchQuery = message;
 
-        if (modelMatch) {
-          const exactMatches = filteredProducts.filter((p) => {
-            const title = (p.title || "").toLowerCase();
-            return title.includes(modelMatch[0].toLowerCase());
-          });
-          if (exactMatches.length > 0) {
-            filteredProducts = exactMatches.slice(0, productCount);
-          }
-        }
+    // If specific model detected, emphasize it
+    const modelMatch = message.match(
+      /\b(iphone|galaxy|pixel)\s*(\d+)(\s*pro)?(\s*max)?/i
+    );
+    if (modelMatch) {
+      searchQuery = `${modelMatch[0]} ${message}`;
+    }
 
-        const categoryName = detectedCategory
-          ? detectedCategory.replace("_", " ")
-          : "products";
+    // --- MEDIUM / HIGH INTENT: RAG + JSON STRUCTURE ---
+    const { vectorLiteral } = await getQueryEmbedding(message);
+    const dbProducts = await executeEmbeddingSearch(vectorLiteral, 80);
 
-        const finalSystemPrompt = `
-          You are Omnia AI, a smart shopping assistant for Kuwait (electronics only).
-    
-          **USER QUERY**: "${searchQuery}"
-          **PRODUCTS**: ${
-            filteredProducts.length
-          } pre-filtered ${categoryName} (All In Stock)
-    
-          **CRITICAL DATA INTEGRITY RULES**:
-          1. You must **ONLY** return products listed in the 'Input Data' section below.
-          2. **Do NOT invent**, hallucinate, or 'fill in' products that are not in the input list.
-          3. If the input list contains 5 items, your output must contain 5 items. Do not add more.
-          4. Ensure 'image_url' and 'product_url' are copied **exactly** from the input data. Do not generate fake URLs.
-    
-          **CONTENT GENERATION**:
-          For each product:
-          - "product_description": Write a detailed 2-3 line paragraph highlighting the technical specifications.
-          - Use the provided 'db_description' as your primary source.
-          
-          Output JSON Structure:
-          {
-            "message": "Friendly intro matching user intent",
-            "intent_level": "${intent}",
-            "products": [ 
-              { 
-                "product_name": "title", 
-                "store_name": "store", 
-                "price_kwd": number, 
-                "product_url": "url", 
-                "image_url": "url", 
-                "product_description": "Detailed specs..." 
-              } 
-            ]
-          }
-    
-          Input Data: ${JSON.stringify(
-            filteredProducts.map((p) => ({
-              title: p.title,
-              price: p.price,
-              storeName: p.storeName,
-              productUrl: p.productUrl,
-              imageUrl: p.imageUrl,
-              db_description: p.description || "",
-            }))
-          )}
-        `;
+    const productCount = intent === "MEDIUM" ? 10 : 15;
 
-        const finalResponse = await openai.chat.completions.create({
-          model: LLM_MODEL,
-          messages: [{ role: "system", content: finalSystemPrompt }],
-          temperature: 0.5,
-          response_format: { type: "json_object" },
-        });
+    if (!dbProducts || dbProducts.length === 0) {
+      return res.json({
+        reply:
+          "I couldn't find any products matching that description. Could you try adjusting your search?",
+        products: [],
+        intent,
+        history: [...history, userMessageObject],
+      });
+    }
 
-        const finalContent = finalResponse.choices[0].message.content || "{}";
-        let parsedData;
+    const filteredProducts = filterAndRankProducts(
+      dbProducts,
+      message,
+      productCount,
+      detectedCategory,
+      priceRange,
+      storeName
+    );
+    // Add this right after filterAndRankProducts call
+    if (modelMatch) {
+      const exactMatches = filteredProducts.filter((p) => {
+        const title = (p.title || "").toLowerCase();
+        return title.includes(modelMatch[0].toLowerCase());
+      });
 
-        try {
-          parsedData = JSON.parse(finalContent);
-        } catch (e) {
-          console.error("JSON Parsing failed", e);
-          parsedData = {
-            message: "Here are the best matches I found.",
-            intent_level: intent,
-            products: filteredProducts.map((p) => ({
-              product_name: p.title,
-              store_name: p.storeName,
-              price_kwd: p.price,
-              product_url: p.productUrl,
-              image_url: p.imageUrl,
-              product_description: p.title,
-            })),
-          };
-        }
-
-        finalResponsePayload = {
-          reply: parsedData.message,
-          products: parsedData.products,
-          intent,
-          category: detectedCategory,
-          priceRange,
-          storeName,
-        };
+      if (exactMatches.length > 0) {
+        // Return only exact matches if found
+        filteredProducts = exactMatches.slice(0, productCount);
       }
     }
 
-    // 4. Save to Redis
-    await saveToMemory(sessionId, "user", message);
-    await saveToMemory(sessionId, "assistant", finalResponsePayload.reply);
+    const categoryName = detectedCategory
+      ? detectedCategory.replace("_", " ")
+      : "products";
 
-    // 5. Respond (Include sessionId)
+    // --- SYSTEM PROMPT: ENFORCING JSON & NO HALLUCINATION ---
+    const finalSystemPrompt = `
+      You are Omnia AI, a smart shopping assistant for Kuwait (electronics only).
+
+      **USER QUERY**: "${message}"
+      **PRODUCTS**: ${
+        filteredProducts.length
+      } pre-filtered ${categoryName} (All In Stock)
+
+      **CRITICAL DATA INTEGRITY RULES**:
+      1. You must **ONLY** return products listed in the 'Input Data' section below.
+      2. **Do NOT invent**, hallucinate, or 'fill in' products that are not in the input list.
+      3. If the input list contains 5 items, your output must contain 5 items. Do not add more.
+      4. Ensure 'image_url' and 'product_url' are copied **exactly** from the input data. Do not generate fake URLs.
+
+      **CONTENT GENERATION**:
+      For each product:
+      - "product_description": Write a detailed 2-3 line paragraph highlighting the technical specifications (Processor, RAM, Storage, Screen, Battery, etc.). 
+      - Use the provided 'db_description' as your primary source. If 'db_description' is empty, use your internal knowledge of the specific product model to generate accurate specifications.
+      
+      Output JSON Structure:
+      {
+        "message": "Friendly intro",
+        "intent_level": "${intent}",
+        "products": [ 
+          { 
+            "product_name": "title", 
+            "store_name": "store", 
+            "price_kwd": number, 
+            "product_url": "url", 
+            "image_url": "url", 
+            "product_description": "Detailed 2-3 line specs paragraph..." 
+          } 
+        ]
+      }
+
+      Input Data: ${JSON.stringify(
+        filteredProducts.map((p) => ({
+          title: p.title,
+          price: p.price,
+          storeName: p.storeName,
+          productUrl: p.productUrl,
+          imageUrl: p.imageUrl,
+          db_description: p.description || "", // Passes DB description to LLM
+        }))
+      )}
+    `;
+
+    const finalResponse = await openai.chat.completions.create({
+      model: LLM_MODEL,
+      messages: [{ role: "system", content: finalSystemPrompt }], // No history needed for strict product listing usually, but can be added if context matters
+      temperature: 0.5,
+      response_format: { type: "json_object" }, // Forces JSON output
+    });
+
+    const finalContent = finalResponse.choices[0].message.content || "{}";
+    let parsedData;
+
+    try {
+      parsedData = JSON.parse(finalContent);
+    } catch (e) {
+      console.error("JSON Parsing failed", e);
+      // Fallback in case of malformed JSON
+      parsedData = {
+        message: "Here are the best matches I found.",
+        intent_level: intent,
+        products: filteredProducts.map((p) => ({
+          product_name: p.title,
+          store_name: p.storeName,
+          price_kwd: p.price,
+          product_url: p.productUrl,
+          image_url: p.imageUrl,
+          product_description: p.title,
+        })),
+      };
+    }
+
     return res.json({
-      ...finalResponsePayload,
-      sessionId,
+      reply: parsedData.message,
+      products: parsedData.products,
+      intent,
+      category: detectedCategory,
+      priceRange,
+      storeName,
       history: [
-        ...history.map((m) => ({ role: m.role, content: m.content })),
-        { role: "user", content: message },
-        { role: "assistant", content: finalResponsePayload.reply },
+        ...history,
+        userMessageObject,
+        { role: "assistant", content: parsedData.message },
       ],
     });
   } catch (error) {
