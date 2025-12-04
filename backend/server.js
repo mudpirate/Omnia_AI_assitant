@@ -217,7 +217,15 @@ const PRODUCT_CATEGORIES = {
   },
 };
 
-const STORE_NAMES = ["xcite", "best.kw", "best", "noon.kw", "noon", "jarir"];
+const STORE_NAMES = [
+  "xcite",
+  "best.kw",
+  "best",
+  "noon.kw",
+  "noon",
+  "jarir",
+  "eureka",
+];
 
 const APPLE_TERMS = [
   "iphone",
@@ -247,7 +255,7 @@ const ANDROID_TERMS = [
 
 // -------------------- LOGIC HELPERS --------------------
 
-// 1. MEMORY: Query Rewriter (Fixed to remove Markdown)
+// 1. MEMORY: Query Rewriter
 async function generateStandaloneQuery(userMessage, history) {
   if (!history || history.length === 0) return userMessage;
 
@@ -260,7 +268,6 @@ async function generateStandaloneQuery(userMessage, history) {
   const systemPrompt = `
     You are a Query Refiner.
     Your job is to decide if the "Latest User Message" is a FOLLOW-UP or a NEW TOPIC.
-
 
     1. **IF FOLLOW-UP:** Merge it with the history.
     2. **IF NEW TOPIC:** Ignore history and use the user message.
@@ -285,8 +292,7 @@ async function generateStandaloneQuery(userMessage, history) {
 
     let rewritten = response.choices[0].message.content.trim();
 
-    // --- FIX: SANITIZE THE OUTPUT ---
-    // Remove "**", "__", and surrounding quotes
+    // Sanitize Output
     rewritten = rewritten
       .replace(/\*\*/g, "")
       .replace(/__/g, "")
@@ -321,8 +327,6 @@ async function searchWeb(query) {
     const { vectorLiteral } = await getQueryEmbedding(query);
 
     // B. Check Vector Cache (Prisma/Postgres)
-    // We look for a similar query stored with >92% similarity
-    // This allows "price of iphone 15" to match "iphone 15 price"
     const closestMatch = await prisma.$queryRawUnsafe(`
       SELECT response, 1 - (embedding <=> '${vectorLiteral}'::vector) as similarity
       FROM "WebSearchCache"
@@ -330,7 +334,6 @@ async function searchWeb(query) {
       LIMIT 1;
     `);
 
-    // 2. Log the score so you can see it in your terminal
     if (closestMatch.length > 0) {
       console.log(
         `[Cache Inspection] Closest match similarity: ${closestMatch[0].similarity.toFixed(
@@ -339,8 +342,7 @@ async function searchWeb(query) {
       );
     }
 
-    // 3. Apply your threshold logic
-    const SIMILARITY_THRESHOLD = 0.73; // <--- Your new setting
+    const SIMILARITY_THRESHOLD = 0.72;
 
     if (
       closestMatch.length > 0 &&
@@ -349,6 +351,7 @@ async function searchWeb(query) {
       console.log(`[Web Search] ⚡ VECTOR CACHE HIT`);
       return closestMatch[0].response;
     }
+
     // C. Cache Miss -> Call Serper API
     console.log(`[Web Search] 🌐 CACHE MISS. Calling Serper.dev...`);
 
@@ -370,16 +373,14 @@ async function searchWeb(query) {
     const data = await response.json();
 
     // D. Save to Vector Cache (if valid data)
-    // D. Save to Vector Cache (if valid data)
     if (data && data.organic && data.organic.length > 0) {
-      // We use $executeRaw because Prisma doesn't support vector writes natively yet
       await prisma.$executeRawUnsafe(
         `
       INSERT INTO "WebSearchCache" (id, query, response, "embedding", "createdAt")
       VALUES (
         gen_random_uuid(), 
         $1, 
-        $2::jsonb,  -- <--- FIXED: Cast the text input to JSONB
+        $2::jsonb, 
         '${vectorLiteral}'::vector, 
         NOW()
       )
@@ -394,7 +395,6 @@ async function searchWeb(query) {
     return data;
   } catch (error) {
     console.error("[Web Search] Error:", error);
-    // Fallback to non-cached call if DB fails
     return null;
   }
 }
@@ -428,14 +428,16 @@ async function synthesizeTrendReport(serperResponse, userQuery) {
         Your Job:
         1. Synthesize these snippets into a friendly, helpful paragraph answering the user.
         2. Mention specific product names found in the snippets if relevant.
-        3. Do NOT output JSON. Output plain text.`,
+        3. Do NOT output JSON. Output plain text.
+        4. **NO MARKDOWN:** Do NOT use bold (**), italics, or quotes. Output clean plain text only.
+        5. Ask a follow up questions like buying , any other product you want to talk about.`,
       },
       {
         role: "user",
         content: `USER QUESTION: "${userQuery}"\n\nSEARCH RESULTS:\n${context}`,
       },
     ],
-    max_completion_tokens: 80,
+    max_completion_tokens: 150,
     temperature: 1,
   });
 
@@ -450,9 +452,9 @@ function extractStoreName(userMessage) {
   if (msg.includes("noon")) return "noon.kw";
   if (msg.includes("xcite")) return "xcite";
   if (msg.includes("jarir")) return "jarir";
+  if (msg.includes("eureka")) return "eureka";
 
-  // 2. Handle "Best" carefully (The Fix)
-  // Only return "best.kw" if the user explicitly types the domain or "best store"
+  // 2. Handle "Best" carefully
   if (msg.includes("best.kw") || msg.includes("best al-yousifi"))
     return "best.kw";
 
@@ -461,6 +463,7 @@ function extractStoreName(userMessage) {
   if (fromMatch) {
     const store = fromMatch[1];
     if (store === "noon") return "noon.kw";
+    if (store === "eureka") return "eureka";
     if (store === "xcite") return "xcite";
     if (store === "jarir") return "jarir";
     // Only accept "best" if it follows the word "from"
@@ -690,24 +693,33 @@ function filterAndRankProducts(
   const isAppleQuery = APPLE_TERMS.some((t) => query.includes(t));
   const isAndroidQuery = ANDROID_TERMS.some((t) => query.includes(t));
 
+  // --- STEP 1: HARD FILTERING ---
   let filteredProducts = products.filter((product) => {
     const title = (product.title || "").toLowerCase();
     if (!product.title || product.price == null) return false;
+
+    // Stock Check
     if (
       product.stock &&
       /out[_\s-]*of[_\s-]*stock/i.test(String(product.stock))
     )
       return false;
+
+    // Price Check
     if (
       priceRange &&
       (product.price < priceRange.min || product.price > priceRange.max)
     )
       return false;
+
+    // Store Check
     if (
       storeName &&
       !(product.storeName || "").toLowerCase().includes(storeName.toLowerCase())
     )
       return false;
+
+    // Category Exclusion
     if (categoryConfig) {
       const isAccessory = categoryConfig.exclude.some((term) =>
         title.includes(term.toLowerCase())
@@ -717,25 +729,24 @@ function filterAndRankProducts(
     return true;
   });
 
+  // --- STEP 2: SCORING ---
   const scoredProducts = filteredProducts.map((product) => {
     let score = 0;
     const title = (product.title || "").toLowerCase();
     const categoryField = (product.category || "").toLowerCase();
 
+    // Scoring Logic
     if (requestedModel) {
       const productModelMatch = title.match(
         /\b(iphone|galaxy|pixel|macbook)\s*(\d+)(\s*pro)?(\s*max)?(\s*plus)?(\s*ultra)?/i
       );
       if (productModelMatch) {
         const productModel = productModelMatch[0].toLowerCase();
-        if (productModel === requestedModel) {
-          score += 500;
-        } else {
+        if (productModel === requestedModel) score += 500;
+        else {
           const requestedNum = requestedModel.match(/\d+/)?.[0];
           const productNum = productModel.match(/\d+/)?.[0];
-          if (requestedNum !== productNum) {
-            score -= 300;
-          }
+          if (requestedNum !== productNum) score -= 300;
         }
       }
     }
@@ -751,57 +762,49 @@ function filterAndRankProducts(
 
     queryWords.forEach((word) => {
       if (title.includes(word)) score += 50;
-      // Regex check (CRASH PROOF VERSION)
-      try {
-        const safeWord = word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        if (new RegExp(`\\b${safeWord}\\b`, "i").test(title)) {
-          score += 25;
-        }
-      } catch (e) {
-        // Ignore regex errors
-      }
-      if (new RegExp(`\\b${word}\\b`).test(title)) score += 25;
     });
 
-    const hasAppleBrand = APPLE_TERMS.some((t) => title.includes(t));
-    const hasAndroidBrand = ANDROID_TERMS.some((t) => title.includes(t));
+    if (isAppleQuery && APPLE_TERMS.some((t) => title.includes(t))) score += 80;
+    if (isAndroidQuery && ANDROID_TERMS.some((t) => title.includes(t)))
+      score += 80;
 
-    if (isAppleQuery) {
-      if (hasAppleBrand) score += 80;
-      if (hasAndroidBrand && !hasAppleBrand) score -= 60;
-    }
-    if (isAndroidQuery) {
-      if (hasAndroidBrand) score += 80;
-      if (hasAppleBrand && !hasAndroidBrand) score -= 60;
-    }
-
-    if (!requestedModel && (title.includes("2024") || title.includes("2025"))) {
+    if (!requestedModel && (title.includes("2024") || title.includes("2025")))
       score += 20;
-    }
 
-    if (hasCheapest) {
-      score += 10000 / (product.price + 1);
-    } else {
-      score += Math.log(product.price + 1) * 8;
-    }
+    if (hasCheapest) score += 10000 / (product.price + 1);
+    else score += Math.log(product.price + 1) * 8;
+
     return { ...product, score };
   });
 
   scoredProducts.sort((a, b) => b.score - a.score);
 
+  // --- STEP 3: BALANCED SELECTION ---
   let selectedProducts = [];
   if (storeName) {
     selectedProducts = scoredProducts.slice(0, productCount);
   } else {
-    const storeCount = { xcite: 0, jarir: 0, "best.kw": 0, "noon.kw": 0 };
-    const maxPerStore = Math.ceil(productCount / 4);
+    // UPDATED: Include ALL 5 stores to ensure balanced results
+    const storeCount = {
+      xcite: 0,
+      "best.kw": 0,
+      eureka: 0,
+      jarir: 0,
+      "noon.kw": 0,
+    };
+
+    // Divide limit by 5 stores
+    const maxPerStore = Math.ceil(productCount / 5);
+
     for (const product of scoredProducts) {
       const pStore = product.storeName ? product.storeName.toLowerCase() : "";
       let storeKey = null;
+
       if (pStore.includes("xcite")) storeKey = "xcite";
       else if (pStore.includes("jarir")) storeKey = "jarir";
       else if (pStore.includes("best")) storeKey = "best.kw";
       else if (pStore.includes("noon")) storeKey = "noon.kw";
+      else if (pStore.includes("eureka")) storeKey = "eureka";
 
       if (
         storeKey &&
@@ -812,6 +815,8 @@ function filterAndRankProducts(
         storeCount[storeKey]++;
       }
     }
+
+    // Fill remaining slots
     for (const product of scoredProducts) {
       if (
         !selectedProducts.includes(product) &&
@@ -831,7 +836,6 @@ app.post("/chat", async (req, res) => {
 
   if (!message) return res.status(400).json({ error: "Message is required." });
 
-  // Generate Session ID if missing (Critical for Memory)
   if (!sessionId) {
     sessionId = uuidv4();
     console.log(`[New Session] Created: ${sessionId}`);
@@ -866,7 +870,6 @@ app.post("/chat", async (req, res) => {
         console.log(
           `[Low Intent] Detected knowledge query. Triggering Web Search...`
         );
-        // MODIFIED: Uses Semantic Vector Cache
         const serperData = await searchWeb(standaloneQuery);
         const webSummary = await synthesizeTrendReport(
           serperData,
@@ -883,6 +886,7 @@ app.post("/chat", async (req, res) => {
         const lowIntentSystem = `
         You are Omnia AI, a friendly shopping assistant for Kuwait electronics.
         Reply in a warm, human tone (2–3 short sentences).
+        Do NOT use markdown (NO **bold**, NO *italics*).
         Ask 1–2 smart follow-up questions about category, budget, or brand.
         Return JSON: { "message": "Your text here", "intent_level": "LOW", "products": [] }
       `;
@@ -920,8 +924,14 @@ app.post("/chat", async (req, res) => {
       }
 
       const { vectorLiteral } = await getQueryEmbedding(searchQuery);
-      const dbProducts = await executeEmbeddingSearch(vectorLiteral, 80);
-      const productCount = intent === "MEDIUM" ? 10 : 15;
+
+      // Fetch 60 candidates to ensure we have enough to fill the request
+      const dbProducts = await executeEmbeddingSearch(vectorLiteral, 90);
+
+      // CONFIG: Product Counts
+      // Medium Intent = 6 Products
+      // High Intent = 12 Products
+      const productCount = intent === "MEDIUM" ? 5 : 9;
 
       if (!dbProducts || dbProducts.length === 0) {
         finalResponsePayload = {
@@ -965,12 +975,12 @@ app.post("/chat", async (req, res) => {
           **CRITICAL DATA INTEGRITY RULES**:
           1. You must **ONLY** return products listed in the 'Input Data' section below.
           2. **Do NOT invent**, hallucinate, or 'fill in' products that are not in the input list.
-          3. If the input list contains 5 items, your output must contain 5 items. Do not add more.
-          4. Ensure 'image_url' and 'product_url' are copied **exactly** from the input data. Do not generate fake URLs.
+          3. Ensure 'image_url' and 'product_url' are copied **exactly** from the input data. Do not generate fake URLs.
+          4. **OUTPUT ALL PRODUCTS**: You must output every single product provided in the input data. Do not summarize or skip items.
     
           **CONTENT GENERATION**:
           For each product:
-          - "product_description": Write a detailed 2-3 line paragraph highlighting the technical specifications.
+          - "product_description": Write a detailed 2 line paragraph highlighting the technical specifications.
           - Use the provided 'db_description' as your primary source.
           
           Output JSON Structure:

@@ -19,8 +19,7 @@ enum StoreName {
   XCITE
   BEST_KW
   NOON_KW
-  JARIR
-  BLINK
+  EUREKA
 }
 
 enum Category {

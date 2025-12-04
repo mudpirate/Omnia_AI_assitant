@@ -16,7 +16,7 @@ import {
 } from "react-icons/fi";
 import { BsStars, BsHandbag } from "react-icons/bs";
 
-// --- CSS for Animations (Updated for Light Mode Content) ---
+// --- CSS for Animations ---
 const styles = `
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(20px); }
@@ -34,7 +34,7 @@ const styles = `
   }
 `;
 
-// --- Loader Component (Dark dots for white background) ---
+// --- Loader Component ---
 const Loader = () => (
   <div className="flex items-center space-x-1.5 p-1">
     <div className="w-1.5 h-1.5 rounded-full bg-zinc-600 animate-bounce [animation-delay:-0.3s]" />
@@ -43,7 +43,7 @@ const Loader = () => (
   </div>
 );
 
-// --- Product Card Component (Light Mode) ---
+// --- Product Card Component ---
 const ProductCard = ({ product }) => {
   const formatPrice = (price) => {
     const num = parseFloat(price);
@@ -52,7 +52,6 @@ const ProductCard = ({ product }) => {
 
   return (
     <div className="group relative flex flex-col sm:flex-row gap-4 p-4 bg-white border border-zinc-200 rounded-2xl hover:shadow-lg transition-all duration-300">
-      {/* Product Image */}
       <div className="shrink-0 w-full sm:w-32 h-32 bg-zinc-50 rounded-xl border border-zinc-100 overflow-hidden flex items-center justify-center relative">
         <img
           src={product.image_url}
@@ -65,8 +64,6 @@ const ProductCard = ({ product }) => {
           }}
         />
       </div>
-
-      {/* Product Details */}
       <div className="flex-1 flex flex-col justify-between">
         <div>
           <div className="flex justify-between items-start gap-3">
@@ -81,8 +78,6 @@ const ProductCard = ({ product }) => {
             {product.product_description}
           </p>
         </div>
-
-        {/* Price & Action */}
         <div className="mt-4 flex items-end justify-between border-t border-zinc-100 pt-3">
           <div>
             <div className="flex items-baseline gap-1">
@@ -92,7 +87,6 @@ const ProductCard = ({ product }) => {
               <span className="text-xs font-semibold text-zinc-500">KWD</span>
             </div>
           </div>
-
           <a
             href={product.product_url}
             target="_blank"
@@ -108,7 +102,7 @@ const ProductCard = ({ product }) => {
   );
 };
 
-// --- Message Component (Adapted for Light Background) ---
+// --- Message Component ---
 const Message = ({ message }) => {
   const isUser = message.sender === "user";
   const hasProducts = message.products && message.products.length > 0;
@@ -120,7 +114,6 @@ const Message = ({ message }) => {
       }`}
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6 flex gap-4 sm:gap-6">
-        {/* Avatar */}
         <div
           className={`shrink-0 w-9 h-9 rounded-full flex items-center justify-center border shadow-sm ${
             isUser
@@ -134,11 +127,8 @@ const Message = ({ message }) => {
             <BsStars className="w-4 h-4" />
           )}
         </div>
-
-        {/* Content Bubble */}
         <div className="flex-1 min-w-0 pt-1">
           <div className="text-[15px] leading-7 text-zinc-800 font-medium">
-            {/* If user, maybe wrap in a bubble, but standard AI UI often just lists text */}
             {isUser ? (
               <div className="bg-zinc-100 px-4 py-2 rounded-2xl rounded-tl-none inline-block text-zinc-900">
                 {message.text}
@@ -147,8 +137,6 @@ const Message = ({ message }) => {
               <p className="whitespace-pre-wrap">{message.text}</p>
             )}
           </div>
-
-          {/* Product Grid */}
           {hasProducts && (
             <div className="mt-6 space-y-4">
               <div className="flex items-center gap-2">
@@ -158,7 +146,6 @@ const Message = ({ message }) => {
                 </span>
                 <div className="h-px flex-1 bg-zinc-200"></div>
               </div>
-
               <div className="grid grid-cols-1 gap-3">
                 {message.products.map((product, idx) => (
                   <ProductCard key={idx} product={product} />
@@ -172,7 +159,7 @@ const Message = ({ message }) => {
   );
 };
 
-// --- Splash Screen (Light Mode) ---
+// --- Splash Screen Component (RESTORED) ---
 const Splash = () => (
   <div className="flex flex-col items-center justify-center h-full text-center px-6 animate-fade-in-up">
     <div className="relative mb-6">
@@ -202,38 +189,21 @@ const Splash = () => (
   </div>
 );
 
-// --- Sidebar Component (Black & Collapsible) ---
+// --- Sidebar ---
 const Sidebar = ({ isOpen, toggleSidebar, startNewChat }) => {
-  const menuItems = [
-    { icon: FiMessageSquare, label: "Mobile Shopping" },
-    { icon: FiMessageSquare, label: "Laptop Shopping" },
-    { icon: FiUser, label: "Headphone Shopping" },
-    { icon: FiHelpCircle, label: "Guides and FAQ" },
-  ];
-
-  const bottomItems = [
-    { icon: FiCpu, label: "Upgrade" },
-    { icon: FiSettings, label: "Settings" },
-    { icon: FiLogOut, label: "Logout" },
-  ];
-
   return (
     <div
       className={`${
         isOpen ? "w-72" : "w-20"
       } bg-black h-screen flex flex-col justify-between transition-all duration-300 ease-in-out border-r border-zinc-900 shrink-0 relative z-50`}
     >
-      {/* Toggle Button (Absolute to overlap border) */}
       <button
         onClick={toggleSidebar}
         className="absolute -right-3 top-8 w-6 h-6 bg-white border border-zinc-200 rounded-full flex items-center justify-center text-zinc-600 shadow-md hover:scale-110 transition-transform z-50 lg:hidden"
       >
         {isOpen ? <FiChevronLeft size={14} /> : <FiChevronRight size={14} />}
       </button>
-
-      {/* Top Section */}
       <div className="p-4 flex flex-col gap-6 overflow-hidden">
-        {/* User Profile Snippet */}
         <div
           className={`flex items-center gap-3 p-2 rounded-xl bg-zinc-900/50 border border-zinc-800 ${
             !isOpen && "justify-center"
@@ -255,10 +225,11 @@ const Sidebar = ({ isOpen, toggleSidebar, startNewChat }) => {
             </span>
           </div>
         </div>
-
-        {/* Menu Items */}
         <div className="flex flex-col gap-1">
-          {menuItems.map((item, idx) => (
+          {[
+            { icon: FiMessageSquare, label: "Mobile Shopping" },
+            { icon: FiHelpCircle, label: "Guides and FAQ" },
+          ].map((item, idx) => (
             <button
               key={idx}
               className={`flex items-center gap-3 p-3 rounded-lg text-zinc-400 hover:bg-zinc-900 hover:text-white transition-all group ${
@@ -279,31 +250,7 @@ const Sidebar = ({ isOpen, toggleSidebar, startNewChat }) => {
           ))}
         </div>
       </div>
-
-      {/* Bottom Section */}
       <div className="p-4 flex flex-col gap-2 bg-black border-t border-zinc-900">
-        {/* Bottom Links */}
-        {bottomItems.map((item, idx) => (
-          <button
-            key={idx}
-            className={`flex items-center gap-3 p-3 rounded-lg text-zinc-400 hover:text-white transition-all group ${
-              !isOpen && "justify-center"
-            }`}
-          >
-            <item.icon className="w-5 h-5 shrink-0" />
-            <span
-              className={`text-sm font-medium whitespace-nowrap transition-all duration-300 ${
-                isOpen
-                  ? "opacity-100 translate-x-0"
-                  : "opacity-0 -translate-x-4 w-0 overflow-hidden"
-              }`}
-            >
-              {item.label}
-            </span>
-          </button>
-        ))}
-
-        {/* New Chat Button */}
         <button
           onClick={startNewChat}
           className={`mt-2 flex items-center gap-2 bg-white hover:bg-indigo-700 text-black rounded-xl shadow-lg shadow-indigo-900/20 transition-all active:scale-95 ${
@@ -319,26 +266,17 @@ const Sidebar = ({ isOpen, toggleSidebar, startNewChat }) => {
             New Chat
           </span>
         </button>
-
-        {/* AI Assistant Label */}
-        {isOpen && (
-          <div className="flex items-center gap-2 mt-2 px-2">
-            <BsStars className="text-indigo-500" />
-            <span className="text-xs font-semibold text-zinc-500">
-              Omnia AI Assistant
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
 };
 
-// --- Main Application ---
+// --- Main App ---
 export default function ChatApp() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState("Searching..."); // New State for Status updates
   const [sessionId, setSessionId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -348,12 +286,9 @@ export default function ChatApp() {
   const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
   useEffect(() => {
-    // Inject styles
     const styleSheet = document.createElement("style");
     styleSheet.innerText = styles;
     document.head.appendChild(styleSheet);
-
-    // Initial welcome message
     setTimeout(() => {
       setMessages([
         {
@@ -364,15 +299,12 @@ export default function ChatApp() {
         },
       ]);
     }, 600);
-
-    // Responsive sidebar check
     const handleResize = () => {
       if (window.innerWidth < 1024) setSidebarOpen(false);
       else setSidebarOpen(true);
     };
     window.addEventListener("resize", handleResize);
-    handleResize(); // call once
-
+    handleResize();
     return () => {
       document.head.removeChild(styleSheet);
       window.removeEventListener("resize", handleResize);
@@ -381,17 +313,25 @@ export default function ChatApp() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, loadingText]);
 
+  // --- STREAMING HANDLER ---
   const handleSendMessage = async (e) => {
     e.preventDefault();
     const query = input.trim();
     if (!query || isLoading) return;
 
+    // 1. Add User Message
     const userMsg = { id: Date.now(), text: query, sender: "user" };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setIsLoading(true);
+    setLoadingText("Connecting...");
+
+    // 2. Prepare AI Message Placeholder
+    const aiMsgId = Date.now() + 1;
+    const aiPlaceholder = { id: aiMsgId, text: "", sender: "ai", products: [] };
+    setMessages((prev) => [...prev, aiPlaceholder]);
 
     try {
       const response = await fetch(`${API_BASE_URL}/chat`, {
@@ -401,32 +341,107 @@ export default function ChatApp() {
       });
 
       if (!response.ok) throw new Error("Server error");
-      const data = await response.json();
 
-      if (data.sessionId) setSessionId(data.sessionId);
+      // 3. Setup Stream Reader
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
 
-      const aiMsg = {
-        id: Date.now() + 1,
-        text: data.reply || data.message || "Here is what I found:",
-        sender: "ai",
-        products: data.products || [],
-      };
+      let buffer = "";
 
-      setMessages((prev) => [...prev, aiMsg]);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process buffer by splitting double newlines (SSE format)
+        const parts = buffer.split("\n\n");
+        buffer = parts.pop(); // Keep incomplete part in buffer
+
+        for (const part of parts) {
+          if (!part.trim()) continue;
+
+          const lines = part.split("\n");
+          let eventType = null;
+          let eventData = null;
+
+          for (const line of lines) {
+            if (line.startsWith("event: ")) {
+              eventType = line.substring(7).trim();
+            } else if (line.startsWith("data: ")) {
+              try {
+                eventData = JSON.parse(line.substring(6));
+              } catch (e) {
+                // Should not happen if backend sends valid JSON
+                console.error("JSON parse error", e);
+              }
+            }
+          }
+
+          if (eventType && eventData !== null) {
+            handleStreamEvent(eventType, eventData, aiMsgId);
+          }
+        }
+      }
     } catch (error) {
       console.error(error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          text: "Connection error. Please check server status.",
-          sender: "ai",
-          products: [],
-        },
-      ]);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === aiMsgId
+            ? { ...msg, text: "Connection error. Please check server." }
+            : msg
+        )
+      );
     } finally {
       setIsLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  };
+
+  // --- EVENT DISPATCHER ---
+  const handleStreamEvent = (type, data, msgId) => {
+    switch (type) {
+      case "session":
+        setSessionId(data.sessionId);
+        break;
+
+      case "status":
+        setLoadingText(data); // Update loading text (e.g., "Searching...", "Thinking...")
+        break;
+
+      case "products":
+        // Immediate Product Render
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === msgId ? { ...msg, products: data } : msg
+          )
+        );
+        break;
+
+      case "token":
+        // Append Text Token
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === msgId ? { ...msg, text: msg.text + data } : msg
+          )
+        );
+        break;
+
+      case "done":
+        setIsLoading(false);
+        break;
+
+      case "error":
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === msgId ? { ...msg, text: "Something went wrong." } : msg
+          )
+        );
+        setIsLoading(false);
+        break;
+
+      default:
+        break;
     }
   };
 
@@ -447,16 +462,12 @@ export default function ChatApp() {
 
   return (
     <div className="flex h-screen bg-white font-sans text-zinc-900 overflow-hidden">
-      {/* Sidebar Section */}
       <Sidebar
         isOpen={sidebarOpen}
         toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         startNewChat={startNewChat}
       />
-
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full relative w-full">
-        {/* Mobile Header (Only visible when sidebar is closed on mobile) */}
         <header className="absolute top-0 w-full z-40 bg-white/80 backdrop-blur-md border-b border-zinc-100 lg:hidden">
           <div className="px-4 h-14 flex items-center justify-between">
             <button
@@ -466,11 +477,9 @@ export default function ChatApp() {
               <FiMenu size={20} />
             </button>
             <span className="font-bold text-zinc-900">Omnia AI</span>
-            <div className="w-6" /> {/* spacer */}
+            <div className="w-6" />
           </div>
         </header>
-
-        {/* Scrollable Chat Area */}
         <main className="flex-1 overflow-y-auto scroll-smooth bg-white">
           {showSplash ? (
             <div className="h-full flex flex-col justify-center pb-20">
@@ -481,7 +490,6 @@ export default function ChatApp() {
               {messages.map((msg) => (
                 <Message key={msg.id} message={msg} />
               ))}
-
               {isLoading && (
                 <div className="w-full py-6">
                   <div className="max-w-4xl mx-auto px-4 sm:px-6 flex gap-4">
@@ -490,7 +498,7 @@ export default function ChatApp() {
                     </div>
                     <div className="flex items-center gap-3 px-4 py-2 bg-zinc-50 rounded-2xl rounded-tl-none">
                       <span className="text-sm font-medium text-zinc-500">
-                        Searching...
+                        {loadingText}
                       </span>
                       <Loader />
                     </div>
@@ -501,8 +509,6 @@ export default function ChatApp() {
             </div>
           )}
         </main>
-
-        {/* Input Area (Footer) */}
         <div className="absolute bottom-0 w-full p-4 lg:p-6 bg-gradient-to-t from-white via-white to-transparent z-10">
           <div className="max-w-3xl mx-auto">
             <form
