@@ -539,6 +539,9 @@ Given the user query, classify it into EXACTLY one of the following labels:
 The user is *browsing*, *exploring*, *comparing between two phones* or *asking vague/general questions*.
 
 Examples:
+- "best phones"
+- "best phones in 2025/24/23"
+- "best laptops/tablet/headphones in 2025/24/23"
 - "what's new?"
 - "trending phones"
 - "show me popular items"
@@ -555,17 +558,12 @@ Examples:
 🟠 MEDIUM INTENT
 ========================================
 The user has a *clear need* but not a specific product. Usually includes:
-- "Best", "Top rated", "Flagship" queries.
 - price ranges
 - categories
 - brands
 - features  
 
 Examples:
-- "Best phone 2024" (MEDIUM INTENT - DO NOT WEB SEARCH)
-- "Best android phone"
-- "Top laptops"
-- "Cheapest phones"
 - "laptops under 300 kwd"
 - "phones under 150"
 - "Samsung phones"
@@ -873,7 +871,7 @@ function filterAndRankProducts(
     }
   }
 
-  // Final re-sort of selected list to respect price ordering
+  // Final re-sort of selected list to respect price
   if (isBestQuery || isBudgetRange) {
     selectedProducts.sort((a, b) => b.price - a.price);
   } else if (isCheapestQuery) {
@@ -881,6 +879,95 @@ function filterAndRankProducts(
   }
 
   return selectedProducts;
+}
+
+// -------------------- LOW-INTENT KEYWORD → DB HELPERS (NEW) --------------------
+function buildSerperKeywordContext(serperResponse) {
+  if (!serperResponse || !serperResponse.organic) return "";
+  try {
+    return serperResponse.organic
+      .slice(0, 6)
+      .map((item, idx) => {
+        const title = item.title || "";
+        const snippet = item.snippet || "";
+        return `Result ${idx + 1}: ${title} - ${snippet}`;
+      })
+      .join("\n");
+  } catch (e) {
+    console.error("[Keyword Context Builder] Error:", e);
+    return "";
+  }
+}
+
+async function extractProductKeywordsFromWeb(
+  serperTextContext,
+  webSummary,
+  userQuery,
+  detectedCategory
+) {
+  const systemPrompt = `
+You are a keyword extractor for an electronics shopping assistant.
+
+Goal:
+Given the user query, a short web-summary paragraph and search result titles/snippets,
+identify up to 6 highly relevant product search keywords.
+
+Prefer:
+- Specific model names (e.g. iPhone 16 Pro Max, Galaxy S24 Ultra, Pixel 9 Pro)
+- Brand + series/family names (e.g. Samsung Galaxy A55, Redmi Note 13, Realme 12 Pro)
+- If concrete models are not clear, return the most relevant brands for that category.
+
+Rules:
+- Only include actual devices: phones, laptops, headphones, earphones, tablets, desktops.
+- Do NOT include accessories (case, cover, charger, cable, screen protector, etc.).
+- Do NOT include generic words like: best, trending, popular, review, specs, feature, price.
+- Each keyword should be 1–5 words long.
+- Return between 1 and 6 keywords. If nothing is clear, return an empty list.
+
+Output strict JSON only:
+{
+  "keywords": ["...", "..."]
+}
+No markdown, no comments, no extra keys.
+`;
+
+  const userContent = `
+USER_QUERY:
+${userQuery}
+
+CATEGORY_HINT:
+${detectedCategory || "unknown"}
+
+WEB_SUMMARY:
+${webSummary || ""}
+
+SEARCH_RESULTS_TEXT:
+${serperTextContext || ""}
+`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: LLM_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userContent },
+      ],
+      temperature: 0.2,
+      response_format: { type: "json_object" },
+    });
+
+    const raw = completion.choices[0].message.content || "{}";
+    const parsed = JSON.parse(raw);
+    const keywords = Array.isArray(parsed.keywords) ? parsed.keywords : [];
+
+    return keywords
+      .map((k) => String(k).trim())
+      .filter((k) => k.length > 0)
+      .slice(0, 6);
+  } catch (e) {
+    console.error("[Keyword Extractor] Error:", e);
+    return [];
+  }
 }
 
 // -------------------- MAIN CHAT ROUTE --------------------
@@ -931,6 +1018,80 @@ app.post("/chat", async (req, res) => {
           intent: "WEB_SEARCH",
           category: detectedCategory,
         };
+
+        // NEW FEATURE: Use web search to drive product recommendations from DB
+        try {
+          if (
+            serperData &&
+            serperData.organic &&
+            serperData.organic.length > 0
+          ) {
+            const serperTextContext = buildSerperKeywordContext(serperData);
+
+            const productKeywords = await extractProductKeywordsFromWeb(
+              serperTextContext,
+              webSummary,
+              standaloneQuery,
+              detectedCategory
+            );
+
+            console.log(
+              "[Low Intent] Extracted product keywords from web:",
+              productKeywords
+            );
+
+            if (productKeywords && productKeywords.length > 0) {
+              const keywordSearchQuery = productKeywords.join(" ");
+
+              const { vectorLiteral } = await getQueryEmbedding(
+                keywordSearchQuery
+              );
+
+              // Fetch from DB using embeddings
+              const dbProducts = await executeEmbeddingSearch(
+                vectorLiteral,
+                80
+              );
+
+              if (dbProducts && dbProducts.length > 0) {
+                // Reuse ranking logic with category / price / store hints if present
+                const suggestedProducts = filterAndRankProducts(
+                  dbProducts,
+                  keywordSearchQuery || standaloneQuery,
+                  6, // show up to 6 products for low-intent web search
+                  detectedCategory,
+                  priceRange,
+                  storeName
+                );
+
+                if (suggestedProducts && suggestedProducts.length > 0) {
+                  const lowIntentProductsPayload = suggestedProducts.map(
+                    (p) => ({
+                      product_name: p.title,
+                      store_name: p.storeName,
+                      price_kwd: p.price,
+                      product_url: p.productUrl,
+                      image_url: p.imageUrl,
+                      product_description: p.description || p.title,
+                    })
+                  );
+
+                  // Override payload to ALSO return products from DB
+                  finalResponsePayload = {
+                    reply: webSummary,
+                    products: lowIntentProductsPayload,
+                    intent: "WEB_SEARCH",
+                    category: detectedCategory,
+                    priceRange,
+                    storeName,
+                  };
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error("[Low Intent] Web→DB keyword product flow failed:", e);
+        }
       } else {
         const lowIntentSystem = `
         You are Omnia AI, a friendly shopping assistant for Kuwait electronics.
