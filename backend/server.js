@@ -342,7 +342,7 @@ async function searchWeb(query) {
       );
     }
 
-    const SIMILARITY_THRESHOLD = 0.72;
+    const SIMILARITY_THRESHOLD = 0.8;
 
     if (
       closestMatch.length > 0 &&
@@ -540,10 +540,11 @@ The user is *browsing*, *exploring*, *comparing between two phones* or *asking v
 
 Examples:
 - "best phones"
+-"best macbooks in 2024"
 - "best phones in 2025/24/23"
-- "best laptops/tablet/headphones in 2025/24/23"
+- "best laptops/tablet/headphones/macbooks in 2025/24/23/22"
 - "what's new?"
-- "trending phones"
+- "trending phones/laptops/tablet/headphones/macbooks in 2025/24/23/22"
 - "show me popular items"
 - "good camera phone"
 - "compare between two phones for example apple iphone 17 vs apple iphone 16 "
@@ -566,8 +567,6 @@ The user has a *clear need* but not a specific product. Usually includes:
 Examples:
 - "laptops under 300 kwd"
 - "phones under 150"
-- "Samsung phones"
-- "Apple laptops"
 - "gaming laptop with RTX"
 → KEY: direction is clear but no precise single product.
 
