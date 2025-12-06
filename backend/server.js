@@ -437,8 +437,8 @@ async function synthesizeTrendReport(serperResponse, userQuery) {
         content: `USER QUESTION: "${userQuery}"\n\nSEARCH RESULTS:\n${context}`,
       },
     ],
-    max_completion_tokens: 150,
-    temperature: 1,
+    max_completion_tokens: 200,
+    temperature: 0.7,
   });
 
   return completion.choices[0].message.content;
@@ -536,26 +536,18 @@ Given the user query, classify it into EXACTLY one of the following labels:
 ========================================
 🔵 LOW INTENT
 ========================================
-The user is *browsing*, *exploring*, or *asking vague/general questions*.
+The user is *browsing*, *exploring*, *comparing between two phones* or *asking vague/general questions*.
 
 Examples:
 - "what's new?"
 - "trending phones"
 - "show me popular items"
 - "good camera phone"
-- "best phone"
-- "best laptop"
-- "which phone should I buy?"
-- "compare phones" (NO models mentioned)
+- "compare between two phones for example apple iphone 17 vs apple iphone 16 "
 - "compare Samsung and Apple phones"
-- "gaming laptops?"
 - "is shipping free?"
 - "how are your returns?"
 - "do you deliver to Kuwait?"
-- "I need a new phone"
-- "recommend a phone"
-- "any good phones under budget?"
-- "does warranty cover screen damage?"
 - "store timings?"  
 → KEY: general, non-specific, window-shopping, policy questions.
 
@@ -563,25 +555,22 @@ Examples:
 🟠 MEDIUM INTENT
 ========================================
 The user has a *clear need* but not a specific product. Usually includes:
+- "Best", "Top rated", "Flagship" queries.
 - price ranges
 - categories
 - brands
 - features  
-BUT NOT a specific model.
 
 Examples:
+- "Best phone 2024" (MEDIUM INTENT - DO NOT WEB SEARCH)
+- "Best android phone"
+- "Top laptops"
+- "Cheapest phones"
 - "laptops under 300 kwd"
 - "phones under 150"
 - "Samsung phones"
 - "Apple laptops"
-- "smartwatches for fitness"
 - "gaming laptop with RTX"
-- "phones with best battery"
-- "budget iPads"
-- "Dell laptops i5 processor"
-- "tablet for kids"
-- "noise cancelling headphones"
-- "OLED TVs 55 inch"
 → KEY: direction is clear but no precise single product.
 
 ========================================
@@ -590,34 +579,21 @@ Examples:
 The user is *ready to buy* or refers to **specific models/specs**.
 
 Examples:
-- Specific models:
-    - "iPhone 15 Pro Max"
-    - "Galaxy S24 Ultra"
-    - "Redmi Note 13 Pro"
-    - "AirPods Pro 2"
-- Specific spec requests:
-    - "i7 16gb ram laptop"
-    - "rtx 4060 1tb laptop"
-    - "75 inch 4k qled tv"
-- Specific comparisons:
-    - "Pixel 8 vs Galaxy S23"
-    - "iPhone 14 or 15 which is better?"
-- Purchase intent:
-    - "buy iphone 15 pro"
-    - "order macbook m3"
-    - "add ps5 to cart"
-    - "where can I buy s24 ultra?"
+- "iPhone 15 Pro Max"
+- "Galaxy S24 Ultra"
+- "buy iphone 15 pro"
+- "order macbook m3"
+- "where can I buy s24 ultra?"
 
 → KEY: highly targeted, actionable, usually one or two exact products.
 
 ========================================
 RULES:
 - Output ONLY: LOW, MEDIUM, or HIGH
-- No explanations.
+- "Best [Product]" or "Cheapest [Product]" is ALWAYS MEDIUM or HIGH. Never LOW.
 - If query mentions a **specific model name** → ALWAYS HIGH
-- If ambiguous between MEDIUM and LOW → choose LOW
+- If ambiguous between MEDIUM and LOW → choose MEDIUM
 - If ambiguous between HIGH and MEDIUM → choose HIGH
-  (specific > broad)
 
 ========================================
 OUTPUT FORMAT:
@@ -667,7 +643,49 @@ async function executeEmbeddingSearch(vectorLiteral, maxResults) {
   }
 }
 
-// -------------------- FILTER + RANK --------------------
+// Extract multiple models from query
+function extractMultipleModels(userMessage) {
+  const msg = userMessage.toLowerCase();
+
+  // Pattern for different phone brands
+  const patterns = [
+    // iPhone pattern
+    /\biphone\s*(\d+)(\s*pro)?(\s*max)?(\s*plus)?/gi,
+    // Samsung Galaxy pattern (includes s-series)
+    /\b(?:samsung\s*)?galaxy\s*s(\d+)(\s*ultra)?(\s*plus)?/gi,
+    /\bs(\d+)(\s*ultra)?(\s*plus)?/gi,
+    // Google Pixel
+    /\bpixel\s*(\d+)(\s*pro)?(\s*xl)?/gi,
+    // MacBook
+    /\bmacbook\s*(air|pro)?(\s*m\d+)?/gi,
+  ];
+
+  let allMatches = [];
+
+  patterns.forEach((pattern) => {
+    const matches = msg.match(pattern);
+    if (matches) {
+      allMatches.push(...matches);
+    }
+  });
+
+  if (allMatches.length === 0) return null;
+
+  // Clean and normalize matches
+  const normalizedMatches = allMatches.map((m) => {
+    let normalized = m.toLowerCase().trim();
+    // Add "galaxy" prefix if it's just "s24 ultra" format
+    if (/^s\d+/.test(normalized) && !normalized.includes("galaxy")) {
+      normalized = "galaxy " + normalized;
+    }
+    return normalized;
+  });
+
+  // Return unique models
+  return [...new Set(normalizedMatches)];
+}
+
+// -------------------- FILTER + RANK (NEW LOGIC) --------------------
 function filterAndRankProducts(
   products,
   userQuery,
@@ -677,7 +695,14 @@ function filterAndRankProducts(
   storeName = null
 ) {
   const query = userQuery.toLowerCase();
-  const hasCheapest = query.includes("cheapest") || query.includes("cheap");
+
+  // --- NEW: Detect Sorting Intents ---
+  const isBestQuery = /best|top|premium|expensive|flagship|high end/i.test(
+    query
+  );
+  const isCheapestQuery = /cheapest|cheap|lowest price|budget/i.test(query);
+  const isBudgetRange = priceRange && priceRange.max !== Infinity;
+
   const queryWords = query.split(/\s+/).filter((w) => w.length > 2);
 
   const modelNumberMatch = query.match(
@@ -771,20 +796,43 @@ function filterAndRankProducts(
     if (!requestedModel && (title.includes("2024") || title.includes("2025")))
       score += 20;
 
-    if (hasCheapest) score += 10000 / (product.price + 1);
-    else score += Math.log(product.price + 1) * 8;
+    // Base score for relevance, specific sorting happens below
+    score += Math.log(product.price + 1) * 2;
 
     return { ...product, score };
   });
 
-  scoredProducts.sort((a, b) => b.score - a.score);
+  // --- STEP 3: SORTING (Implemented Rules) ---
+  scoredProducts.sort((a, b) => {
+    // Rule 1: Specific Model Match (Always Top Priority)
+    if (requestedModel) {
+      return b.score - a.score;
+    }
 
-  // --- STEP 3: BALANCED SELECTION ---
+    // Rule 2: "Best" / "Top" -> Descending Price (Higher specs/price)
+    if (isBestQuery) {
+      return b.price - a.price;
+    }
+
+    // Rule 3: Budget Range (e.g., "Under 400") -> Descending Price (399 down to 0)
+    if (isBudgetRange) {
+      return b.price - a.price;
+    }
+
+    // Rule 4: "Cheapest" -> Ascending Price
+    if (isCheapestQuery) {
+      return a.price - b.price;
+    }
+
+    // Default: Sort by Score (Relevance)
+    return b.score - a.score;
+  });
+
+  // --- STEP 4: BALANCED SELECTION ---
   let selectedProducts = [];
   if (storeName) {
     selectedProducts = scoredProducts.slice(0, productCount);
   } else {
-    // UPDATED: Include ALL 5 stores to ensure balanced results
     const storeCount = {
       xcite: 0,
       "best.kw": 0,
@@ -793,7 +841,6 @@ function filterAndRankProducts(
       "noon.kw": 0,
     };
 
-    // Divide limit by 5 stores
     const maxPerStore = Math.ceil(productCount / 5);
 
     for (const product of scoredProducts) {
@@ -816,7 +863,6 @@ function filterAndRankProducts(
       }
     }
 
-    // Fill remaining slots
     for (const product of scoredProducts) {
       if (
         !selectedProducts.includes(product) &&
@@ -825,6 +871,13 @@ function filterAndRankProducts(
         selectedProducts.push(product);
       }
     }
+  }
+
+  // Final re-sort of selected list to respect price ordering
+  if (isBestQuery || isBudgetRange) {
+    selectedProducts.sort((a, b) => b.price - a.price);
+  } else if (isCheapestQuery) {
+    selectedProducts.sort((a, b) => a.price - b.price);
   }
 
   return selectedProducts;
@@ -842,13 +895,9 @@ app.post("/chat", async (req, res) => {
   }
 
   try {
-    // 1. Fetch History from Redis
     const history = await getMemory(sessionId);
-
-    // 2. Query Rewriting (Contextualization)
     const standaloneQuery = await generateStandaloneQuery(message, history);
 
-    // 3. Analysis
     const detectedCategory = detectProductCategory(standaloneQuery);
     const intent = await classifyIntent(standaloneQuery);
     const priceRange = extractPriceRange(standaloneQuery);
@@ -916,22 +965,26 @@ app.post("/chat", async (req, res) => {
     // --- BRANCH 2: MEDIUM / HIGH INTENT ---
     else {
       let searchQuery = standaloneQuery;
+
+      const multipleModels = extractMultipleModels(message);
       const modelMatch = message.match(
-        /\b(iphone|galaxy|pixel)\s*(\d+)(\s*pro)?(\s*max)?/i
+        /\b(iphone|galaxy|pixel|macbook)\s*(\d+)(\s*pro)?(\s*max)?/i
       );
+
       if (modelMatch) {
         searchQuery = `${modelMatch[0]} ${message}`;
       }
 
       const { vectorLiteral } = await getQueryEmbedding(searchQuery);
 
-      // Fetch 60 candidates to ensure we have enough to fill the request
-      const dbProducts = await executeEmbeddingSearch(vectorLiteral, 90);
+      const fetchCount = multipleModels && multipleModels.length > 1 ? 110 : 90;
+      const dbProducts = await executeEmbeddingSearch(
+        vectorLiteral,
+        fetchCount
+      );
 
       // CONFIG: Product Counts
-      // Medium Intent = 6 Products
-      // High Intent = 12 Products
-      const productCount = intent === "MEDIUM" ? 5 : 9;
+      const productCount = intent === "MEDIUM" ? 6 : 10;
 
       if (!dbProducts || dbProducts.length === 0) {
         finalResponsePayload = {
@@ -950,111 +1003,179 @@ app.post("/chat", async (req, res) => {
           storeName
         );
 
-        if (modelMatch) {
-          const exactMatches = filteredProducts.filter((p) => {
-            const title = (p.title || "").toLowerCase();
-            return title.includes(modelMatch[0].toLowerCase());
+        if (multipleModels && multipleModels.length > 1) {
+          console.log(
+            `[Multiple Models Detected]: ${multipleModels.join(", ")}`
+          );
+
+          let combinedResults = [];
+          const productsPerModel = Math.ceil(
+            productCount / multipleModels.length
+          );
+
+          multipleModels.forEach((requestedModel) => {
+            const searchTerms = requestedModel.split(/\s+/);
+
+            const modelProducts = dbProducts.filter((p) => {
+              const title = (p.title || "").toLowerCase();
+              const allTermsMatch = searchTerms.every((term) =>
+                title.includes(term)
+              );
+
+              if (allTermsMatch) return true;
+
+              if (requestedModel.includes("galaxy")) {
+                const modelNum = requestedModel.match(/s\d+/i)?.[0];
+                if (modelNum && title.includes(modelNum)) {
+                  if (
+                    requestedModel.includes("ultra") &&
+                    title.includes("ultra")
+                  )
+                    return true;
+                  if (requestedModel.includes("plus") && title.includes("plus"))
+                    return true;
+                  if (
+                    !requestedModel.includes("ultra") &&
+                    !requestedModel.includes("plus") &&
+                    !title.includes("ultra") &&
+                    !title.includes("plus")
+                  )
+                    return true;
+                }
+              }
+              return false;
+            });
+
+            combinedResults.push(...modelProducts.slice(0, productsPerModel));
           });
-          if (exactMatches.length > 0) {
-            filteredProducts = exactMatches.slice(0, productCount);
-          }
+
+          filteredProducts = combinedResults.slice(0, productCount);
+        } else if (modelMatch) {
+          const requestedModelName = modelMatch[0].toLowerCase();
+          filteredProducts = filteredProducts.filter((p) => {
+            const title = (p.title || "").toLowerCase();
+            return title.includes(requestedModelName);
+          });
+          filteredProducts = filteredProducts.slice(0, 3);
         }
 
-        const categoryName = detectedCategory
-          ? detectedCategory.replace("_", " ")
-          : "products";
+        if (filteredProducts.length === 0) {
+          finalResponsePayload = {
+            reply:
+              "I couldn't find any products matching that exact specification. Would you like me to show you similar alternatives?",
+            products: [],
+            intent,
+          };
+        } else {
+          const categoryName = detectedCategory
+            ? detectedCategory.replace("_", " ")
+            : "products";
 
-        const finalSystemPrompt = `
-          You are Omnia AI, a smart shopping assistant for Kuwait (electronics only).
-    
-          **USER QUERY**: "${searchQuery}"
-          **PRODUCTS**: ${
-            filteredProducts.length
-          } pre-filtered ${categoryName} (All In Stock)
-    
-          **CRITICAL DATA INTEGRITY RULES**:
-          1. You must **ONLY** return products listed in the 'Input Data' section below.
-          2. **Do NOT invent**, hallucinate, or 'fill in' products that are not in the input list.
-          3. Ensure 'image_url' and 'product_url' are copied **exactly** from the input data. Do not generate fake URLs.
-          4. **OUTPUT ALL PRODUCTS**: You must output every single product provided in the input data. Do not summarize or skip items.
-    
-          **CONTENT GENERATION**:
-          For each product:
-          - "product_description": Write a detailed 2 line paragraph highlighting the technical specifications.
-          - Use the provided 'db_description' as your primary source.
+          const finalSystemPrompt = `
+            You are Omnia AI, a smart shopping assistant for Kuwait (electronics only).
           
-          Output JSON Structure:
-          {
-            "message": "Friendly intro matching user intent",
-            "intent_level": "${intent}",
-            "products": [ 
-              { 
-                "product_name": "title", 
-                "store_name": "store", 
-                "price_kwd": number, 
-                "product_url": "url", 
-                "image_url": "url", 
-                "product_description": "Detailed specs..." 
-              } 
-            ]
+            **USER QUERY**: "${searchQuery}"
+            **PRODUCTS**: ${
+              filteredProducts.length
+            } pre-filtered ${categoryName} (All In Stock)
+            ${
+              multipleModels && multipleModels.length > 1
+                ? `**MULTIPLE MODELS REQUESTED**: ${multipleModels.join(", ")}`
+                : ""
+            }
+          
+            **CRITICAL DATA INTEGRITY RULES**:
+            1. You must **ONLY** return products listed in the 'Input Data' section below.
+            2. **Do NOT invent**, hallucinate, or 'fill in' products that are not in the input list.
+            3. Ensure 'image_url' and 'product_url' are copied **exactly** from the input data. Do not generate fake URLs.
+            4. **OUTPUT ALL PRODUCTS**: You must output every single product provided in the input data. Do not summarize or skip items.
+            ${
+              multipleModels && multipleModels.length > 1
+                ? "6. If multiple models were requested but only some are available, acknowledge which ones you found."
+                : ""
+            }
+          
+            **CONTENT GENERATION**:
+            For each product:
+            - "product_description": Write a detailed 2 line paragraph highlighting the technical specifications.
+            - Use the provided 'db_description' as your primary source.
+            
+            Output JSON Structure:
+            {
+              "message": "Friendly intro matching user intent${
+                multipleModels && multipleModels.length > 1
+                  ? " (mention which models are available)"
+                  : ""
+              }",
+              "intent_level": "${intent}",
+              "products": [ 
+                { 
+                  "product_name": "title", 
+                  "store_name": "store", 
+                  "price_kwd": number, 
+                  "product_url": "url", 
+                  "image_url": "url", 
+                  "product_description": "Detailed specs..." 
+                } 
+              ],
+              "outro" : "An outro message after showing products about more products buying or exploration"
+            }
+          
+            Input Data: ${JSON.stringify(
+              filteredProducts.map((p) => ({
+                title: p.title,
+                price: p.price,
+                storeName: p.storeName,
+                productUrl: p.productUrl,
+                imageUrl: p.imageUrl,
+                db_description: p.description || "",
+              }))
+            )}
+          `;
+          const finalResponse = await openai.chat.completions.create({
+            model: LLM_MODEL,
+            messages: [{ role: "system", content: finalSystemPrompt }],
+            temperature: 0.5,
+            response_format: { type: "json_object" },
+          });
+
+          const finalContent = finalResponse.choices[0].message.content || "{}";
+          let parsedData;
+
+          try {
+            parsedData = JSON.parse(finalContent);
+          } catch (e) {
+            console.error("JSON Parsing failed", e);
+            parsedData = {
+              message: "Here are the best matches I found.",
+              intent_level: intent,
+              products: filteredProducts.map((p) => ({
+                product_name: p.title,
+                store_name: p.storeName,
+                price_kwd: p.price,
+                product_url: p.productUrl,
+                image_url: p.imageUrl,
+                product_description: p.title,
+              })),
+            };
           }
-    
-          Input Data: ${JSON.stringify(
-            filteredProducts.map((p) => ({
-              title: p.title,
-              price: p.price,
-              storeName: p.storeName,
-              productUrl: p.productUrl,
-              imageUrl: p.imageUrl,
-              db_description: p.description || "",
-            }))
-          )}
-        `;
 
-        const finalResponse = await openai.chat.completions.create({
-          model: LLM_MODEL,
-          messages: [{ role: "system", content: finalSystemPrompt }],
-          temperature: 0.5,
-          response_format: { type: "json_object" },
-        });
-
-        const finalContent = finalResponse.choices[0].message.content || "{}";
-        let parsedData;
-
-        try {
-          parsedData = JSON.parse(finalContent);
-        } catch (e) {
-          console.error("JSON Parsing failed", e);
-          parsedData = {
-            message: "Here are the best matches I found.",
-            intent_level: intent,
-            products: filteredProducts.map((p) => ({
-              product_name: p.title,
-              store_name: p.storeName,
-              price_kwd: p.price,
-              product_url: p.productUrl,
-              image_url: p.imageUrl,
-              product_description: p.title,
-            })),
+          finalResponsePayload = {
+            reply: parsedData.message,
+            products: parsedData.products,
+            intent,
+            category: detectedCategory,
+            priceRange,
+            storeName,
+            outro: parsedData.outro,
           };
         }
-
-        finalResponsePayload = {
-          reply: parsedData.message,
-          products: parsedData.products,
-          intent,
-          category: detectedCategory,
-          priceRange,
-          storeName,
-        };
       }
     }
 
-    // 4. Save to Redis
     await saveToMemory(sessionId, "user", message);
     await saveToMemory(sessionId, "assistant", finalResponsePayload.reply);
 
-    // 5. Respond (Include sessionId)
     return res.json({
       ...finalResponsePayload,
       sessionId,
