@@ -1137,7 +1137,7 @@ app.post("/chat", async (req, res) => {
 
       const { vectorLiteral } = await getQueryEmbedding(searchQuery);
 
-      const fetchCount = multipleModels && multipleModels.length > 1 ? 110 : 90;
+      const fetchCount = multipleModels && multipleModels.length > 1 ? 50 : 40;
       const dbProducts = await executeEmbeddingSearch(
         vectorLiteral,
         fetchCount
@@ -1262,7 +1262,7 @@ app.post("/chat", async (req, res) => {
             
             Output JSON Structure:
             {
-              "message": "Friendly intro matching user intent${
+              "message": "Friendly intro in 2 lines for matching user intent${
                 multipleModels && multipleModels.length > 1
                   ? " (mention which models are available)"
                   : ""
