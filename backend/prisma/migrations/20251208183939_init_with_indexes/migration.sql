@@ -1,11 +1,14 @@
 -- CreateExtension
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+
+-- CreateExtension
 CREATE EXTENSION IF NOT EXISTS "vector";
 
 -- CreateEnum
 CREATE TYPE "StockStatus" AS ENUM ('IN_STOCK', 'OUT_OF_STOCK');
 
 -- CreateEnum
-CREATE TYPE "StoreName" AS ENUM ('XCITE', 'BEST_KW', 'NOON_KW', 'JARIR', 'BLINK');
+CREATE TYPE "StoreName" AS ENUM ('XCITE', 'BEST_KW', 'NOON_KW', 'EUREKA');
 
 -- CreateEnum
 CREATE TYPE "Category" AS ENUM ('MOBILE_PHONE', 'LAPTOP', 'HEADPHONE', 'EARPHONE', 'TABLET', 'WATCH', 'ACCESSORY');
@@ -47,6 +50,17 @@ CREATE TABLE "Coupon" (
     CONSTRAINT "Coupon_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "WebSearchCache" (
+    "id" TEXT NOT NULL,
+    "query" TEXT NOT NULL,
+    "response" JSONB NOT NULL,
+    "embedding" vector(1536) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "WebSearchCache_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE INDEX "idx_store" ON "Product"("storeName");
 
@@ -67,3 +81,22 @@ CREATE UNIQUE INDEX "Coupon_storeName_code_key" ON "Coupon"("storeName", "code")
 
 -- AddForeignKey
 ALTER TABLE "Product" ADD CONSTRAINT "Product_couponId_fkey" FOREIGN KEY ("couponId") REFERENCES "Coupon"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+
+-- 2. Create GIN Index for fast Text Search
+CREATE INDEX IF NOT EXISTS "idx_product_searchKey_trgm"
+ON "Product"
+USING GIN (lower("searchKey") gin_trgm_ops);
+
+
+-- 3. Create HNSW Index for fast Vector Search
+CREATE INDEX IF NOT EXISTS "idx_product_embedding_hnsw" 
+ON "Product" 
+USING hnsw ("descriptionEmbedding" vector_cosine_ops)
+WITH (m = 16, ef_construction = 64);
+
+-- 4. (Optional) HNSW Index for Web Cache
+CREATE INDEX IF NOT EXISTS "idx_websearch_embedding_hnsw"
+ON "WebSearchCache"
+USING hnsw ("embedding" vector_cosine_ops)
+WITH (m = 16, ef_construction = 64);

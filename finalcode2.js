@@ -3,6 +3,8 @@ import express from "express";
 import cors from "cors";
 import OpenAI from "openai";
 import { PrismaClient } from "@prisma/client";
+import Redis from "ioredis";
+import { v4 as uuidv4 } from "uuid";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
@@ -15,461 +17,98 @@ const openai = new OpenAI({
 });
 
 const prisma = new PrismaClient();
+const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
 
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ limit: "20mb", extended: true }));
 
-// -------------------- CATEGORY + BRAND CONFIG --------------------
-const PRODUCT_CATEGORIES = {
-  MOBILE_PHONE: {
-    name: "mobile_phone",
-    keywords: [
-      "phone",
-      "mobile",
-      "smartphone",
-      "android",
-      "cellular",
-      "5g",
-      "mobilephones",
-      "cellphone",
-      "cell",
-    ],
-    brands: [
-      "samsung",
-      "xiaomi",
-      "huawei",
-      "oppo",
-      "vivo",
-      "oneplus",
-      "realme",
-      "nokia",
-      "motorola",
-      "google",
-      "pixel",
-      "honor",
-      "tecno",
-      "infinix",
-      "redmi",
-      "poco",
-      "apple",
-      "iphone",
-    ],
-    specs: ["gb", "ram", "camera", "mp", "mah", "inch", "display", "5g", "4g"],
-    exclude: [
-      "case",
-      "cover",
-      "protector",
-      "screen guard",
-      "glass",
-      "charger",
-      "cable",
-      "holder",
-      "stand",
-      "adapter",
-      "pouch",
-      "headphone",
-      "earphone",
-      "earbuds",
-      "EarPods with",
-      "watch",
-      "band",
-      "strap",
-    ],
-    required: ["phone", "smartphone", "mobile", "galaxy", "pixel", "iphone"],
-  },
-  LAPTOP: {
-    name: "laptop",
-    keywords: ["laptop", "notebook", "ultrabook", "macbook", "gaming"],
-    brands: [
-      "dell",
-      "hp",
-      "lenovo",
-      "asus",
-      "acer",
-      "msi",
-      "razer",
-      "apple",
-      "microsoft",
-      "surface",
-    ],
-    specs: [
-      "intel",
-      "amd",
-      "ryzen",
-      "core",
-      "ssd",
-      "ram",
-      "nvidia",
-      "rtx",
-      "gtx",
-    ],
-    exclude: [
-      "bag",
-      "case",
-      "sleeve",
-      "charger",
-      "adapter",
-      "mouse",
-      "keyboard",
-      "stand",
-      "sticker",
-    ],
-    required: [
-      "laptop",
-      "notebook",
-      "macbook",
-      "workstation",
-      "convertible",
-      "matebook",
-      "surface",
-    ],
-  },
-  HEADPHONE: {
-    name: "headphone",
-    keywords: ["headphone", "headphones", "headset", "over-ear"],
-    brands: [
-      "sony",
-      "bose",
-      "jbl",
-      "sennheiser",
-      "beats",
-      "anker",
-      "logitech",
-      "hyperx",
-      "razer",
-    ],
-    specs: ["wireless", "bluetooth", "noise cancelling", "anc", "mic"],
-    exclude: [
-      "case only",
-      "pouch",
-      "stand",
-      "cable",
-      "earbuds",
-      "earpods",
-      "in-ear",
-    ],
-    required: ["headphone", "headphones", "headset", "over-ear"],
-  },
-  EARPHONE: {
-    name: "earphone",
-    keywords: ["earphone", "earphones", "earbuds", "airpods", "tws", "buds"],
-    brands: ["apple", "samsung", "sony", "jbl", "anker", "xiaomi", "huawei"],
-    specs: ["wireless", "bluetooth", "tws", "anc", "noise cancelling"],
-    exclude: [
-      "case",
-      "cover",
-      "protector",
-      "strap",
-      "headphone",
-      "headset",
-      "over-ear",
-    ],
-    required: ["earphone", "earbuds", "earpods", "airpods", "tws", "buds"],
-  },
-  DESKTOP: {
-    name: "desktop",
-    keywords: ["desktop", "pc", "computer", "tower", "all-in-one", "aio"],
-    brands: ["dell", "hp", "lenovo", "asus", "acer", "msi", "apple", "imac"],
-    specs: ["intel", "amd", "ryzen", "rtx", "gtx"],
-    exclude: ["monitor", "keyboard", "mouse", "speaker", "cable"],
-    required: [
-      "desktop",
-      "pc",
-      "computer",
-      "tower",
-      "all-in-one",
-      "imac",
-      "mac mini",
-    ],
-  },
-  TABLET: {
-    name: "tablet",
-    keywords: ["tablet", "ipad", "tab"],
-    brands: ["apple", "samsung", "lenovo", "huawei", "xiaomi"],
-    specs: ["inch", "display", "wifi", "lte", "cellular"],
-    exclude: ["case", "cover", "screen", "keyboard", "pen", "stylus"],
-    required: ["tablet", "ipad", "tab", "pad"],
-  },
-};
+// -------------------- REDIS MEMORY --------------------
+async function saveToMemory(sessionId, role, content) {
+  const key = `chat:${sessionId}`;
+  const message = JSON.stringify({ role, content });
+  await redis.rpush(key, message);
+  await redis.ltrim(key, -20, -1);
+  await redis.expire(key, 86400);
+}
 
-const STORE_NAMES = ["xcite", "best.kw", "best", "noon.kw", "noon", "jarir"];
+async function getMemory(sessionId) {
+  const key = `chat:${sessionId}`;
+  const rawHistory = await redis.lrange(key, 0, -1);
+  return rawHistory.map((item) => JSON.parse(item));
+}
 
-const APPLE_TERMS = [
-  "iphone",
-  "apple",
-  "ios",
-  "macbook",
-  "ipad",
-  "mac",
-  "airpods",
-];
-const ANDROID_TERMS = [
-  "samsung",
-  "huawei",
-  "xiaomi",
-  "android",
-  "galaxy",
-  "pixel",
-  "oppo",
-  "vivo",
-  "honor",
-  "redmi",
-  "realme",
-  "oneplus",
-  "tecno",
-  "infinix",
-];
-
-// -------------------- NEW HELPERS: WEB SEARCH & MEMORY --------------------
-
-// 1. MEMORY: Query Rewriter
-async function generateStandaloneQuery(userMessage, history) {
-  if (!history || history.length === 0) return userMessage;
-
-  const recentHistory = history.slice(-6);
-  const conversationText = recentHistory
-    .map(
-      (msg) =>
-        `${msg.sender === "user" ? "User" : "AI"}: ${msg.text || msg.content}`
-    )
-    .join("\n");
-
-  const systemPrompt = `
-    You are a Search Query Optimizer.
-    Your job is to REWRITE the "Latest User Message" into a standalone search query by merging it with the "Chat History".
-
-    **CRITICAL RULES:**
-    1. **PRESERVE BRANDS:** If the history mentions a specific brand (e.g., "Motorola"), you MUST keep it in the new query unless user explicitly changes it.
-    2. **MERGE CONSTRAINTS:** Combine old constraints (Brand) with new constraints (Price).
-    3. **OUTPUT ONLY THE QUERY.**
-
-    **EXAMPLES:**
-    - History: "Motorola phone" -> User: "under 400"
-      -> Rewritten: "Motorola phone under 400 kwd"
-  `;
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: LLM_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        {
-          role: "user",
-          content: `CHAT HISTORY:\n${conversationText}\n\nLATEST USER MESSAGE: "${userMessage}"`,
+// -------------------- TOOL DEFINITIONS --------------------
+const TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "search_product_database",
+      description:
+        "Search the product database for electronics (phones, laptops, tablets, headphones, etc.). Use this when user asks about specific products, prices, or wants to buy something. Returns relevant products from local stores in Kuwait.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description:
+              "The refined search query for products (e.g., 'iPhone 15 Pro Max', 'gaming laptops under 500 KWD', 'Samsung Galaxy S24')",
+          },
+          category: {
+            type: "string",
+            enum: [
+              "mobile_phone",
+              "laptop",
+              "tablet",
+              "headphone",
+              "earphone",
+              "desktop",
+              "all",
+            ],
+            description: "Product category to narrow search",
+          },
+          max_price: {
+            type: "number",
+            description: "Maximum price in KWD (optional)",
+          },
+          min_price: {
+            type: "number",
+            description: "Minimum price in KWD (optional)",
+          },
+          store_name: {
+            type: "string",
+            enum: ["xcite", "best.kw", "noon.kw", "jarir", "eureka", "all"],
+            description: "Specific store to search in (optional)",
+          },
         },
-      ],
-      temperature: 0.1,
-    });
-
-    const rewritten = response.choices[0].message.content.trim();
-    console.log(
-      `[Memory] Original: "${userMessage}" -> Rewritten: "${rewritten}"`
-    );
-    return rewritten;
-  } catch (error) {
-    console.error("Query Rewriter Failed:", error);
-    return userMessage;
-  }
-}
-
-// 2. WEB SEARCH: Serper.dev
-async function searchWeb(query) {
-  console.log(`[Web Search] Querying Serper.dev for: "${query}"...`);
-
-  const myHeaders = new Headers();
-  myHeaders.append("X-API-KEY", process.env.SERPER_API_KEY);
-  myHeaders.append("Content-Type", "application/json");
-
-  // Search specifically in Kuwait (gl: "kw")
-  const raw = JSON.stringify({
-    q: query,
-    gl: "kw",
-    hl: "en",
-  });
-
-  try {
-    const response = await fetch("https://google.serper.dev/search", {
-      method: "POST",
-      headers: myHeaders,
-      body: raw,
-      redirect: "follow",
-    });
-
-    if (!response.ok) {
-      console.error("[Web Search] API Error:", response.statusText);
-      return null;
-    }
-    return await response.json();
-  } catch (error) {
-    console.error("[Web Search] Fetch Failed:", error);
-    return null;
-  }
-}
-
-// 3. WEB SYNTHESIZER: GPT-4o-mini
-async function synthesizeTrendReport(serperResponse, userQuery) {
-  if (
-    !serperResponse ||
-    !serperResponse.organic ||
-    serperResponse.organic.length === 0
-  ) {
-    return "I couldn't find any recent information on that topic from the web right now.";
-  }
-
-  // Extract top 5 snippets
-  const topResults = serperResponse.organic.slice(0, 5);
-  const context = topResults
-    .map((item) => `SOURCE: ${item.title}\nSNIPPET: ${item.snippet}`)
-    .join("\n\n");
-
-  console.log("[Web Search] Synthesizing summary...");
-
-  const completion = await openai.chat.completions.create({
-    model: "gpt-5-nano",
-    messages: [
-      {
-        role: "system",
-        content: `You are Omnia AI, a helpful shopping assistant. 
-        The user asked a question that required a live web search (e.g., trends, news, or general advice).
-        I will provide you with search snippets.
-        
-        Your Job:
-        1. Synthesize these snippets into a friendly, helpful paragraph answering the user.
-        2. Mention specific product names found in the snippets if relevant.
-        3. Do NOT output JSON. Output plain text.`,
+        required: ["query"],
       },
-      {
-        role: "user",
-        content: `USER QUESTION: "${userQuery}"\n\nSEARCH RESULTS:\n${context}`,
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_web",
+      description:
+        "Search the web for current information, trends, news, reviews, or general knowledge not in the product database. Use this for questions about latest tech trends, product comparisons, reviews, or general electronics information.",
+      parameters: {
+        type: "object",
+        properties: {
+          query: {
+            type: "string",
+            description:
+              "The web search query (e.g., 'best phones 2024', 'iPhone 16 vs Samsung S24', 'latest laptop trends')",
+          },
+        },
+        required: ["query"],
       },
-    ],
-    temperature: 1,
-  });
+    },
+  },
+];
 
-  return completion.choices[0].message.content;
-}
+// -------------------- HYBRID SEARCH IMPLEMENTATION --------------------
 
-// -------------------- EXISTING HELPERS --------------------
-function extractStoreName(userMessage) {
-  const msg = userMessage.toLowerCase();
-  for (const store of STORE_NAMES) {
-    const pattern = new RegExp(`\\b${store}(?:\\s+store|\\s+shop|\\b)`, "i");
-    if (pattern.test(msg)) {
-      if (store === "noon.kw" || store === "noon") return "noon.kw";
-      if (store === "best.kw" || store === "best") return "best.kw";
-      if (store === "xcite") return "xcite";
-      if (store === "jarir") return "jarir";
-      return store;
-    }
-  }
-  const fromMatch = msg.match(/from\s*(\S+)/i);
-  if (fromMatch) {
-    const wordAfterFrom = fromMatch[1].toLowerCase().replace(/[.,]/g, "");
-    if (wordAfterFrom.includes("xcite")) return "xcite";
-    if (wordAfterFrom.includes("noon")) return "noon.kw";
-    if (wordAfterFrom.includes("best")) return "best.kw";
-    if (wordAfterFrom.includes("jarir")) return "jarir";
-  }
-  return null;
-}
-
-function extractPriceRange(userMessage) {
-  const msg = userMessage.toLowerCase();
-  const underMatch = msg.match(
-    /(?:under|below|less than|max|maximum)\s*(\d+)/i
-  );
-  if (underMatch) return { max: parseFloat(underMatch[1]), min: 0 };
-  const rangeMatch = msg.match(
-    /(?:between|from)\s*(\d+)\s*(?:and|to)\s*(\d+)/i
-  );
-  if (rangeMatch)
-    return { min: parseFloat(rangeMatch[1]), max: parseFloat(rangeMatch[2]) };
-  const aboveMatch = msg.match(/(?:above|over|more than|min|minimum)\s*(\d+)/i);
-  if (aboveMatch) return { min: parseFloat(aboveMatch[1]), max: Infinity };
-  const priceMatch = msg.match(/(\d+)\s*(?:kwd|dinar|kd)/i);
-  if (priceMatch) return { max: parseFloat(priceMatch[1]), min: 0 };
-  return null;
-}
-
-function detectProductCategory(userMessage) {
-  const msg = userMessage.toLowerCase().trim();
-  const forcePatterns = {
-    mobile_phone:
-      /\b(android|smartphone|smart phone|cell phone|mobile phone|iphone|galaxy phone|phone)\b/i,
-    laptop: /\b(laptop|notebook|macbook|chromebook|ultrabook)\b/i,
-    desktop: /\b(desktop|desktop pc|gaming pc|tower pc|all-in-one pc)\b/i,
-    headphone: /\b(headphone|headphones|headset|over-ear|on-ear)\b/i,
-    earphone:
-      /\b(earphone|earphones|earbuds|airpods|earpods|tws|wireless earbuds)\b/i,
-    tablet: /\b(tablet|ipad|galaxy tab)\b/i,
-  };
-  for (const [category, pattern] of Object.entries(forcePatterns)) {
-    if (pattern.test(msg)) return category;
-  }
-  let categoryScores = {};
-  Object.values(PRODUCT_CATEGORIES).forEach((category) => {
-    categoryScores[category.name] = 0;
-    category.keywords.forEach((keyword) => {
-      if (msg.includes(keyword)) categoryScores[category.name] += 10;
-    });
-    category.brands.forEach((brand) => {
-      if (msg.includes(brand)) categoryScores[category.name] += 5;
-    });
-  });
-  const detectedCategory = Object.entries(categoryScores).reduce(
-    (max, [cat, score]) => (score > max.score ? { category: cat, score } : max),
-    { category: null, score: 0 }
-  );
-  return detectedCategory.score > 0 ? detectedCategory.category : null;
-}
-
-async function classifyIntent(query) {
-  const systemPrompt = `
-    You are an intent classification engine for an electronics store.
-    Analyze the user's query and categorize it into exactly one of these levels:
-
-    1. LOW:
-       - General discovery ("what's new?", "trending phones","good camera phone", "best phone", "comparison between two phones")
-       - Vague requests ("I need a phone","any good camera phone")
-       - Questions about policies ("shipping", "returns")
-    
-    2. MEDIUM:
-       - Broad category searches with constraints ("laptops under 300 kwd")
-       - Brand specific but broad ("samsung phones", "hp laptops")
-       - Feature specific ("phones with good camera")
-
-    3. HIGH:
-       - Specific product models ("iPhone 15 Pro", "Galaxy S24 Ultra")
-       - Precise specifications ("16gb ram i7 laptop")
-       - Comparisons between specific items ("Pixel 8 vs S23")
-       - Direct purchase intent ("buy iphone 15")
-
-    OUTPUT ONLY THE LABEL: "LOW", "MEDIUM", or "HIGH". Do not output anything else.
-  `;
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: LLM_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: query },
-      ],
-      temperature: 0.0, // Strict determinism
-      max_tokens: 10,
-    });
-
-    const intent = response.choices[0].message.content
-      .trim()
-      .replace(/[^a-zA-Z]/g, "")
-      .toUpperCase();
-    return ["LOW", "MEDIUM", "HIGH"].includes(intent) ? intent : "LOW";
-  } catch (e) {
-    console.error("Intent Classifier Error:", e);
-    return "LOW"; // Fail safe
-  }
-}
-
+// Generate embedding vector
 async function getQueryEmbedding(text) {
   const embeddingRes = await openai.embeddings.create({
     model: EMBEDDING_MODEL,
@@ -482,432 +121,411 @@ async function getQueryEmbedding(text) {
   return { embedding, vectorLiteral };
 }
 
-// -------------------- DB SEARCH (UPDATED TO FETCH DESCRIPTION) --------------------
-async function executeEmbeddingSearch(vectorLiteral, maxResults) {
+// HNSW Vector Search (Semantic)
+async function vectorSearch(vectorLiteral, limit = 50) {
+  console.log(`[Vector Search] Using HNSW index...`);
+  const query = `
+    SELECT
+      "title", "price", "storeName", "productUrl", "category",
+      "imageUrl", "stock", "description", "brand", "specs",
+      1 - ("descriptionEmbedding" <=> '${vectorLiteral}'::vector) as similarity
+    FROM "Product"
+    WHERE "descriptionEmbedding" IS NOT NULL
+      AND "stock" = 'IN_STOCK'
+    ORDER BY "descriptionEmbedding" <=> '${vectorLiteral}'::vector ASC
+    LIMIT ${limit};
+  `;
+  return await prisma.$queryRawUnsafe(query);
+}
+
+// GIN Full-Text Search (Keyword) - Using searchKey field
+async function fulltextSearch(searchQuery, limit = 50) {
+  console.log(`[Fulltext Search] Using GIN index on searchKey...`);
+
+  // Use trigram similarity for fuzzy matching
+  const searchTerm = searchQuery.toLowerCase().trim();
+
+  if (!searchTerm) return [];
+
   try {
-    console.log(`[Embedding Search] Fetching top ${maxResults} products...`);
-    const query = `
+    // Using pg_trgm similarity search on searchKey field
+    return await prisma.$queryRaw`
       SELECT
-        "title",
-        "price",
-        "storeName",
-        "productUrl",
-        "category",
-        "imageUrl",
-        "stock",
-        "description"
+        "title", "price", "storeName", "productUrl", "category",
+        "imageUrl", "stock", "description", "brand", "specs",
+        similarity("searchKey", ${searchTerm}) as rank
       FROM "Product"
-      WHERE "descriptionEmbedding" IS NOT NULL
-      ORDER BY "descriptionEmbedding" <#> '${vectorLiteral}'::vector ASC
-      LIMIT ${maxResults};
+      WHERE "searchKey" % ${searchTerm}
+      ORDER BY rank DESC
+      LIMIT ${limit};
     `;
-    const results = await prisma.$queryRawUnsafe(query);
-    console.log(`[Embedding Search] Found: ${results.length} products`);
-    return results;
-  } catch (err) {
-    console.error("Embedding DB Search Error:", err);
+  } catch (error) {
+    console.error("[Fulltext Search] Error:", error);
     return [];
   }
 }
 
-// -------------------- FILTER + RANK --------------------
-function filterAndRankProducts(
-  products,
-  userQuery,
-  productCount,
-  category,
-  priceRange = null,
-  storeName = null
-) {
-  const query = userQuery.toLowerCase();
-  const hasCheapest = query.includes("cheapest") || query.includes("cheap");
-  const queryWords = query.split(/\s+/).filter((w) => w.length > 2);
-
-  // **NEW: Extract specific model numbers from query**
-  const modelNumberMatch = query.match(
-    /\b(iphone|galaxy|pixel|macbook)\s*(\d+)(\s*pro)?(\s*max)?(\s*plus)?(\s*ultra)?/i
+// Reciprocal Rank Fusion (RRF)
+function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
+  console.log(
+    `[RRF] Fusing ${vectorResults.length} vector + ${fulltextResults.length} fulltext results...`
   );
-  const requestedModel = modelNumberMatch
-    ? modelNumberMatch[0].toLowerCase()
-    : null;
 
-  const categoryConfig = category
-    ? Object.values(PRODUCT_CATEGORIES).find((c) => c.name === category)
-    : null;
-  const isAppleQuery = APPLE_TERMS.some((t) => query.includes(t));
-  const isAndroidQuery = ANDROID_TERMS.some((t) => query.includes(t));
+  const scores = new Map();
 
-  let filteredProducts = products.filter((product) => {
-    const title = (product.title || "").toLowerCase();
-    if (!product.title || product.price == null) return false;
-    if (
-      product.stock &&
-      /out[_\s-]*of[_\s-]*stock/i.test(String(product.stock))
-    )
-      return false;
-    if (
-      priceRange &&
-      (product.price < priceRange.min || product.price > priceRange.max)
-    )
-      return false;
-    if (
-      storeName &&
-      !(product.storeName || "").toLowerCase().includes(storeName.toLowerCase())
-    )
-      return false;
-    if (categoryConfig) {
-      const isAccessory = categoryConfig.exclude.some((term) =>
-        title.includes(term.toLowerCase())
-      );
-      if (isAccessory) return false;
+  // Score vector search results
+  vectorResults.forEach((product, index) => {
+    const key = product.productUrl || product.title;
+    const rrfScore = 1 / (k + index + 1);
+    scores.set(key, {
+      product,
+      score: rrfScore,
+      vectorRank: index + 1,
+    });
+  });
+
+  // Add fulltext search results
+  fulltextResults.forEach((product, index) => {
+    const key = product.productUrl || product.title;
+    const rrfScore = 1 / (k + index + 1);
+
+    if (scores.has(key)) {
+      const existing = scores.get(key);
+      existing.score += rrfScore;
+      existing.fulltextRank = index + 1;
+    } else {
+      scores.set(key, {
+        product,
+        score: rrfScore,
+        fulltextRank: index + 1,
+      });
     }
+  });
+
+  // Sort by combined RRF score
+  const fusedResults = Array.from(scores.values())
+    .sort((a, b) => b.score - a.score)
+    .map((item) => ({
+      ...item.product,
+      rrfScore: item.score,
+      vectorRank: item.vectorRank || null,
+      fulltextRank: item.fulltextRank || null,
+    }));
+
+  console.log(`[RRF] Fused into ${fusedResults.length} unique results`);
+  return fusedResults;
+}
+
+// Hybrid Search Function
+async function hybridSearch(searchQuery, vectorLiteral, limit = 50) {
+  console.log(`[Hybrid Search] Query: "${searchQuery}"`);
+
+  // Run both searches in parallel
+  const [vectorResults, fulltextResults] = await Promise.all([
+    vectorSearch(vectorLiteral, limit),
+    fulltextSearch(searchQuery, limit),
+  ]);
+
+  // Fuse results using RRF
+  const fusedResults = reciprocalRankFusion(vectorResults, fulltextResults);
+
+  return fusedResults.slice(0, limit);
+}
+
+// -------------------- PRODUCT FILTERING --------------------
+function filterProducts(products, filters = {}) {
+  const { category, minPrice, maxPrice, storeName } = filters;
+
+  return products.filter((product) => {
+    // Stock check - using enum StockStatus
+    if (product.stock === "OUT_OF_STOCK") {
+      return false;
+    }
+
+    // Price range
+    if (minPrice && product.price < minPrice) return false;
+    if (maxPrice && product.price > maxPrice) return false;
+
+    // Store filter - handle enum values (XCITE, BEST_KW, NOON_KW, EUREKA)
+    if (storeName && storeName !== "all") {
+      const storeMap = {
+        xcite: "XCITE",
+        "best.kw": "BEST_KW",
+        best: "BEST_KW",
+        "noon.kw": "NOON_KW",
+        noon: "NOON_KW",
+        eureka: "EUREKA",
+      };
+      const enumStore = storeMap[storeName.toLowerCase()];
+      if (enumStore && product.storeName !== enumStore) return false;
+    }
+
+    // Category filter - handle enum values (MOBILE_PHONE, LAPTOP, etc.)
+    if (category && category !== "all") {
+      const categoryMap = {
+        mobile_phone: "MOBILE_PHONE",
+        laptop: "LAPTOP",
+        headphone: "HEADPHONE",
+        earphone: "EARPHONE",
+        tablet: "TABLET",
+        desktop: "WATCH", // if you have desktop, adjust enum
+        watch: "WATCH",
+        accessory: "ACCESSORY",
+      };
+      const enumCategory = categoryMap[category.toLowerCase()];
+      if (enumCategory && product.category !== enumCategory) return false;
+    }
+
     return true;
   });
+}
 
-  const scoredProducts = filteredProducts.map((product) => {
-    let score = 0;
-    const title = (product.title || "").toLowerCase();
-    const categoryField = (product.category || "").toLowerCase();
+// -------------------- WEB SEARCH --------------------
+async function searchWebTool(query) {
+  console.log(`[Web Search] Query: "${query}"`);
 
-    // **NEW: Massive boost for exact model match**
-    if (requestedModel) {
-      // Extract model from product title
-      const productModelMatch = title.match(
-        /\b(iphone|galaxy|pixel|macbook)\s*(\d+)(\s*pro)?(\s*max)?(\s*plus)?(\s*ultra)?/i
+  try {
+    const { vectorLiteral } = await getQueryEmbedding(query);
+
+    // Check cache
+    const closestMatch = await prisma.$queryRawUnsafe(`
+      SELECT response, 1 - (embedding <=> '${vectorLiteral}'::vector) as similarity
+      FROM "WebSearchCache"
+      ORDER BY similarity DESC
+      LIMIT 1;
+    `);
+
+    if (closestMatch.length > 0 && closestMatch[0].similarity > 0.8) {
+      console.log(
+        `[Web Search] Cache hit (${closestMatch[0].similarity.toFixed(3)})`
       );
-      if (productModelMatch) {
-        const productModel = productModelMatch[0].toLowerCase();
-
-        // Exact match gets huge boost
-        if (productModel === requestedModel) {
-          score += 500; // Very high score for exact match
-        } else {
-          // Penalize different model numbers
-          const requestedNum = requestedModel.match(/\d+/)?.[0];
-          const productNum = productModel.match(/\d+/)?.[0];
-          if (requestedNum !== productNum) {
-            score -= 300; // Heavy penalty for wrong model number
-          }
-        }
-      }
+      return closestMatch[0].response;
     }
 
-    if (category) {
-      if (categoryField.includes(category.split("_")[0])) score += 40;
-      if (categoryConfig) {
-        categoryConfig.required.forEach((term) => {
-          if (title.includes(term)) score += 20;
-        });
-      }
-    }
-
-    queryWords.forEach((word) => {
-      if (title.includes(word)) score += 50;
-      if (new RegExp(`\\b${word}\\b`).test(title)) score += 25;
+    // Call Serper API
+    console.log(`[Web Search] Calling Serper API...`);
+    const response = await fetch("https://google.serper.dev/search", {
+      method: "POST",
+      headers: {
+        "X-API-KEY": process.env.SERPER_API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ q: query, gl: "kw", hl: "en" }),
     });
 
-    const hasAppleBrand = APPLE_TERMS.some((t) => title.includes(t));
-    const hasAndroidBrand = ANDROID_TERMS.some((t) => title.includes(t));
+    if (!response.ok) throw new Error("Serper API failed");
 
-    if (isAppleQuery) {
-      if (hasAppleBrand) score += 80;
-      if (hasAndroidBrand && !hasAppleBrand) score -= 60;
-    }
-    if (isAndroidQuery) {
-      if (hasAndroidBrand) score += 80;
-      if (hasAppleBrand && !hasAndroidBrand) score -= 60;
-    }
+    const data = await response.json();
 
-    // **MODIFIED: Only boost year if no specific model requested**
-    if (!requestedModel && (title.includes("2024") || title.includes("2025"))) {
-      score += 20;
+    // Cache result
+    if (data && data.organic && data.organic.length > 0) {
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO "WebSearchCache" (id, query, response, "embedding", "createdAt")
+         VALUES (gen_random_uuid(), $1, $2::jsonb, '${vectorLiteral}'::vector, NOW())`,
+        query,
+        JSON.stringify(data)
+      );
+      console.log(`[Web Search] Cached result`);
     }
 
-    if (hasCheapest) {
-      score += 10000 / (product.price + 1);
-    } else {
-      score += Math.log(product.price + 1) * 8;
-    }
-    return { ...product, score };
+    return data;
+  } catch (error) {
+    console.error("[Web Search] Error:", error);
+    return null;
+  }
+}
+
+// -------------------- TOOL EXECUTION --------------------
+async function executeSearchDatabase(args) {
+  const { query, category, max_price, min_price, store_name } = args;
+
+  console.log(`[Tool: search_product_database] Query: "${query}"`);
+
+  // Generate embedding
+  const { vectorLiteral } = await getQueryEmbedding(query);
+
+  // Hybrid search
+  const results = await hybridSearch(query, vectorLiteral, 80);
+
+  // Apply filters
+  const filtered = filterProducts(results, {
+    category: category || "all",
+    minPrice: min_price || 0,
+    maxPrice: max_price || Infinity,
+    storeName: store_name || "all",
   });
 
-  scoredProducts.sort((a, b) => b.score - a.score);
+  console.log(
+    `[Tool: search_product_database] Found ${filtered.length} products after filtering`
+  );
 
-  // Rest of the function remains the same...
+  return {
+    success: true,
+    count: filtered.length,
+    products: filtered.slice(0, 10).map((p) => ({
+      title: p.title,
+      price: p.price,
+      storeName: p.storeName,
+      productUrl: p.productUrl,
+      imageUrl: p.imageUrl,
+      description: p.description,
+      category: p.category,
+      brand: p.brand,
+      specs: p.specs,
+      rrfScore: p.rrfScore,
+    })),
+  };
+}
 
-  let selectedProducts = [];
-  if (storeName) {
-    selectedProducts = scoredProducts.slice(0, productCount);
-  } else {
-    const storeCount = { xcite: 0, jarir: 0, "best.kw": 0, "noon.kw": 0 };
-    const maxPerStore = Math.ceil(productCount / 4);
-    for (const product of scoredProducts) {
-      const pStore = product.storeName ? product.storeName.toLowerCase() : "";
-      let storeKey = null;
-      if (pStore.includes("xcite")) storeKey = "xcite";
-      else if (pStore.includes("jarir")) storeKey = "jarir";
-      else if (pStore.includes("best")) storeKey = "best.kw";
-      else if (pStore.includes("noon")) storeKey = "noon.kw";
+async function executeSearchWeb(args) {
+  const { query } = args;
 
-      if (
-        storeKey &&
-        storeCount[storeKey] < maxPerStore &&
-        selectedProducts.length < productCount
-      ) {
-        selectedProducts.push(product);
-        storeCount[storeKey]++;
-      }
-    }
-    for (const product of scoredProducts) {
-      if (
-        !selectedProducts.includes(product) &&
-        selectedProducts.length < productCount
-      ) {
-        selectedProducts.push(product);
-      }
-    }
+  console.log(`[Tool: search_web] Query: "${query}"`);
+
+  const serperData = await searchWebTool(query);
+
+  if (!serperData || !serperData.organic) {
+    return {
+      success: false,
+      message: "No web results found",
+    };
   }
 
-  return selectedProducts;
+  const topResults = serperData.organic.slice(0, 6);
+
+  return {
+    success: true,
+    results: topResults.map((r) => ({
+      title: r.title,
+      snippet: r.snippet,
+      link: r.link,
+    })),
+  };
 }
 
 // -------------------- MAIN CHAT ROUTE --------------------
 app.post("/chat", async (req, res) => {
-  const { query: message, history = [] } = req.body;
+  let { query: message, sessionId } = req.body;
 
   if (!message) return res.status(400).json({ error: "Message is required." });
 
-  const userMessageObject = { role: "user", content: message };
-  // We will add the assistant response to history at the end
+  if (!sessionId) {
+    sessionId = uuidv4();
+    console.log(`[New Session] ${sessionId}`);
+  }
 
   try {
-    // 1. CONTEXTUALIZE
-    const standaloneQuery = await generateStandaloneQuery(message, history);
+    const history = await getMemory(sessionId);
 
-    const detectedCategory = detectProductCategory(standaloneQuery);
-    const intent = await classifyIntent(standaloneQuery);
-    const priceRange = extractPriceRange(standaloneQuery);
-    const storeName = extractStoreName(standaloneQuery);
+    // Build messages for OpenAI
+    const messages = [
+      {
+        role: "system",
+        content: `You are Omnia AI, a helpful shopping assistant for electronics in Kuwait.
 
-    console.log(
-      `[Chat] Intent: ${intent}, Category: ${detectedCategory}, Store: ${storeName}`
-    );
+You have access to two tools:
+1. search_product_database: Search local product catalog for phones, laptops, tablets, headphones, etc.
+2. search_web: Search the web for trends, reviews, comparisons, or general information.
 
-    // --- LOW INTENT / WEB SEARCH HANDLING ---
-    if (intent === "LOW") {
-      // 1. Check if it is a Greeting or a Trend/Knowledge Query
-      const isGreeting = /^(hi|hy|hello|hey|greetings|morning|afternoon)/i.test(
-        message.trim()
+Guidelines:
+- For product searches, buying queries, price checks → use search_product_database
+- For trends, "best of 2024", comparisons, reviews, general tech info → use search_web
+- You can use multiple tools if needed
+- Always be friendly and helpful
+- Provide specific product recommendations when possible`,
+      },
+      ...history.map((m) => ({ role: m.role, content: m.content })),
+      { role: "user", content: message },
+    ];
+
+    // Call OpenAI with tools
+    const completion = await openai.chat.completions.create({
+      model: LLM_MODEL,
+      messages,
+      tools: TOOLS,
+      tool_choice: "auto",
+      temperature: 0.7,
+    });
+
+    const responseMessage = completion.choices[0].message;
+    let finalResponse = responseMessage.content || "";
+    let toolResults = [];
+    let products = [];
+
+    // Handle tool calls
+    if (responseMessage.tool_calls) {
+      console.log(
+        `[Agent] ${responseMessage.tool_calls.length} tool calls requested`
       );
 
-      if (!isGreeting) {
-        // --- WEB SEARCH PIPELINE ---
-        console.log(
-          `[Low Intent] Detected knowledge query. Triggering Web Search...`
-        );
+      for (const toolCall of responseMessage.tool_calls) {
+        const functionName = toolCall.function.name;
+        const args = JSON.parse(toolCall.function.arguments);
 
-        // A. Call Serper API
-        const serperData = await searchWeb(message);
+        console.log(`[Agent] Executing ${functionName}:`, args);
 
-        // B. Summarize with LLM
-        const webSummary = await synthesizeTrendReport(serperData, message);
+        let result;
+        if (functionName === "search_product_database") {
+          result = await executeSearchDatabase(args);
+          if (result.success && result.products) {
+            products = result.products;
+          }
+        } else if (functionName === "search_web") {
+          result = await executeSearchWeb(args);
+        }
 
-        // C. Return Response to Frontend (No Product Cards)
-        return res.json({
-          reply: webSummary,
-          products: [],
-          intent: "WEB_SEARCH",
-          category: detectedCategory,
-          history: [
-            ...history,
-            userMessageObject,
-            { role: "assistant", content: webSummary },
-          ],
+        toolResults.push({
+          tool: functionName,
+          result,
         });
       }
 
-      // --- EXISTING GREETING LOGIC ---
-      const lowIntentSystem = `
-        You are Omnia AI, a friendly shopping assistant for Kuwait electronics.
-        The user is just exploring.
-        Reply in a warm, human tone (2–3 short sentences).
-        Ask 1–2 smart follow-up questions about category, budget, or brand.
-        Return your response in JSON format: { "message": "Your text here", "intent_level": "LOW", "products": [] }
-      `;
-
-      const lowResponse = await openai.chat.completions.create({
-        model: LLM_MODEL,
-        messages: [
-          { role: "system", content: lowIntentSystem },
-          ...history,
-          userMessageObject,
-        ],
-        temperature: 0.7,
-        response_format: { type: "json_object" },
-      });
-
-      const content = JSON.parse(
-        lowResponse.choices[0].message.content || "{}"
-      );
-
-      return res.json({
-        reply: content.message || "How can I help you today?",
-        products: [],
-        intent: "LOW",
-        category: detectedCategory,
-        history: [
-          ...history,
-          userMessageObject,
-          { role: "assistant", content: content.message },
-        ],
-      });
-    }
-
-    // In /chat route, before calling getQueryEmbedding
-    let searchQuery = message;
-
-    // If specific model detected, emphasize it
-    const modelMatch = message.match(
-      /\b(iphone|galaxy|pixel)\s*(\d+)(\s*pro)?(\s*max)?/i
-    );
-    if (modelMatch) {
-      searchQuery = `${modelMatch[0]} ${message}`;
-    }
-
-    // --- MEDIUM / HIGH INTENT: RAG + JSON STRUCTURE ---
-    const { vectorLiteral } = await getQueryEmbedding(message);
-    const dbProducts = await executeEmbeddingSearch(vectorLiteral, 80);
-
-    const productCount = intent === "MEDIUM" ? 10 : 15;
-
-    if (!dbProducts || dbProducts.length === 0) {
-      return res.json({
-        reply:
-          "I couldn't find any products matching that description. Could you try adjusting your search?",
-        products: [],
-        intent,
-        history: [...history, userMessageObject],
-      });
-    }
-
-    const filteredProducts = filterAndRankProducts(
-      dbProducts,
-      message,
-      productCount,
-      detectedCategory,
-      priceRange,
-      storeName
-    );
-    // Add this right after filterAndRankProducts call
-    if (modelMatch) {
-      const exactMatches = filteredProducts.filter((p) => {
-        const title = (p.title || "").toLowerCase();
-        return title.includes(modelMatch[0].toLowerCase());
-      });
-
-      if (exactMatches.length > 0) {
-        // Return only exact matches if found
-        filteredProducts = exactMatches.slice(0, productCount);
-      }
-    }
-
-    const categoryName = detectedCategory
-      ? detectedCategory.replace("_", " ")
-      : "products";
-
-    // --- SYSTEM PROMPT: ENFORCING JSON & NO HALLUCINATION ---
-    const finalSystemPrompt = `
-      You are Omnia AI, a smart shopping assistant for Kuwait (electronics only).
-
-      **USER QUERY**: "${message}"
-      **PRODUCTS**: ${
-        filteredProducts.length
-      } pre-filtered ${categoryName} (All In Stock)
-
-      **CRITICAL DATA INTEGRITY RULES**:
-      1. You must **ONLY** return products listed in the 'Input Data' section below.
-      2. **Do NOT invent**, hallucinate, or 'fill in' products that are not in the input list.
-      3. If the input list contains 5 items, your output must contain 5 items. Do not add more.
-      4. Ensure 'image_url' and 'product_url' are copied **exactly** from the input data. Do not generate fake URLs.
-
-      **CONTENT GENERATION**:
-      For each product:
-      - "product_description": Write a detailed 2-3 line paragraph highlighting the technical specifications (Processor, RAM, Storage, Screen, Battery, etc.). 
-      - Use the provided 'db_description' as your primary source. If 'db_description' is empty, use your internal knowledge of the specific product model to generate accurate specifications.
-      
-      Output JSON Structure:
-      {
-        "message": "Friendly intro",
-        "intent_level": "${intent}",
-        "products": [ 
-          { 
-            "product_name": "title", 
-            "store_name": "store", 
-            "price_kwd": number, 
-            "product_url": "url", 
-            "image_url": "url", 
-            "product_description": "Detailed 2-3 line specs paragraph..." 
-          } 
-        ]
-      }
-
-      Input Data: ${JSON.stringify(
-        filteredProducts.map((p) => ({
-          title: p.title,
-          price: p.price,
-          storeName: p.storeName,
-          productUrl: p.productUrl,
-          imageUrl: p.imageUrl,
-          db_description: p.description || "", // Passes DB description to LLM
-        }))
-      )}
-    `;
-
-    const finalResponse = await openai.chat.completions.create({
-      model: LLM_MODEL,
-      messages: [{ role: "system", content: finalSystemPrompt }], // No history needed for strict product listing usually, but can be added if context matters
-      temperature: 0.5,
-      response_format: { type: "json_object" }, // Forces JSON output
-    });
-
-    const finalContent = finalResponse.choices[0].message.content || "{}";
-    let parsedData;
-
-    try {
-      parsedData = JSON.parse(finalContent);
-    } catch (e) {
-      console.error("JSON Parsing failed", e);
-      // Fallback in case of malformed JSON
-      parsedData = {
-        message: "Here are the best matches I found.",
-        intent_level: intent,
-        products: filteredProducts.map((p) => ({
-          product_name: p.title,
-          store_name: p.storeName,
-          price_kwd: p.price,
-          product_url: p.productUrl,
-          image_url: p.imageUrl,
-          product_description: p.title,
+      // Get final response from OpenAI with tool results
+      const followUpMessages = [
+        ...messages,
+        responseMessage,
+        ...responseMessage.tool_calls.map((tc, idx) => ({
+          role: "tool",
+          tool_call_id: tc.id,
+          content: JSON.stringify(toolResults[idx].result),
         })),
-      };
+      ];
+
+      const finalCompletion = await openai.chat.completions.create({
+        model: LLM_MODEL,
+        messages: followUpMessages,
+        temperature: 0.7,
+      });
+
+      finalResponse = finalCompletion.choices[0].message.content;
     }
+
+    // Format products for response
+    const formattedProducts = products.map((p) => ({
+      product_name: p.title,
+      store_name: p.storeName,
+      price_kwd: p.price,
+      product_url: p.productUrl,
+      image_url: p.imageUrl,
+      product_description: p.description || p.title,
+    }));
+
+    // Save to memory
+    await saveToMemory(sessionId, "user", message);
+    await saveToMemory(sessionId, "assistant", finalResponse);
 
     return res.json({
-      reply: parsedData.message,
-      products: parsedData.products,
-      intent,
-      category: detectedCategory,
-      priceRange,
-      storeName,
-      history: [
-        ...history,
-        userMessageObject,
-        { role: "assistant", content: parsedData.message },
-      ],
+      reply: finalResponse,
+      products: formattedProducts,
+      sessionId,
+      toolsUsed: toolResults.map((t) => t.tool),
+      history: await getMemory(sessionId),
     });
   } catch (error) {
-    console.error("Chat Error:", error);
-    return res.status(500).json({ error: "An error occurred." });
+    console.error("[Chat Error]", error);
+    return res
+      .status(500)
+      .json({ error: "An error occurred processing your request." });
   }
 });
 
@@ -915,10 +533,18 @@ app.post("/chat", async (req, res) => {
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    message: "Shopping assistant running (JSON/RAG mode)",
+    message: "Hybrid Search Assistant with RRF, GIN, HNSW",
+    features: [
+      "Hybrid Search",
+      "RRF Fusion",
+      "Tool-based Architecture",
+      "OpenAI Router",
+    ],
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📊 Features: Hybrid Search (HNSW + GIN) with RRF`);
+  console.log(`🤖 Router: OpenAI with Tool Calling`);
 });
