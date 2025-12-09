@@ -133,16 +133,21 @@ async function vectorSearch(vectorLiteral, limit = 50) {
 }
 
 // GIN Full-Text Search (Keyword) - Using searchKey field
+// GIN Full-Text Search (Keyword)
 async function fulltextSearch(searchQuery, limit = 50) {
   console.log(`[Fulltext Search] Using GIN index on searchKey...`);
 
+  // 1. Convert user input to lowercase
   const searchTerm = searchQuery.toLowerCase().trim();
+
   if (!searchTerm) return [];
 
   try {
+    await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.2;`);
+    // 2. Use 'lower("searchKey")' to make the DB column lowercase on the fly
     return await prisma.$queryRaw`
-      SELECT
-        "title", "price", "storeName", "productUrl", "category",
+      SELECT 
+        "title", "price", "storeName", "productUrl", "category", 
         "imageUrl", "stock", "description", "brand", "specs",
         similarity(lower("searchKey"), ${searchTerm}) as rank
       FROM "Product"
@@ -155,7 +160,6 @@ async function fulltextSearch(searchQuery, limit = 50) {
     return [];
   }
 }
-
 // Reciprocal Rank Fusion (RRF)
 function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
   console.log(
@@ -228,31 +232,25 @@ async function hybridSearch(searchQuery, vectorLiteral, limit = 50) {
 function filterProducts(products, filters = {}) {
   const { category, minPrice, maxPrice, storeName, rawQuery } = filters;
 
-  // Parse extra filters from user query
-  const { capacityGb, strictQuery } = rawQuery
+  // Parse all filters (now includes color)
+  const { capacityGb, strictQuery, extractedColor } = rawQuery
     ? parseStructuredFilters(rawQuery)
-    : { capacityGb: null, strictQuery: "" };
+    : { capacityGb: null, strictQuery: "", extractedColor: null };
 
-  if (strictQuery) {
-    console.log("[Filter] strictQuery =", strictQuery);
-  }
-  if (capacityGb) {
-    console.log("[Filter] capacityGb =", capacityGb);
-  }
+  if (strictQuery) console.log("[Filter] strictQuery =", strictQuery);
+  if (capacityGb) console.log("[Filter] capacityGb =", capacityGb);
+  if (extractedColor) console.log("[Filter] extractedColor =", extractedColor);
 
   const strictTokens = strictQuery
     ? strictQuery.split(/\s+/).filter(Boolean)
     : [];
 
   return products.filter((product) => {
-    // Stock check
+    // 1. Standard Filters
     if (product.stock === "OUT_OF_STOCK") return false;
-
-    // Price range
     if (minPrice && product.price < minPrice) return false;
     if (maxPrice && product.price > maxPrice) return false;
 
-    // Store filter
     if (storeName && storeName !== "all") {
       const storeMap = {
         xcite: "XCITE",
@@ -266,7 +264,6 @@ function filterProducts(products, filters = {}) {
       if (enumStore && product.storeName !== enumStore) return false;
     }
 
-    // Category filter
     if (category && category !== "all") {
       const categoryMap = {
         mobile_phone: "MOBILE_PHONE",
@@ -274,41 +271,40 @@ function filterProducts(products, filters = {}) {
         headphone: "HEADPHONE",
         earphone: "EARPHONE",
         tablet: "TABLET",
-        desktop: "WATCH", // adjust if you add desktop
         watch: "WATCH",
-        accessory: "ACCESSORY",
       };
       const enumCategory = categoryMap[category.toLowerCase()];
       if (enumCategory && product.category !== enumCategory) return false;
     }
 
+    // Prepare Text for Matching
     const title = (product.title || "").toLowerCase();
     const desc = (product.description || "").toLowerCase();
-    const text = title + " " + desc;
+    const specs = JSON.stringify(product.specs || {}).toLowerCase();
+    const allText = title + " " + desc + " " + specs;
 
-    // STRICT MODEL TOKENS — eg. "iphone 17"
+    // 2. Strict Model Check
     if (strictTokens.length > 0) {
-      const allTokensPresent = strictTokens.every((t) => text.includes(t));
+      const allTokensPresent = strictTokens.every((t) => allText.includes(t));
       if (!allTokensPresent) return false;
     }
 
-    // STRICT CAPACITY — if user asked "512GB", do not show 256/1TB etc.
+    // 3. Strict Capacity Check
     if (capacityGb) {
-      const patterns = [];
-
-      // exact 512gb, "512 gb" style
-      patterns.push(`${capacityGb}gb`);
-      patterns.push(`${capacityGb} gb`);
-
-      // if capacity is multiple of 1024 (1TB, 2TB), also allow "1tb" / "2tb"
+      const patterns = [`${capacityGb}gb`, `${capacityGb} gb`];
       if (capacityGb % 1024 === 0) {
-        const tbVal = capacityGb / 1024;
-        patterns.push(`${tbVal}tb`);
-        patterns.push(`${tbVal} tb`);
+        const tb = capacityGb / 1024;
+        patterns.push(`${tb}tb`, `${tb} tb`);
       }
+      if (!patterns.some((p) => allText.includes(p))) return false;
+    }
 
-      const hasCapacity = patterns.some((p) => text.includes(p));
-      if (!hasCapacity) return false;
+    // 4. Strict Color Check (THIS WAS MISSING)
+    if (extractedColor) {
+      // If user said "Orange", the product text MUST contain "orange"
+      if (!allText.includes(extractedColor)) {
+        return false;
+      }
     }
 
     return true;
@@ -374,39 +370,64 @@ async function searchWebTool(query) {
 function parseStructuredFilters(rawQuery) {
   const q = rawQuery.toLowerCase();
 
-  // 1. Storage capacity
-  // supports "512gb", "512 gb", "1tb", "2 tb", etc.
+  // 1. Storage Capacity
   let capacityGb = null;
-
-  const gbMatch = q.match(/(\d+)\s*gb/); // 128gb, 256 gb, 512 gb
+  const gbMatch = q.match(/(\d+)\s*gb/);
   if (gbMatch) {
     capacityGb = parseInt(gbMatch[1], 10);
   } else {
-    const tbMatch = q.match(/(\d+)\s*tb/); // 1tb, 2 tb
+    const tbMatch = q.match(/(\d+)\s*tb/);
     if (tbMatch) {
-      const tb = parseInt(tbMatch[1], 10);
-      capacityGb = tb * 1024;
+      capacityGb = parseInt(tbMatch[1], 10) * 1024;
     }
   }
 
-  // 2. Strict model tokens (like "iphone 17", "s24 ultra")
-  // You can refine this later; for now, take words that look like model tokens
+  // 2. Color Extraction (THIS WAS MISSING)
+  const colors = [
+    "black",
+    "white",
+    "blue",
+    "red",
+    "green",
+    "yellow",
+    "purple",
+    "orange",
+    "titanium",
+    "silver",
+    "gold",
+    "grey",
+    "gray",
+    "pink",
+    "lavender",
+    "cream",
+    "midnight",
+    "starlight",
+    "cosmic",
+    "deep",
+    "natural",
+  ];
+  const extractedColor = colors.find((c) => q.includes(c)) || null;
+
+  // 3. Strict Model Tokens
   const tokens = q
     .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
     .filter(Boolean);
-
-  // Very simple heuristic: keep brand / model-ish tokens
   const modelTokens = tokens.filter((t) => {
-    // keep words like iphone, galaxy, s24, 17, etc.
-    return t.length >= 2 && !["gb", "tb", "version", "storage"].includes(t);
+    // Exclude colors and storage from model name (e.g. don't filter for "black" as a model name)
+    return (
+      t.length >= 2 &&
+      !["gb", "tb", "version", "storage"].includes(t) &&
+      !colors.includes(t)
+    );
   });
 
   const strictQuery = modelTokens.join(" ");
 
   return {
-    capacityGb, // e.g. 512
-    strictQuery, // e.g. "iphone 17"
+    capacityGb,
+    strictQuery,
+    extractedColor, // Return the color!
   };
 }
 
@@ -510,7 +531,7 @@ The user cannot see visual cards. You must list the products explicitly in your 
    - Price: [Price] KWD
    - Store: [Store Name]
    - Specs: [Key Specs like Storage, Color]
-   - Description: [Short 1-sentence description]
+   - Description: [Short 2-sentence description]
    
 3. **Be Concise:** Do not write huge paragraphs. Use bullet points.
 4. **No Links:** Do not try to output markdown links or images, just text details.

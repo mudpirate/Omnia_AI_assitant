@@ -7,26 +7,26 @@ import scrapeProducts from "./eureka.js";
 // The scraper's internal logic will map these hints to strict Enums.
 const SCRAPING_JOBS = [
   {
-    url: "https://www.eureka.com.kw/products/browse/phones/mobile-phones?brand%3D933",
+    url: "https://www.eureka.com.kw/products/browse/phones/mobile-phones",
     category: "mobilephones", // Will map to Category.MOBILE_PHONE
   },
 
-  // {
-  //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/laptops",
-  //   category: "laptops", // Will map to Category.LAPTOP
-  // },
-  // {
-  //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
-  //   category: "tablets", // Will map to Category.TABLET
-  // },
-  // {
-  //   url: "https://www.eureka.com.kw/products/browse/audio/accessories",
-  //   category: "headphones", // Will map to Category.HEADPHONE
-  // },
-  // {
-  //   url: "https://www.eureka.com.kw/products/browse/smart-watches/watches",
-  //   category: "smartwatch", // Will map to Category.HEADPHONE
-  // },
+  {
+    url: "https://www.eureka.com.kw/products/browse/computers-tablets/laptops",
+    category: "laptops", // Will map to Category.LAPTOP
+  },
+  {
+    url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
+    category: "tablets", // Will map to Category.TABLET
+  },
+  {
+    url: "https://www.eureka.com.kw/products/browse/audio/accessories",
+    category: "headphones", // Will map to Category.HEADPHONE
+  },
+  {
+    url: "https://www.eureka.com.kw/products/browse/smart-watches/watches",
+    category: "smartwatch", // Will map to Category.HEADPHONE
+  },
   // {
   //   url: "https://www.xcite.com/apple-iphone/c",
   //   category: "mobilephones", // Will map to Category.HEADPHONE

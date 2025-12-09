@@ -39,14 +39,18 @@ async function vectorSearch(vectorLiteral, limit = 10) {
 }
 
 // GIN Full-Text Search (Keyword)
+// GIN Full-Text Search (Keyword)
 async function fulltextSearch(searchQuery, limit = 50) {
-  // 1. Convert user input to lower case ("iPhone 17" -> "iphone 17")
   const searchTerm = searchQuery.toLowerCase().trim();
 
   if (!searchTerm) return [];
 
   try {
-    // 2. Use 'lower("searchKey")' to match your working SQL query
+    // 🔥 FIX: Lower the threshold to 0.1 so long titles don't get filtered out
+    // We run this command first to configure the current connection
+    await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.25;`);
+
+    // Now run the search
     return await prisma.$queryRaw`
       SELECT 
         "title", "price", "storeName", "productUrl", "category", 
@@ -111,7 +115,8 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
 }
 
 async function main() {
-  const query = process.argv.slice(2).join(" ") || "iphone 17 512gb";
+  const query =
+    process.argv.slice(2).join(" ") || "iphone 17 512gb cosmic orange";
 
   console.log("========================================");
   console.log(`Testing hybrid search for query: "${query}"`);
