@@ -143,7 +143,7 @@ async function fulltextSearch(searchQuery, limit = 50) {
   if (!searchTerm) return [];
 
   try {
-    await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.2;`);
+    await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.1;`);
     // 2. Use 'lower("searchKey")' to make the DB column lowercase on the fly
     return await prisma.$queryRaw`
       SELECT 
@@ -439,7 +439,7 @@ async function executeSearchDatabase(args) {
 
   const { vectorLiteral } = await getQueryEmbedding(query);
 
-  const results = await hybridSearch(query, vectorLiteral, 80);
+  const results = await hybridSearch(query, vectorLiteral, 200);
 
   const filtered = filterProducts(results, {
     category: category || "all",
