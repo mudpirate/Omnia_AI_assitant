@@ -1,21 +1,25 @@
+// schema.prisma
+
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"] 
+  // Enable PostgreSQL extensions and advanced index types
+  previewFeatures = ["postgresqlExtensions", "fullTextSearch", "fullTextIndex"] 
 }
 
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-  // 1. Declare extensions here so Prisma knows they exist
   extensions = [vector, pg_trgm]
 }
 
-// --- ENUMS (Strict Filtering) ---
+// --- ENUMS ---
 enum StockStatus {
   IN_STOCK
   OUT_OF_STOCK
 }
 
+// Keeping StoreName as Enum is fine if you have a fixed list of suppliers.
+// If you plan to scrape 100+ stores, change this to String as well.
 enum StoreName {
   XCITE
   BEST_KW
@@ -23,53 +27,53 @@ enum StoreName {
   EUREKA
 }
 
-enum Category {
-  MOBILE_PHONE
-  LAPTOP
-  HEADPHONE
-  EARPHONE
-  TABLET
-  WATCH
-  ACCESSORY
-}
-
 model Product {
-  id           String      @id @default(cuid())
-  storeName    StoreName 
-  title        String    
-  description  String?     @db.Text 
+  id             String      @id @default(cuid())
+  storeName      StoreName 
+  title          String    
+  description    String?     @db.Text 
 
-  // The Field used for text search (GIN index target)
-  searchKey    String      @db.Text 
+  // 1. TEXT SEARCH KEY (Target for GIN Trigram Index)
+  searchKey      String      @db.Text 
 
-  // The Field used for vector search (HNSW index target)
+  // 2. VECTOR EMBEDDING (Target for HNSW Index)
   descriptionEmbedding Unsupported("vector(1536)")? 
 
-  specs        Json?     
-  category     Category  
-  price        Float     
-  stock        StockStatus @default(IN_STOCK)
-  brand        String
+  // 3. SCALABLE ATTRIBUTES (Target for JSONB GIN Index)
+  // Stores: {"color": "silver", "storage": "256gb", "variant": "pro"}
+  specs          Json?       
 
-  imageUrl     String    @default("https://example.com/placeholder.png")
-  productUrl   String    @default("https://example.com/placeholder-url")
-  scrapedAt    DateTime  @default(now())
-  lastSeenAt   DateTime  @updatedAt
+  // 4. CATEGORY (Changed from Enum to String for infinite categories)
+  category       String      
+
+  price          Float     
+  stock          StockStatus @default(IN_STOCK)
+  brand          String
+
+  imageUrl       String    @default("https://example.com/placeholder.png")
+  productUrl     String    @default("https://example.com/placeholder-url")
   
-  couponId     String?
-  coupon       Coupon?   @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  scrapedAt      DateTime  @default(now())
+  lastSeenAt     DateTime  @updatedAt
+   
+  couponId       String?
+  coupon         Coupon?   @relation(fields: [couponId], references: [id], onDelete: SetNull)
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
-  // Standard Prisma Indexes
+  // --- INDEXES ---
+  
+  // Standard Lookups
   @@unique([storeName, productUrl], map: "uniq_store_producturl")
   @@index([storeName], map: "idx_store")
-  @@index([category], map: "idx_category") 
   @@index([price], map: "idx_price")  
-  
-  // NOTE: HNSW and GIN indexes are best added via raw SQL migration
-  // because Prisma's schema syntax doesn't fully support their options yet.
+  @@index([category], map: "idx_category") 
+
+  // 🔥 SCALABILITY UPGRADE:
+  // GIN Index for fast filtering inside the 'specs' JSON
+  // This allows SQL like: WHERE specs->>'color' = 'silver' to be instant.
+  @@index([specs], type: Gin, map: "idx_product_specs")
 }
 
 model Coupon {
@@ -86,15 +90,10 @@ model Coupon {
   @@index([expiryDate])
 }
 
-// Add this to your schema.prisma file
-
-// In schema.prisma
-
 model WebSearchCache {
   id        String   @id @default(uuid())
   query     String
   response  Json
-  // IMPORTANT: This requires the vector extension
   embedding Unsupported("vector(1536)") 
   createdAt DateTime @default(now())
 }

@@ -1,14 +1,14 @@
 // runner.js
 import puppeteer from "puppeteer";
 import { PrismaClient } from "@prisma/client";
-import scrapeProducts from "./best.js";
+import scrapeProducts from "./xcite.js";
 
 // Define jobs with URLs and simple "hint" category names.
 // The scraper's internal logic will map these hints to strict Enums.
 const SCRAPING_JOBS = [
   {
-    url: "https://best.com.kw/en/c/mobiles-nn",
-    category: "mobilephones", // Will map to Category.MOBILE_PHONE
+    url: "https://www.xcite.com/computer-desktops/c",
+    category: "lol", // Will map to Category.MOBILE_PHONE
   },
 
   // {
