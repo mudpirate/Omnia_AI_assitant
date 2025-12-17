@@ -1,31 +1,59 @@
 import puppeteer from "puppeteer";
-import { PrismaClient, StockStatus, StoreName, Category } from "@prisma/client";
+import { PrismaClient, StockStatus, StoreName } from "@prisma/client";
 import OpenAI from "openai";
 
 // --- GLOBAL CONFIGURATION ---
 const prisma = new PrismaClient();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); // Ensure OPENAI_API_KEY is in your .env
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const PRODUCT_SELECTOR = ".ProductList_tileWrapper__V1Z9h";
 const SHOW_MORE_BUTTON_SELECTOR = "button.secondaryOnLight";
 const MAX_CLICKS = 50;
-const STORE_NAME_FIXED = StoreName.XCITE; // Using Enum
+const STORE_NAME_FIXED = StoreName.XCITE;
 const DOMAIN = "https://www.xcite.com";
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 5000; // 5 seconds
 
 // --- CONCURRENCY SETTING ---
-const CONCURRENT_LIMIT = 5; // Reduced slightly to handle OpenAI rate limits safely
+const CONCURRENT_LIMIT = 3; // Reduced from 5 to be safer
+const LLM_MODEL = "gpt-4o-mini"; 
 
-/**
- * Maps Schema.org availability strings to the Prisma StockStatus Enum.
- */
-const AVAILABILITY_MAP = {
-  "https://schema.org/InStock": StockStatus.IN_STOCK,
-  "https://schema.org/OutOfStock": StockStatus.OUT_OF_STOCK,
-};
+// --- SYSTEM PROMPT (Triangle of Truth) ---
+const SYSTEM_PROMPT = `
+You are a strict Data Extraction AI for an E-commerce Database.
+Your goal is to extract a flat JSON object of filtering attributes ("specs") from raw product data.
+
+### 1. INPUT HIERARCHY (The "Triangle of Truth")
+- **TIER 1 (Highest Authority):** PRODUCT TITLE. Trust this above all for determining the specific Variant (Color, Storage, Size, Model).
+- **TIER 2 (High Detail):** SPECS TABLE. Use this for technical details missing from the title (Material, Voltage, Ingredients, Hz).
+- **TIER 3 (Context):** DESCRIPTION. Use only as a fallback. NEVER use it to override the Title.
+
+### 2. NORMALIZATION RULES (Crucial)
+- **Keys:** Snake_case and lowercase (e.g., 'screen_size', not 'Screen Size').
+- **Values:** Lowercase strings (e.g., 'silver', not 'Silver').
+- **Storage:** Convert to 'gb' or 'tb' (no spaces). Example: '256 GB' -> '256gb', '1 TB' -> '1024gb'.
+- **Colors:** Normalize fancy names. 'Midnight' -> 'black', 'Starlight' -> 'silver', 'Titanium Blue' -> 'blue'.
+- **measurements:** Standardize units (e.g., '2 Liters' -> '2l', '500 ML' -> '500ml', '1.5 KG' -> '1.5kg').
+
+### 3. CATEGORY-SPECIFIC LOGIC
+- **Electronics:** - Extract 'variant' strictly as: 'pro', 'pro_max', 'plus', 'mini', or 'base'.
+   - Extract 'network': '5g', '4g', 'wifi'.
+- **Fashion:** Extract 'gender' ('men', 'women', 'unisex', 'kids'), 'size', 'material'.
+- **Grocery:** Extract 'dietary' (e.g., 'gluten_free'), 'volume', 'pack_count'.
+
+### 4. OUTPUT FORMAT
+- Return ONLY a flat JSON object.
+- Do NOT include Price, Stock, or Store Name (these are stored elsewhere).
+- If a field is not found, omit it. Do not hallucinate.
+`;
 
 // -------------------------------------------------------------------
-// --- HELPER FUNCTIONS FOR AI CONTEXT & VECTORS ---
+// --- HELPER FUNCTIONS ---
 // -------------------------------------------------------------------
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 async function getEmbedding(text) {
   try {
@@ -41,83 +69,57 @@ async function getEmbedding(text) {
   }
 }
 
+async function generateSpecsWithAI(title, rawSpecsText, descriptionSnippet) {
+  const userPrompt = `
+  Analyze this product and generate the 'specs' JSON:
+  
+  PRODUCT TITLE (TIER 1): "${title}"
+  SPECS TABLE DATA (TIER 2): 
+  ${rawSpecsText}
+  
+  DESCRIPTION SNIPPET (TIER 3): "${descriptionSnippet.substring(0, 500)}..."
+  `;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: LLM_MODEL,
+      response_format: { type: "json_object" }, 
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0,
+    });
+
+    return JSON.parse(completion.choices[0].message.content);
+  } catch (error) {
+    console.error(`⚠️ AI Specs Extraction Failed for "${title.substring(0, 20)}...":`, error.message);
+    return {};
+  }
+}
+
 function mapCategory(rawInput) {
   const lower = rawInput.toLowerCase();
 
-  // 1. Check Specific Audio Categories FIRST (because they might contain "phone")
   if (lower.includes("headphone") || lower.includes("headset"))
-    return Category.HEADPHONE;
-  if (
-    lower.includes("earphone") ||
-    lower.includes("buds") ||
-    lower.includes("airpods")
-  )
-    return Category.EARPHONE;
-
-  // 2. Check Laptops/Tablets
+    return "HEADPHONE";
+  if (lower.includes("earphone") || lower.includes("buds") || lower.includes("airpods"))
+    return "EARPHONE";
   if (lower.includes("laptop") || lower.includes("macbook"))
-    return Category.LAPTOP;
-  if (
-    lower.includes("tablet") ||
-    lower.includes("ipad") ||
-    lower.includes("tab")
-  )
-    return Category.TABLET;
-  if (lower.includes("watch")) return Category.WATCH;
-
-  // 3. Check Mobile Phones LAST (Generic "phone" catch-all)
+    return "LAPTOP";
+  if (lower.includes("tablet") || lower.includes("ipad") || lower.includes("tab"))
+    return "TABLET";
+  if (lower.includes("watch")) return "WATCH";
   if (lower.includes("phone") || lower.includes("mobile"))
-    return Category.MOBILE_PHONE;
+    return "MOBILE_PHONE";
+  if (lower.includes("desktop") || lower.includes("computer") || lower.includes("pc"))
+    return "DESKTOP";
 
-  return Category.ACCESSORY;
-}
-
-function extractSpecs(title, description) {
-  const text = (title + " " + description).toLowerCase();
-  const specs = {};
-
-  const storageMatch = text.match(/(\d{3}|\d{2}|\d{1})\s?(gb|tb)/);
-  if (storageMatch) specs.storage = storageMatch[0].toUpperCase();
-
-  const ramMatch = text.match(/(\d{1,2})\s?gb\s?ram/);
-  if (ramMatch) specs.ram = ramMatch[0].toUpperCase();
-
-  const colors = [
-    "black",
-    "white",
-    "silver",
-    "gold",
-    "blue",
-    "red",
-    "green",
-    "grey",
-    "gray",
-    "titanium",
-    "purple",
-  ];
-  const foundColor = colors.find((c) => text.includes(c));
-  if (foundColor)
-    specs.color = foundColor.charAt(0).toUpperCase() + foundColor.slice(1);
-
-  return specs;
+  return "ACCESSORY";
 }
 
 function extractBrand(title) {
-  const knownBrands = [
-    "Apple",
-    "Samsung",
-    "Xiaomi",
-    "Huawei",
-    "Honor",
-    "Lenovo",
-    "HP",
-    "Dell",
-    "Asus",
-    "Sony",
-    "Bose",
-    "JBL",
-    "Microsoft",
-  ];
+  const knownBrands = ["Apple", "Samsung", "Xiaomi", "Huawei", "Honor", "Lenovo", "HP", "Dell", "Asus", "Sony", "Bose", "JBL", "Microsoft"];
   const titleLower = title.toLowerCase();
   for (const brand of knownBrands) {
     if (titleLower.includes(brand.toLowerCase())) return brand;
@@ -127,14 +129,12 @@ function extractBrand(title) {
 
 function generateCascadingContext(title, brand, specs, price, description) {
   let context = `${brand} ${title}.`;
-
-  const specList = [];
-  if (specs.ram) specList.push(`${specs.ram} RAM`);
-  if (specs.storage) specList.push(`${specs.storage} Storage`);
-  if (specs.color) specList.push(`Color: ${specs.color}`);
-
-  if (specList.length > 0) context += ` Specs: ${specList.join(", ")}.`;
-
+  
+  const specString = Object.entries(specs)
+    .map(([k, v]) => `${k}: ${v}`)
+    .join(", ");
+    
+  if (specString) context += ` Specs: ${specString}.`;
   context += ` Price: ${price} KWD.`;
 
   if (description && description.length > 20) {
@@ -145,375 +145,329 @@ function generateCascadingContext(title, brand, specs, price, description) {
 }
 
 // -------------------------------------------------------------------
-// --- UNIFIED FUNCTION: SCRAPE STOCK AND DESCRIPTION ---
+// --- SCRAPER LOGIC WITH RETRY ---
 // -------------------------------------------------------------------
 
+async function retryPageNavigation(page, url, maxRetries = MAX_RETRIES) {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`  Attempt ${attempt}/${maxRetries} - Loading: ${url}`);
+      
+      await page.goto(url, { 
+        waitUntil: "domcontentloaded", 
+        timeout: 60000 
+      });
+      
+      console.log(`  ✓ Page loaded successfully`);
+      return true;
+      
+    } catch (error) {
+      console.warn(`  ⚠️ Attempt ${attempt} failed: ${error.message}`);
+      
+      if (attempt < maxRetries) {
+        console.log(`  ⏳ Waiting ${RETRY_DELAY/1000}s before retry...`);
+        await sleep(RETRY_DELAY);
+      } else {
+        throw new Error(`Failed to load page after ${maxRetries} attempts: ${error.message}`);
+      }
+    }
+  }
+}
+
 async function getStockAndDescription(browser, url) {
-  const page = await browser.newPage();
-  page.setDefaultTimeout(30000);
+  let page;
   let stockStatus = StockStatus.IN_STOCK;
   let description = "";
+  let rawSpecsText = "";
 
   try {
-    await page.goto(url, { waitUntil: "domcontentloaded" });
+    page = await browser.newPage();
+    
+    // Set more conservative timeouts and disable images/CSS for faster loading
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      if(['image', 'stylesheet', 'font'].includes(req.resourceType())){
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
+    
+    page.setDefaultTimeout(60000);
+    
+    // Use retry logic for navigation
+    await retryPageNavigation(page, url, 2); // Only 2 retries for product pages
 
-    // --- UNIFIED IN-BROWSER LOGIC ---
     const pageDetails = await page.evaluate(() => {
       let availability = null;
       let rawDescription = null;
+      let scrapedSpecs = "";
 
-      const productSchema = document.querySelector(
-        '[itemtype="https://schema.org/Product"]'
-      );
+      const productSchema = document.querySelector('[itemtype="https://schema.org/Product"]');
 
-      // Stock Check 1: Visible "Out of Stock" element (Highest Priority)
-      const outOfStockElement = document.querySelector(
-        ".typography-small.text-functional-red-800"
-      );
-      if (
-        outOfStockElement &&
-        outOfStockElement.textContent
-          .trim()
-          .toLowerCase()
-          .includes("out of stock online")
-      ) {
+      const outOfStockElement = document.querySelector(".typography-small.text-functional-red-800");
+      if (outOfStockElement && outOfStockElement.textContent.trim().toLowerCase().includes("out of stock online")) {
         availability = "Out of stock online";
       }
 
-      if (productSchema) {
-        // Get description from schema meta tag
-        rawDescription = productSchema
-          .querySelector('[itemprop="description"]')
-          ?.getAttribute("content");
-
-        // Stock Check 2: Schema fallback
-        if (availability === null) {
-          const offersSchema = productSchema.querySelector(
-            '[itemprop="offers"]'
-          );
-          availability = offersSchema
-            ? offersSchema
-                .querySelector('[itemprop="availability"]')
-                ?.getAttribute("content")
-            : null;
-        }
+      if (!availability && productSchema) {
+        const offersSchema = productSchema.querySelector('[itemprop="offers"]');
+        availability = offersSchema ? offersSchema.querySelector('[itemprop="availability"]')?.getAttribute("content") : null;
       }
 
-      // Stock Check 3: Last fallback for "In Stock" text
-      if (availability === null) {
-        const inStockElement = document.querySelector(
-          ".flex.items-center.gap-x-1 .typography-small"
-        );
-        if (
-          inStockElement &&
-          inStockElement.textContent.trim().toLowerCase().includes("in stock")
-        ) {
+      if (!availability) {
+        const inStockElement = document.querySelector(".flex.items-center.gap-x-1 .typography-small");
+        if (inStockElement && inStockElement.textContent.trim().toLowerCase().includes("in stock")) {
           availability = "In Stock";
         }
       }
 
-      // Fallback description from specifications list if schema description is null
-      if (!rawDescription) {
-        const specList = document.querySelector(
-          ".ProductOverview_list__7LEwB ul"
-        );
-        if (specList) {
-          rawDescription = Array.from(specList.querySelectorAll("li"))
-            .map((li) => li.textContent.trim())
-            .join(" | ");
-        }
+      const specContainer = document.querySelector(".ProductOverview_list__7LEwB ul");
+      if (specContainer) {
+        scrapedSpecs = Array.from(specContainer.querySelectorAll("li"))
+            .map(li => li.innerText.trim())
+            .join("\n");
       }
 
-      return { availability, rawDescription: rawDescription || "" };
+      if (productSchema) {
+         rawDescription = productSchema.querySelector('[itemprop="description"]')?.getAttribute("content");
+      }
+      
+      if (!rawDescription && scrapedSpecs) {
+          rawDescription = scrapedSpecs.replace(/\n/g, " | ");
+      }
+
+      return { availability, rawDescription: rawDescription || "", scrapedSpecs };
     });
 
-    // --- Node.js Side: Cleaning and Mapping ---
-    const { availability, rawDescription } = pageDetails;
+    const { availability, rawDescription, scrapedSpecs } = pageDetails;
 
-    // 1. Map Stock Status
     if (availability) {
       const lowerCaseStatus = availability.toLowerCase();
-      if (
-        lowerCaseStatus.includes("out of stock online") ||
-        availability === AVAILABILITY_MAP["https://schema.org/OutOfStock"]
-      ) {
+      if (lowerCaseStatus.includes("out of stock") || availability === "https://schema.org/OutOfStock") {
         stockStatus = StockStatus.OUT_OF_STOCK;
-      } else if (
-        lowerCaseStatus.includes("in stock") ||
-        availability === AVAILABILITY_MAP["https://schema.org/InStock"]
-      ) {
-        stockStatus = StockStatus.IN_STOCK;
       }
     }
 
-    // 2. Clean Description (Applying Regex Filter)
     description = rawDescription
-      .replace(/(\*|\-|\u2022|&quot;)/g, "") // Remove bullet points (*, -, unicode bullet, &quot;)
-      .replace(/\s+/g, " ") // Replace multiple spaces/newlines with a single space
+      .replace(/(\*|\-|\u2022|&quot;)/g, "")
+      .replace(/\s+/g, " ")
       .trim();
+
+    rawSpecsText = scrapedSpecs;
+
   } catch (e) {
-    console.warn(
-      `\n⚠️ Failed to check details for ${url}. Error: ${e.message}`
-    );
+    console.warn(`\n⚠️ Failed to check details for ${url}. Error: ${e.message}`);
     stockStatus = StockStatus.OUT_OF_STOCK;
-    description = "";
   } finally {
-    await page.close();
+    if (page) await page.close();
   }
 
-  return { stock: stockStatus, description: description };
+  return { stock: stockStatus, description, rawSpecsText };
 }
 
 // -------------------------------------------------------------------
-// --- MAIN SCRAPER ---
+// --- MAIN PROCESSOR ---
 // -------------------------------------------------------------------
 
-/**
- * Main function to navigate, scrape, and save to DB.
- */
 async function scrapeProducts(browser, TARGET_URL, RAW_CATEGORY_NAME) {
-  // 1. Map the Category immediately
   const STRICT_CATEGORY = mapCategory(RAW_CATEGORY_NAME);
 
   let allProductsData = [];
-  let createdCount = 0;
-  let updatedCount = 0;
-  let skippedCount = 0;
-  let errorCount = 0;
-  let totalProcessed = 0;
+  let createdCount = 0, updatedCount = 0, skippedCount = 0, errorCount = 0;
 
-  // --- Category Crawl Logic (Using shared browser instance) ---
-  const categoryPage = await browser.newPage();
-  categoryPage.setDefaultTimeout(90000);
-  await categoryPage.setViewport({ width: 1280, height: 800 });
-
+  // --- 1. Crawl Category Page (Gather Links) ---
+  let categoryPage;
+  
   try {
-    console.log(
-      `Navigating to category page (${RAW_CATEGORY_NAME} mapped to ${STRICT_CATEGORY})...`
-    );
-    await categoryPage.goto(TARGET_URL, {
-      waitUntil: "networkidle2",
-      timeout: 60000,
-    });
-
-    // --- Pagination Logic ---
-    await categoryPage.waitForSelector(PRODUCT_SELECTOR, { timeout: 30000 });
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    let productsCount = await categoryPage.$$eval(
-      PRODUCT_SELECTOR,
-      (tiles) => tiles.length
-    );
-
+    console.log(`Navigating to ${RAW_CATEGORY_NAME}...`);
+    
+    categoryPage = await browser.newPage();
+    categoryPage.setDefaultTimeout(60000);
+    
+    // Use retry logic for main navigation
+    await retryPageNavigation(categoryPage, TARGET_URL);
+    
+    // Wait for products to appear
+    try {
+      await categoryPage.waitForSelector(PRODUCT_SELECTOR, { timeout: 10000 });
+      console.log("✓ Product grid loaded");
+    } catch (e) {
+      console.log("⚠️ Product selector not found initially - page may be empty or layout changed");
+    }
+    
+    // --- PAGINATION LOGIC: Click "Show More" to Load All Products ---
     let clickCount = 0;
-    let consecutiveFailures = 0;
-    const MAX_CONSECUTIVE_FAILURES = 3;
-
+    let previousCount = 0;
+    
     while (clickCount < MAX_CLICKS) {
-      clickCount++;
-      await categoryPage.evaluate(() =>
-        window.scrollTo(0, document.body.scrollHeight)
-      );
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      const currentCount = await categoryPage.$$eval(
-        PRODUCT_SELECTOR,
-        (tiles) => tiles.length
-      );
       try {
-        const buttonExists = await categoryPage.$(SHOW_MORE_BUTTON_SELECTOR);
-        if (!buttonExists) {
-          consecutiveFailures++;
-          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-            productsCount = currentCount;
-            break;
-          }
-          await new Promise((resolve) => setTimeout(resolve, 2000));
-          continue;
-        }
-        await categoryPage.waitForSelector(SHOW_MORE_BUTTON_SELECTOR, {
-          visible: true,
-          timeout: 8000,
-        });
-        await categoryPage.click(SHOW_MORE_BUTTON_SELECTOR);
-        await new Promise((resolve) => setTimeout(resolve, 6000));
-        const newCount = await categoryPage.$$eval(
-          PRODUCT_SELECTOR,
-          (tiles) => tiles.length
-        );
-        if (newCount > currentCount) {
-          productsCount = newCount;
-          consecutiveFailures = 0;
-        } else {
-          consecutiveFailures++;
-          if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-            productsCount = newCount;
-            break;
-          }
-        }
-      } catch (e) {
-        consecutiveFailures++;
-        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-          productsCount = await categoryPage.$$eval(
-            PRODUCT_SELECTOR,
-            (tiles) => tiles.length
-          );
+        // Count current products
+        const currentCount = await categoryPage.$$eval(
+          PRODUCT_SELECTOR, 
+          tiles => tiles.length
+        ).catch(() => 0);
+        
+        console.log(`  📦 Products loaded: ${currentCount} (click ${clickCount + 1}/${MAX_CLICKS})`);
+        
+        // If no new products loaded, we're done
+        if (currentCount === previousCount && clickCount > 0) {
+          console.log("  ✓ No more products to load.");
           break;
         }
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+        
+        if (currentCount === 0 && clickCount === 0) {
+          console.log("  ⚠️ No products found on initial load");
+          break;
+        }
+        
+        previousCount = currentCount;
+        
+        // Try to find and click the "Show More" button
+        const showMoreButton = await categoryPage.$(SHOW_MORE_BUTTON_SELECTOR);
+        
+        if (!showMoreButton) {
+          console.log("  ✓ Show More button not found. All products loaded.");
+          break;
+        }
+        
+        // Check if button is visible and clickable
+        const isVisible = await categoryPage.evaluate(sel => {
+          const btn = document.querySelector(sel);
+          if (!btn) return false;
+          const style = window.getComputedStyle(btn);
+          return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+        }, SHOW_MORE_BUTTON_SELECTOR);
+        
+        if (!isVisible) {
+          console.log("  ✓ Show More button no longer visible. All products loaded.");
+          break;
+        }
+        
+        // Click the button and wait for new content
+        await showMoreButton.click();
+        await categoryPage.waitForTimeout(3000); // Increased wait time
+        
+        clickCount++;
+        
+      } catch (error) {
+        console.log(`  ⚠️ Pagination ended: ${error.message}`);
+        break;
       }
     }
-    console.log(
-      `✅ Finished loading phase. Total tiles found: ${productsCount}`
-    );
-
-    // Extracting data from tiles
-    await categoryPage.evaluate(async (selector) => {
-      const tiles = document.querySelectorAll(selector);
-      for (let i = 0; i < tiles.length; i++) {
-        tiles[i].scrollIntoView({ behavior: "auto", block: "center" });
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      }
-    }, PRODUCT_SELECTOR);
-
+    
+    if (clickCount >= MAX_CLICKS) {
+      console.log(`  ⚠️ Reached maximum click limit (${MAX_CLICKS}). Some products may not be loaded.`);
+    }
+    
+    // --- Extract All Product Tiles ---
     allProductsData = await categoryPage.$$eval(
       PRODUCT_SELECTOR,
       (tiles, category, store, domain) => {
-        const extractProductData = (tile) => {
+        return tiles.map(tile => {
           try {
-            const storeName = store;
-            const title =
-              tile
-                .querySelector(".ProductTile_productName__wEJB5")
-                ?.textContent.trim() || "N/A";
-            const relativeUrl = tile.querySelector("a")?.getAttribute("href");
-            let productUrl = relativeUrl
-              ? relativeUrl.startsWith("http")
-                ? relativeUrl
-                : `${domain}${
-                    relativeUrl.startsWith("/")
-                      ? relativeUrl
-                      : "/" + relativeUrl
-                  }`
-              : "N/A";
+             const title = tile.querySelector(".ProductTile_productName__wEJB5")?.textContent.trim() || "N/A";
+             const relativeUrl = tile.querySelector("a")?.getAttribute("href");
+             const productUrl = relativeUrl ? (relativeUrl.startsWith("http") ? relativeUrl : domain + relativeUrl) : "N/A";
+             
+             let priceText = tile.querySelector("span.text-2xl.text-functional-red-800.block")?.textContent.trim() || "N/A";
+             if(priceText === "N/A") {
+                 const h4 = tile.querySelector("h4");
+                 if(h4) priceText = h4.textContent.trim();
+             }
+             const price = parseFloat(priceText.replace(/KD/gi, "").replace(/,/g, "").trim()) || 0;
 
-            let priceText =
-              tile
-                .querySelector("span.text-2xl.text-functional-red-800.block")
-                ?.textContent.trim() || "N/A";
-            if (priceText === "N/A") {
-              const h4 = tile.querySelector("h4");
-              if (h4)
-                priceText = Array.from(h4.childNodes)
-                  .filter((node) => node.nodeType === 3)
-                  .map((node) => node.textContent.trim())
-                  .join(" ")
-                  .trim();
-            }
-            const price =
-              parseFloat(
-                priceText.replace(/KD/gi, "").replace(/,/g, "").trim()
-              ) || 0;
+             // --- FIXED IMAGE EXTRACTION LOGIC ---
+             let imageUrl = "https://example.com/placeholder-image.png";
+             const imgElement = tile.querySelector("img[data-cs-capture]") || tile.querySelector("img");
+             
+             if (imgElement) {
+               // 1. Try to get high-res from srcset
+               const srcset = imgElement.getAttribute("srcset") || "";
+               if (srcset) {
+                 const srcsetUrls = srcset.split(",").map((s) => s.trim());
+                 const highRes = srcsetUrls.find((s) => s.includes("2x"));
+                 let urlToUse = highRes
+                   ? highRes.split(" ")[0]
+                   : srcsetUrls.length > 0
+                   ? srcsetUrls[0].split(" ")[0]
+                   : null;
+                 if (urlToUse && urlToUse.startsWith("http")) {
+                   imageUrl = urlToUse;
+                 }
+               } 
+               
+               // 2. Fallback to normal src, but explicitly block data:image (binary)
+               if (imageUrl === "https://example.com/placeholder-image.png") {
+                 const src = imgElement.getAttribute("src") || "";
+                 if (
+                   src &&
+                   src.startsWith("http") &&
+                   !src.includes("data:image")
+                 ) {
+                   imageUrl = src;
+                 }
+               }
+             }
+             // ------------------------------------
 
-            let imageUrl = "https://example.com/placeholder-image.png";
-            const imgElement =
-              tile.querySelector("img[data-cs-capture]") ||
-              tile.querySelector("img");
-            if (imgElement) {
-              const srcset = imgElement.getAttribute("srcset") || "";
-              if (srcset) {
-                const srcsetUrls = srcset.split(",").map((s) => s.trim());
-                const highRes = srcsetUrls.find((s) => s.includes("2x"));
-                let urlToUse = highRes
-                  ? highRes.split(" ")[0]
-                  : srcsetUrls.length > 0
-                  ? srcsetUrls[0].split(" ")[0]
-                  : null;
-                if (urlToUse && urlToUse.startsWith("http"))
-                  imageUrl = urlToUse;
-              } else {
-                const src = imgElement.getAttribute("src") || "";
-                if (
-                  src &&
-                  src.startsWith("http") &&
-                  !src.includes("data:image")
-                )
-                  imageUrl = src;
-              }
-            }
-
-            return { storeName, title, price, imageUrl, productUrl }; // Note: category passed via scope but not needed in return for now
-          } catch (e) {
-            return null;
+             return { storeName: store, title, price, imageUrl, productUrl };
+          } catch(e) { 
+            console.error('Tile extraction error:', e);
+            return null; 
           }
-        };
-        return tiles.map(extractProductData).filter((data) => data !== null);
+        }).filter(p => p !== null);
       },
       STRICT_CATEGORY,
       STORE_NAME_FIXED,
       DOMAIN
     );
+
   } catch (error) {
+    console.error(`❌ Error during category page scraping: ${error.message}`);
     throw error;
   } finally {
     if (categoryPage) await categoryPage.close();
   }
 
-  // Filter invalid products before processing
-  const validProducts = allProductsData.filter(
-    (product) =>
-      product.title &&
-      product.title !== "N/A" &&
-      product.productUrl &&
-      product.productUrl !== "N/A" &&
-      product.price > 0
-  );
-  skippedCount = allProductsData.length - validProducts.length;
-  console.log(
-    `Starting concurrent stock/description check for ${validProducts.length} valid products...`
-  );
+  // --- 2. Filter Valid Products ---
+  const validProducts = allProductsData.filter(p => p.title !== "N/A" && p.productUrl !== "N/A" && p.price > 0);
+  console.log(`\n✅ Found ${validProducts.length} valid products. Starting detailed processing...\n`);
 
-  // --- CONCURRENT BATCH PROCESSING FOR STOCK/DESCRIPTION/VECTOR CHECK & DB SAVE ---
+  if (validProducts.length === 0) {
+    console.log("⚠️ No valid products found. Possible reasons:");
+    console.log("   1. The URL is correct but category is empty");
+    console.log("   2. The product selector '.ProductList_tileWrapper__V1Z9h' may have changed");
+    console.log("   3. Network connection issues");
+    console.log("   4. Website structure has changed");
+    return;
+  }
 
+  // --- 3. Process Products (Scrape -> AI -> DB) ---
   const productUpdateTask = async (product) => {
-    // 1. Scrape stock and description
-    const { stock: currentStockStatus, description } =
-      await getStockAndDescription(browser, product.productUrl);
-
-    // 2. Generate Intelligent Fields
+    const { stock, description, rawSpecsText } = await getStockAndDescription(browser, product.productUrl);
+    const specs = await generateSpecsWithAI(product.title, rawSpecsText, description);
+    
     const brand = extractBrand(product.title);
-    const specs = extractSpecs(product.title, description);
-
-    // 3. Generate Search Key (The Text Context)
-    const searchKey = generateCascadingContext(
-      product.title,
-      brand,
-      specs,
-      product.price,
-      description
-    );
-
-    // 4. Generate Embedding (The Vector)
+    const searchKey = generateCascadingContext(product.title, brand, specs, product.price, description);
     const vector = await getEmbedding(searchKey);
 
     const upsertData = {
       title: product.title,
       description: description,
-      category: STRICT_CATEGORY, // Use Strict Enum
+      category: STRICT_CATEGORY,
       price: product.price,
       imageUrl: product.imageUrl,
-      stock: currentStockStatus,
+      stock: stock,
       lastSeenAt: new Date(),
-      brand: brand, // New field
-      specs: specs, // New field (Json)
-      searchKey: searchKey, // New field (Text)
+      brand: brand,
+      specs: specs,
+      searchKey: searchKey,
     };
 
-    // 5. Save Standard Data
     const record = await prisma.product.upsert({
       where: {
-        storeName_productUrl: {
-          storeName: product.storeName,
-          productUrl: product.productUrl,
-        },
+        storeName_productUrl: { storeName: product.storeName, productUrl: product.productUrl },
       },
       update: upsertData,
       create: {
@@ -525,67 +479,33 @@ async function scrapeProducts(browser, TARGET_URL, RAW_CATEGORY_NAME) {
       select: { id: true, createdAt: true, title: true, stock: true },
     });
 
-    // 6. Save Vector Data (Using Raw SQL)
     if (vector) {
       const vectorString = `[${vector.join(",")}]`;
-      await prisma.$executeRaw`
-            UPDATE "Product"
-            SET "descriptionEmbedding" = ${vectorString}::vector
-            WHERE id = ${record.id}
-          `;
+      await prisma.$executeRaw`UPDATE "Product" SET "descriptionEmbedding" = ${vectorString}::vector WHERE id = ${record.id}`;
     }
 
-    return {
-      result: record,
-      status: currentStockStatus,
-      isNew: record.createdAt.getTime() > Date.now() - 5000,
-    };
+    return { result: record, status: stock, isNew: record.createdAt.getTime() > Date.now() - 5000 };
   };
 
-  // --- Batch Processing Loop ---
+  // --- Batch Loop ---
   for (let i = 0; i < validProducts.length; i += CONCURRENT_LIMIT) {
     const batch = validProducts.slice(i, i + CONCURRENT_LIMIT);
+    console.log(`➡️ Processing batch ${Math.ceil((i + 1) / CONCURRENT_LIMIT)} of ${Math.ceil(validProducts.length / CONCURRENT_LIMIT)}...`);
 
-    console.log(
-      `\n➡️ Processing batch ${Math.ceil(
-        (i + 1) / CONCURRENT_LIMIT
-      )}/${Math.ceil(validProducts.length / CONCURRENT_LIMIT)} (${
-        i + 1
-      } to ${Math.min(i + CONCURRENT_LIMIT, validProducts.length)})...`
-    );
+    const batchResults = await Promise.allSettled(batch.map(p => productUpdateTask(p)));
 
-    const batchPromises = batch.map((product) => productUpdateTask(product));
-    const batchResults = await Promise.allSettled(batchPromises);
-
-    for (const stockResult of batchResults) {
-      totalProcessed++;
-      if (stockResult.status === "fulfilled") {
-        const res = stockResult.value;
-        if (res.isNew) createdCount++;
-        else updatedCount++;
-        if (res.status !== StockStatus.IN_STOCK) {
-          console.log(`   [${res.status}] ${res.result.title}`);
-        }
+    for (const res of batchResults) {
+      if (res.status === "fulfilled") {
+        if (res.value.isNew) createdCount++; else updatedCount++;
       } else {
         errorCount++;
-        console.error(
-          `❌ Batch Error: A product check failed: ${stockResult.reason}`
-        );
+        console.error(`❌ Error processing item: ${res.reason}`);
       }
     }
   }
 
-  // --- FINAL SUMMARY & SAMPLE ---
-  let totalSavedCount = createdCount + updatedCount;
-
-  console.log(`\n=== JOB SUMMARY: ${RAW_CATEGORY_NAME.toUpperCase()} ===`);
-  console.log(`Total Products Extracted: ${allProductsData.length}`);
-  console.log(`✅ Created: ${createdCount}`);
-  console.log(`🔄 Updated: ${updatedCount}`);
-  console.log(`⏭️  Skipped (Invalid Data): ${skippedCount}`);
-  console.log(`❌ Errors (Stock/DB): ${errorCount}`);
-  console.log(`📊 FINAL UNIQUE PRODUCTS SAVED/UPDATED: ${totalSavedCount}`);
-  console.log("========================================\n");
+  console.log(`\n=== JOB SUMMARY ===`);
+  console.log(`✅ Created: ${createdCount} | 🔄 Updated: ${updatedCount} | ❌ Errors: ${errorCount}`);
 }
 
 export default scrapeProducts;
