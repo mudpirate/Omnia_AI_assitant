@@ -1,99 +1,99 @@
-// schema.prisma
+  // schema.prisma
 
-generator client {
-  provider        = "prisma-client-js"
-  // Enable PostgreSQL extensions and advanced index types
-  previewFeatures = ["postgresqlExtensions", "fullTextSearch", "fullTextIndex"] 
-}
+  generator client {
+    provider        = "prisma-client-js"
+    // Enable PostgreSQL extensions and advanced index types
+    previewFeatures = ["postgresqlExtensions", "fullTextSearch", "fullTextIndex"] 
+  }
 
-datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [vector, pg_trgm]
-}
+  datasource db {
+    provider   = "postgresql"
+    url        = env("DATABASE_URL")
+    extensions = [vector, pg_trgm]
+  }
 
-// --- ENUMS ---
-enum StockStatus {
-  IN_STOCK
-  OUT_OF_STOCK
-}
+  // --- ENUMS ---
+  enum StockStatus {
+    IN_STOCK
+    OUT_OF_STOCK
+  }
 
-// Keeping StoreName as Enum is fine if you have a fixed list of suppliers.
-// If you plan to scrape 100+ stores, change this to String as well.
-enum StoreName {
-  XCITE
-  BEST_KW
-  NOON_KW
-  EUREKA
-}
+  // Keeping StoreName as Enum is fine if you have a fixed list of suppliers.
+  // If you plan to scrape 100+ stores, change this to String as well.
+  enum StoreName {
+    XCITE
+    BEST_KW
+    NOON_KW
+    EUREKA
+  }
 
-model Product {
-  id             String      @id @default(cuid())
-  storeName      StoreName 
-  title          String    
-  description    String?     @db.Text 
+  model Product {
+    id             String      @id @default(cuid())
+    storeName      StoreName 
+    title          String    
+    description    String?     @db.Text 
 
-  // 1. TEXT SEARCH KEY (Target for GIN Trigram Index)
-  searchKey      String      @db.Text 
+    // 1. TEXT SEARCH KEY (Target for GIN Trigram Index)
+    searchKey      String      @db.Text 
 
-  // 2. VECTOR EMBEDDING (Target for HNSW Index)
-  descriptionEmbedding Unsupported("vector(1536)")? 
+    // 2. VECTOR EMBEDDING (Target for HNSW Index)
+    descriptionEmbedding Unsupported("vector(1536)")? 
 
-  // 3. SCALABLE ATTRIBUTES (Target for JSONB GIN Index)
-  // Stores: {"color": "silver", "storage": "256gb", "variant": "pro"}
-  specs          Json?       
+    // 3. SCALABLE ATTRIBUTES (Target for JSONB GIN Index)
+    // Stores: {"color": "silver", "storage": "256gb", "variant": "pro"}
+    specs          Json?       
 
-  // 4. CATEGORY (Changed from Enum to String for infinite categories)
-  category       String      
+    // 4. CATEGORY (Changed from Enum to String for infinite categories)
+    category       String      
 
-  price          Float     
-  stock          StockStatus @default(IN_STOCK)
-  brand          String
+    price          Float     
+    stock          StockStatus @default(IN_STOCK)
+    brand          String
 
-  imageUrl       String    @default("https://example.com/placeholder.png")
-  productUrl     String    @default("https://example.com/placeholder-url")
-  
-  scrapedAt      DateTime  @default(now())
-  lastSeenAt     DateTime  @updatedAt
-   
-  couponId       String?
-  coupon         Coupon?   @relation(fields: [couponId], references: [id], onDelete: SetNull)
+    imageUrl       String    @default("https://example.com/placeholder.png")
+    productUrl     String    @default("https://example.com/placeholder-url")
+    
+    scrapedAt      DateTime  @default(now())
+    lastSeenAt     DateTime  @updatedAt
+    
+    couponId       String?
+    coupon         Coupon?   @relation(fields: [couponId], references: [id], onDelete: SetNull)
 
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+    createdAt      DateTime  @default(now())
+    updatedAt      DateTime  @updatedAt
 
-  // --- INDEXES ---
-  
-  // Standard Lookups
-  @@unique([storeName, productUrl], map: "uniq_store_producturl")
-  @@index([storeName], map: "idx_store")
-  @@index([price], map: "idx_price")  
-  @@index([category], map: "idx_category") 
+    // --- INDEXES ---
+    
+    // Standard Lookups
+    @@unique([storeName, productUrl], map: "uniq_store_producturl")
+    @@index([storeName], map: "idx_store")
+    @@index([price], map: "idx_price")  
+    @@index([category], map: "idx_category") 
 
-  // 🔥 SCALABILITY UPGRADE:
-  // GIN Index for fast filtering inside the 'specs' JSON
-  // This allows SQL like: WHERE specs->>'color' = 'silver' to be instant.
-  @@index([specs], type: Gin, map: "idx_product_specs")
-}
+    // 🔥 SCALABILITY UPGRADE:
+    // GIN Index for fast filtering inside the 'specs' JSON
+    // This allows SQL like: WHERE specs->>'color' = 'silver' to be instant.
+    @@index([specs], type: Gin, map: "idx_product_specs")
+  }
 
-model Coupon {
-  id          String    @id @default(cuid())
-  storeName   StoreName
-  title       String
-  code        String
-  expiryDate  DateTime?
-  products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  model Coupon {
+    id          String    @id @default(cuid())
+    storeName   StoreName
+    title       String
+    code        String
+    expiryDate  DateTime?
+    products    Product[]
+    createdAt   DateTime  @default(now())
+    updatedAt   DateTime  @updatedAt
 
-  @@unique([storeName, code])
-  @@index([expiryDate])
-}
+    @@unique([storeName, code])
+    @@index([expiryDate])
+  }
 
-model WebSearchCache {
-  id        String   @id @default(uuid())
-  query     String
-  response  Json
-  embedding Unsupported("vector(1536)") 
-  createdAt DateTime @default(now())
-}
+  model WebSearchCache {
+    id        String   @id @default(uuid())
+    query     String
+    response  Json
+    embedding Unsupported("vector(1536)") 
+    createdAt DateTime @default(now())
+  }

@@ -45,35 +45,50 @@ const TOOLS = [
     function: {
       name: "search_product_database",
       description:
-        "Search for electronics. Extract brand, model, color, and STORAGE capacity.",
+        "Search for any product in the database. You are responsible for extracting strict filters.",
       parameters: {
         type: "object",
         properties: {
-          query: { type: "string", description: "Full search query" },
-          brand: { type: "string", description: "e.g., Apple, Samsung" },
-          model: { type: "string", description: "e.g., 17, S24, Pro Max" },
-          color: { type: "string", description: "e.g., black, titanium, blue" },
-          // 🔥 NEW PARAMETER
-          storage: {
+          query: {
             type: "string",
-            description:
-              "Storage capacity if mentioned (e.g., '512GB', '1TB', '256'). Normalize to format like '512GB'.",
+            description: "Full natural language search query from user",
           },
           category: {
             type: "string",
-            enum: [
-              "mobile_phone",
-              "laptop",
-              "tablet",
-              "headphone",
-              "earphone",
-              "desktop",
-              "all",
-            ],
+            description:
+              "Category if mentioned (e.g., smartphone, laptop, headphone, tablet)",
           },
-          max_price: { type: "number" },
-          min_price: { type: "number" },
-          store_name: { type: "string" },
+          brand: {
+            type: "string",
+            description:
+              "Brand name if mentioned (e.g., Apple, Samsung, Sony). Infer brand from model names (e.g. iPhone -> Apple).",
+          },
+          variant: {
+            type: "string",
+            description:
+              "CRITICAL: The model variant. If user searches for a numbered model (e.g. 'iPhone 17') WITHOUT modifiers like 'Pro', 'Max', 'Plus', you MUST set this to 'base'. If 'iPhone 17 Pro', set to 'pro'. Values: 'base', 'pro', 'pro_max', 'plus', 'ultra'.",
+          },
+          color: {
+            type: "string",
+            description: "Color if mentioned (e.g., black, blue, silver)",
+          },
+          storage: {
+            type: "string",
+            description:
+              "Storage capacity if mentioned (e.g., '512gb', '1tb', '256gb')",
+          },
+          max_price: {
+            type: "number",
+            description: "Maximum price in KWD if mentioned",
+          },
+          min_price: {
+            type: "number",
+            description: "Minimum price in KWD if mentioned",
+          },
+          store_name: {
+            type: "string",
+            description: "Store name if specified (xcite, best, noon, eureka)",
+          },
         },
         required: ["query"],
       },
@@ -84,15 +99,11 @@ const TOOLS = [
     function: {
       name: "search_web",
       description:
-        "Search the web for current information, trends, news, reviews, or general knowledge not in the product database. Use this for questions about latest tech trends, product comparisons, reviews, or general electronics information.",
+        "Search the web for current information, trends, news, reviews, or general knowledge not in product database.",
       parameters: {
         type: "object",
         properties: {
-          query: {
-            type: "string",
-            description:
-              "The web search query (e.g., 'best phones 2024', 'iPhone 16 vs Samsung S24', 'latest laptop trends')",
-          },
+          query: { type: "string", description: "Web search query" },
         },
         required: ["query"],
       },
@@ -100,9 +111,7 @@ const TOOLS = [
   },
 ];
 
-// -------------------- HYBRID SEARCH IMPLEMENTATION --------------------
-
-// Generate embedding vector
+// -------------------- EMBEDDING GENERATION --------------------
 async function getQueryEmbedding(text) {
   const embeddingRes = await openai.embeddings.create({
     model: EMBEDDING_MODEL,
@@ -115,9 +124,125 @@ async function getQueryEmbedding(text) {
   return { embedding, vectorLiteral };
 }
 
-// HNSW Vector Search (Semantic)
-async function vectorSearch(vectorLiteral, limit = 50) {
-  console.log(`[Vector Search] Using HNSW index...`);
+// -------------------- INTELLIGENT QUERY ANALYZER (SCALABLE) --------------------
+function analyzeQueryForFilters(query) {
+  const q = query.toLowerCase();
+  const extracted = {};
+
+  // 1. Extract Storage (512gb, 1tb, 256gb, etc.)
+  // We keep this regex as a helper for numeric storage values, but rely on LLM for everything else.
+  const gbMatch = q.match(/(\d+)\s*gb/i);
+  const tbMatch = q.match(/(\d+)\s*tb/i);
+
+  if (gbMatch) {
+    extracted.storage = `${gbMatch[1]}gb`;
+  } else if (tbMatch) {
+    const gb = parseInt(tbMatch[1]) * 1024;
+    extracted.storage = `${gb}gb`;
+  }
+
+  // NOTE: Manual brand/variant regex mapping has been removed.
+  // We now rely 100% on the LLM Tool Definitions and System Prompt for this logic.
+
+  console.log(`[Query Analyzer] Extracted:`, extracted);
+  return extracted;
+}
+
+// -------------------- PUSH-DOWN FILTER BUILDER --------------------
+/**
+ * 🔥 BUILD SQL WHERE CLAUSE WITH STRICT JSON FILTERING & TITLE MATCHING
+ * - REMOVED: searchKey filtering
+ * - ADDED: Strict Number Matching directly in the WHERE clause (Applies to Vector Search too!)
+ */
+function buildPushDownFilters(filters = {}, rawQuery = "") {
+  const conditions = [];
+
+  // 1. ALWAYS filter stock (indexed column)
+  conditions.push(`"stock" = 'IN_STOCK'`);
+
+  // 2. Price Range (indexed column)
+  if (filters.minPrice && filters.minPrice > 0) {
+    conditions.push(`"price" >= ${parseFloat(filters.minPrice)}`);
+  }
+  if (
+    filters.maxPrice &&
+    filters.maxPrice < Infinity &&
+    filters.maxPrice !== null
+  ) {
+    conditions.push(`"price" <= ${parseFloat(filters.maxPrice)}`);
+  }
+
+  // 3. Store Name (indexed column)
+  if (filters.storeName && filters.storeName !== "all") {
+    const storeValue = filters.storeName.toUpperCase().replace(/\./g, "_");
+    conditions.push(`"storeName" = '${storeValue}'`);
+  }
+
+  // 4. Category (indexed column)
+  if (filters.category) {
+    const catLower = filters.category.toLowerCase().replace(/'/g, "''");
+    conditions.push(`LOWER("category") LIKE '%${catLower}%'`);
+  }
+
+  // 5. Brand (Strict Column Match) - NO SEARCH KEY FALLBACK
+  if (filters.brand) {
+    const brandLower = filters.brand.toLowerCase().replace(/'/g, "''");
+    conditions.push(`LOWER("brand") = '${brandLower}'`);
+  }
+
+  // 6. Variant (Strict JSON Match)
+  if (filters.variant) {
+    const variantLower = filters.variant.toLowerCase().replace(/'/g, "''");
+    conditions.push(`"specs"->>'variant' = '${variantLower}'`);
+  }
+
+  // 7. Storage (Strict JSON Match)
+  if (filters.storage) {
+    const storageLower = filters.storage.toLowerCase().replace(/'/g, "''");
+    conditions.push(`"specs"->>'storage' = '${storageLower}'`);
+  }
+
+  // 8. Color (Strict JSON Match)
+  if (filters.color) {
+    const colorLower = filters.color.toLowerCase().replace(/'/g, "''");
+    conditions.push(`"specs"->>'color' ILIKE '%${colorLower}%'`);
+  }
+
+  // 9. 🔥 STRICT NUMBER MATCHING (Moved here to apply to Vector Search too)
+  // If user searches "14", we enforce that the TITLE must contain "14" as a distinct number.
+  if (rawQuery) {
+    const q = rawQuery.toLowerCase();
+    const allNumbers = q.match(/\b(\d+)\b/g) || [];
+
+    if (allNumbers.length > 0) {
+      console.log(
+        `[Filter Builder] Enforcing strict numbers in TITLE: [${allNumbers.join(
+          ", "
+        )}]`
+      );
+      const numberConditions = allNumbers
+        .map((num) => `LOWER("title") ~ '(^|[^0-9])${num}([^0-9]|$)'`)
+        .join(" AND ");
+      conditions.push(`(${numberConditions})`);
+    }
+  }
+
+  const whereClause = conditions.length > 0 ? conditions.join(" AND ") : "1=1";
+  console.log(`[Push-Down Filter] WHERE: ${whereClause}`);
+
+  return whereClause;
+}
+
+// -------------------- VECTOR SEARCH WITH PUSH-DOWN --------------------
+async function vectorSearch(
+  vectorLiteral,
+  filters = {},
+  limit = 100,
+  rawQuery = ""
+) {
+  // Pass rawQuery so strict numbers are enforced on the Title
+  const whereClause = buildPushDownFilters(filters, rawQuery);
+
   const query = `
     SELECT
       "title", "price", "storeName", "productUrl", "category",
@@ -125,190 +250,192 @@ async function vectorSearch(vectorLiteral, limit = 50) {
       1 - ("descriptionEmbedding" <=> '${vectorLiteral}'::vector) as similarity
     FROM "Product"
     WHERE "descriptionEmbedding" IS NOT NULL
-      AND "stock" = 'IN_STOCK'
+      AND ${whereClause}
     ORDER BY "descriptionEmbedding" <=> '${vectorLiteral}'::vector ASC
     LIMIT ${limit};
   `;
-  return await prisma.$queryRawUnsafe(query);
+
+  try {
+    const startTime = Date.now();
+    const results = await prisma.$queryRawUnsafe(query);
+    const duration = Date.now() - startTime;
+    console.log(
+      `[Vector Search] Found ${results.length} products in ${duration}ms`
+    );
+    return results;
+  } catch (error) {
+    console.error("[Vector Search] Error:", error.message);
+    return [];
+  }
 }
 
-// GIN Full-Text Search (Keyword) - Using searchKey field
-// GIN Full-Text Search (Keyword)
-async function fulltextSearch(searchQuery, limit = 50) {
-  console.log(`[Fulltext Search] Using GIN index on searchKey...`);
-
-  // 1. Convert user input to lowercase
-  const searchTerm = searchQuery.toLowerCase().trim();
+// -------------------- ULTRA-STRICT FULLTEXT SEARCH --------------------
+/**
+ * 🔥 UPDATED: Uses TITLE instead of SearchKey
+ */
+async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
+  // Pass searchQuery here too so filters match
+  const whereClause = buildPushDownFilters(filters, searchQuery);
+  const searchTerm = searchQuery.toLowerCase().trim().replace(/'/g, "''");
 
   if (!searchTerm) return [];
 
   try {
-    await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.1;`);
-    // 2. Use 'lower("searchKey")' to make the DB column lowercase on the fly
-    return await prisma.$queryRaw`
+    // CRITICAL: Very high similarity threshold for precision
+    await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.5;`);
+
+    // Using "title" instead of "searchKey"
+    const query = `
       SELECT 
         "title", "price", "storeName", "productUrl", "category", 
         "imageUrl", "stock", "description", "brand", "specs",
-        similarity(lower("searchKey"), ${searchTerm}) as rank
+        similarity(LOWER("title"), '${searchTerm}') as rank
       FROM "Product"
-      WHERE lower("searchKey") % ${searchTerm}
+      WHERE LOWER("title") % '${searchTerm}'
+        AND ${whereClause}
       ORDER BY rank DESC
       LIMIT ${limit};
     `;
+
+    const startTime = Date.now();
+    const results = await prisma.$queryRawUnsafe(query);
+    const duration = Date.now() - startTime;
+
+    console.log(
+      `[Fulltext Search] Found ${results.length} products in ${duration}ms`
+    );
+
+    return results;
   } catch (error) {
-    console.error("[Fulltext Search] Error:", error);
+    console.error("[Fulltext Search] Error:", error.message);
     return [];
   }
 }
-// Reciprocal Rank Fusion (RRF)
-function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
-  console.log(
-    `[RRF] Fusing ${vectorResults.length} vector + ${fulltextResults.length} fulltext results...`
-  );
 
+// -------------------- IMPROVED RRF - FULLTEXT-ONLY MODE --------------------
+function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
   const scores = new Map();
 
-  // Score vector search results
+  // Process vector results
   vectorResults.forEach((product, index) => {
     const key = product.productUrl || product.title;
     const rrfScore = 1 / (k + index + 1);
     scores.set(key, {
       product,
-      score: rrfScore,
+      vectorScore: rrfScore,
+      fulltextScore: 0,
       vectorRank: index + 1,
+      fulltextRank: null,
     });
   });
 
-  // Add fulltext search results
+  // Process fulltext results
   fulltextResults.forEach((product, index) => {
     const key = product.productUrl || product.title;
     const rrfScore = 1 / (k + index + 1);
 
     if (scores.has(key)) {
       const existing = scores.get(key);
-      existing.score += rrfScore;
+      existing.fulltextScore = rrfScore;
       existing.fulltextRank = index + 1;
     } else {
       scores.set(key, {
         product,
-        score: rrfScore,
+        vectorScore: 0,
+        fulltextScore: rrfScore,
+        vectorRank: null,
         fulltextRank: index + 1,
       });
     }
   });
 
-  // Sort by combined RRF score
-  const fusedResults = Array.from(scores.values())
-    .sort((a, b) => b.score - a.score)
-    .map((item) => ({
-      ...item.product,
-      rrfScore: item.score,
-      vectorRank: item.vectorRank || null,
-      fulltextRank: item.fulltextRank || null,
-    }));
+  // Strict: If we have fulltext matches, ONLY use those
+  const fulltextMatches = Array.from(scores.values()).filter(
+    (item) => item.fulltextRank !== null
+  );
 
-  console.log(`[RRF] Fused into ${fusedResults.length} unique results`);
-  return fusedResults;
+  const vectorOnlyMatches = Array.from(scores.values()).filter(
+    (item) => item.fulltextRank === null
+  );
+
+  let finalResults;
+
+  if (fulltextMatches.length > 0) {
+    finalResults = fulltextMatches.map((item) => ({
+      finalScore: item.fulltextScore * 0.95 + item.vectorScore * 0.05,
+      ...item,
+    }));
+    console.log(`[RRF] ✅ Using ONLY fulltext matches`);
+  } else {
+    finalResults = vectorOnlyMatches.map((item) => ({
+      finalScore: item.vectorScore * 0.02,
+      ...item,
+    }));
+    console.log(`[RRF] ⚠️  No fulltext matches, using vector fallback`);
+  }
+
+  // Sort by final score
+  finalResults.sort((a, b) => b.finalScore - a.finalScore);
+
+  const fused = finalResults.map((item) => ({
+    ...item.product,
+    rrfScore: item.finalScore,
+  }));
+
+  return fused;
 }
 
-// Hybrid Search Function
-async function hybridSearch(searchQuery, vectorLiteral, limit = 50) {
-  console.log(`[Hybrid Search] Query: "${searchQuery}"`);
+// -------------------- HYBRID SEARCH WITH AUTOMATIC FALLBACK --------------------
+async function hybridSearch(
+  searchQuery,
+  vectorLiteral,
+  filters = {},
+  limit = 50
+) {
+  console.log(`\n[Hybrid Search] Query: "${searchQuery}"`);
+  console.log(`[Hybrid Search] Filters:`, JSON.stringify(filters, null, 2));
 
-  // Run both searches in parallel
+  const startTime = Date.now();
+
+  // Run both searches - Pass searchQuery to vectorSearch for strict number filtering
   const [vectorResults, fulltextResults] = await Promise.all([
-    vectorSearch(vectorLiteral, limit),
-    fulltextSearch(searchQuery, limit),
+    vectorSearch(vectorLiteral, filters, limit * 2, searchQuery),
+    fulltextSearch(searchQuery, filters, limit * 2),
   ]);
 
-  // Fuse results using RRF
-  const fusedResults = reciprocalRankFusion(vectorResults, fulltextResults);
+  console.log(
+    `[Hybrid Search] Initial - Vector: ${vectorResults.length}, Fulltext: ${fulltextResults.length}`
+  );
+
+  if (vectorResults.length > 0 || fulltextResults.length > 0) {
+    const fusedResults = reciprocalRankFusion(vectorResults, fulltextResults);
+    const duration = Date.now() - startTime;
+    return fusedResults.slice(0, limit);
+  }
+
+  // No results - try relaxed filters (but keep strict number matching!)
+  console.log(`[Hybrid Search] No results. Trying relaxed filters...`);
+
+  const relaxedFilters = {
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    storeName: filters.storeName,
+    // We KEEP brand/category strict if needed, or relax them.
+    // Usually relaxed search drops complex filters but keeps price/store.
+  };
+
+  const [relaxedVector, relaxedFulltext] = await Promise.all([
+    vectorSearch(vectorLiteral, relaxedFilters, limit * 2, searchQuery),
+    fulltextSearch(searchQuery, relaxedFilters, limit * 2),
+  ]);
+
+  const fusedResults = reciprocalRankFusion(relaxedVector, relaxedFulltext);
+  const duration = Date.now() - startTime;
+  console.log(
+    `[Hybrid Search] ✅ Completed in ${duration}ms with ${fusedResults.length} results (relaxed)`
+  );
 
   return fusedResults.slice(0, limit);
-}
-
-// -------------------- PRODUCT FILTERING --------------------
-// -------------------- PRODUCT FILTERING --------------------
-function filterProducts(products, filters = {}) {
-  const { category, minPrice, maxPrice, storeName, rawQuery } = filters;
-
-  // Parse all filters (now includes color)
-  const { capacityGb, strictQuery, extractedColor } = rawQuery
-    ? parseStructuredFilters(rawQuery)
-    : { capacityGb: null, strictQuery: "", extractedColor: null };
-
-  if (strictQuery) console.log("[Filter] strictQuery =", strictQuery);
-  if (capacityGb) console.log("[Filter] capacityGb =", capacityGb);
-  if (extractedColor) console.log("[Filter] extractedColor =", extractedColor);
-
-  const strictTokens = strictQuery
-    ? strictQuery.split(/\s+/).filter(Boolean)
-    : [];
-
-  return products.filter((product) => {
-    // 1. Standard Filters
-    if (product.stock === "OUT_OF_STOCK") return false;
-    if (minPrice && product.price < minPrice) return false;
-    if (maxPrice && product.price > maxPrice) return false;
-
-    if (storeName && storeName !== "all") {
-      const storeMap = {
-        xcite: "XCITE",
-        "best.kw": "BEST_KW",
-        best: "BEST_KW",
-        "noon.kw": "NOON_KW",
-        noon: "NOON_KW",
-        eureka: "EUREKA",
-      };
-      const enumStore = storeMap[storeName.toLowerCase()];
-      if (enumStore && product.storeName !== enumStore) return false;
-    }
-
-    if (category && category !== "all") {
-      const categoryMap = {
-        mobile_phone: "MOBILE_PHONE",
-        laptop: "LAPTOP",
-        headphone: "HEADPHONE",
-        earphone: "EARPHONE",
-        tablet: "TABLET",
-        watch: "WATCH",
-      };
-      const enumCategory = categoryMap[category.toLowerCase()];
-      if (enumCategory && product.category !== enumCategory) return false;
-    }
-
-    // Prepare Text for Matching
-    const title = (product.title || "").toLowerCase();
-    const desc = (product.description || "").toLowerCase();
-    const specs = JSON.stringify(product.specs || {}).toLowerCase();
-    const allText = title + " " + desc + " " + specs;
-
-    // 2. Strict Model Check
-    if (strictTokens.length > 0) {
-      const allTokensPresent = strictTokens.every((t) => allText.includes(t));
-      if (!allTokensPresent) return false;
-    }
-
-    // 3. Strict Capacity Check
-    if (capacityGb) {
-      const patterns = [`${capacityGb}gb`, `${capacityGb} gb`];
-      if (capacityGb % 1024 === 0) {
-        const tb = capacityGb / 1024;
-        patterns.push(`${tb}tb`, `${tb} tb`);
-      }
-      if (!patterns.some((p) => allText.includes(p))) return false;
-    }
-
-    // 4. Strict Color Check (THIS WAS MISSING)
-    if (extractedColor) {
-      // If user said "Orange", the product text MUST contain "orange"
-      if (!allText.includes(extractedColor)) {
-        return false;
-      }
-    }
-
-    return true;
-  });
 }
 
 // -------------------- WEB SEARCH --------------------
@@ -318,7 +445,6 @@ async function searchWebTool(query) {
   try {
     const { vectorLiteral } = await getQueryEmbedding(query);
 
-    // Check cache
     const closestMatch = await prisma.$queryRawUnsafe(`
       SELECT response, 1 - (embedding <=> '${vectorLiteral}'::vector) as similarity
       FROM "WebSearchCache"
@@ -327,13 +453,9 @@ async function searchWebTool(query) {
     `);
 
     if (closestMatch.length > 0 && closestMatch[0].similarity > 0.8) {
-      console.log(
-        `[Web Search] Cache hit (${closestMatch[0].similarity.toFixed(3)})`
-      );
       return closestMatch[0].response;
     }
 
-    // Call Serper API
     console.log(`[Web Search] Calling Serper API...`);
     const response = await fetch("https://google.serper.dev/search", {
       method: "POST",
@@ -348,7 +470,6 @@ async function searchWebTool(query) {
 
     const data = await response.json();
 
-    // Cache result
     if (data && data.organic && data.organic.length > 0) {
       await prisma.$executeRawUnsafe(
         `INSERT INTO "WebSearchCache" (id, query, response, "embedding", "createdAt")
@@ -356,7 +477,6 @@ async function searchWebTool(query) {
         query,
         JSON.stringify(data)
       );
-      console.log(`[Web Search] Cached result`);
     }
 
     return data;
@@ -366,97 +486,70 @@ async function searchWebTool(query) {
   }
 }
 
-// -------------------- QUERY PARSING --------------------
-function parseStructuredFilters(rawQuery) {
-  const q = rawQuery.toLowerCase();
-
-  // 1. Storage Capacity
-  let capacityGb = null;
-  const gbMatch = q.match(/(\d+)\s*gb/);
-  if (gbMatch) {
-    capacityGb = parseInt(gbMatch[1], 10);
-  } else {
-    const tbMatch = q.match(/(\d+)\s*tb/);
-    if (tbMatch) {
-      capacityGb = parseInt(tbMatch[1], 10) * 1024;
-    }
-  }
-
-  // 2. Color Extraction (THIS WAS MISSING)
-  const colors = [
-    "black",
-    "white",
-    "blue",
-    "red",
-    "green",
-    "yellow",
-    "purple",
-    "orange",
-    "titanium",
-    "silver",
-    "gold",
-    "grey",
-    "gray",
-    "pink",
-    "lavender",
-    "cream",
-    "midnight",
-    "starlight",
-    "cosmic",
-    "deep",
-    "natural",
-  ];
-  const extractedColor = colors.find((c) => q.includes(c)) || null;
-
-  // 3. Strict Model Tokens
-  const tokens = q
-    .replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter(Boolean);
-  const modelTokens = tokens.filter((t) => {
-    // Exclude colors and storage from model name (e.g. don't filter for "black" as a model name)
-    return (
-      t.length >= 2 &&
-      !["gb", "tb", "version", "storage"].includes(t) &&
-      !colors.includes(t)
-    );
-  });
-
-  const strictQuery = modelTokens.join(" ");
-
-  return {
-    capacityGb,
-    strictQuery,
-    extractedColor, // Return the color!
-  };
-}
-
-// -------------------- TOOL EXECUTION --------------------
+// -------------------- TOOL EXECUTION WITH DYNAMIC LIMITING --------------------
 async function executeSearchDatabase(args) {
-  const { query, category, max_price, min_price, store_name } = args;
+  const {
+    query,
+    max_price,
+    min_price,
+    store_name,
+    brand,
+    color,
+    storage,
+    variant,
+    category,
+  } = args;
 
-  console.log(`[Tool: search_product_database] Query: "${query}"`);
+  console.log(`\n[Tool: search_product_database] Query: "${query}"`);
+  console.log(
+    `[Tool: search_product_database] AI Extracted:`,
+    JSON.stringify(args, null, 2)
+  );
 
-  const { vectorLiteral } = await getQueryEmbedding(query);
+  const queryAnalysis = analyzeQueryForFilters(query);
 
-  const results = await hybridSearch(query, vectorLiteral, 200);
+  const mergedFilters = {
+    minPrice: min_price || 0,
+    maxPrice: max_price || null,
+    storeName: store_name || null,
+    brand: brand || queryAnalysis.brand || null,
+    color: color || null,
+    storage: storage || queryAnalysis.storage || null,
+    variant: variant || null,
+    category: category || null,
+  };
 
-  const filtered = filterProducts(results, {
-    category: category || "all",
-    minPrice: min_price ?? 0,
-    maxPrice: max_price ?? Infinity,
-    storeName: store_name || "all",
-    rawQuery: query, // 🔥 new
+  const finalFilters = {};
+  Object.keys(mergedFilters).forEach((key) => {
+    if (
+      mergedFilters[key] !== null &&
+      mergedFilters[key] !== undefined &&
+      mergedFilters[key] !== 0
+    ) {
+      finalFilters[key] = mergedFilters[key];
+    }
   });
 
   console.log(
-    `[Tool: search_product_database] Found ${filtered.length} products after filtering`
+    `[Tool: search_product_database] Final Filters:`,
+    JSON.stringify(finalFilters, null, 2)
+  );
+
+  const { vectorLiteral } = await getQueryEmbedding(query);
+  const results = await hybridSearch(query, vectorLiteral, finalFilters, 50);
+
+  // ⭐ DYNAMIC LIMITING: Return only what exists (max 5)
+  const actualCount = Math.min(results.length, 5);
+  const productsToReturn = results.slice(0, actualCount);
+
+  console.log(
+    `[Tool: search_product_database] ✅ Returning ${productsToReturn.length} products (${results.length} found)\n`
   );
 
   return {
     success: true,
-    count: filtered.length,
-    products: filtered.slice(0, 10).map((p) => ({
+    count: productsToReturn.length,
+    products: productsToReturn.map((p) => ({
       title: p.title,
       price: p.price,
       storeName: p.storeName,
@@ -466,15 +559,13 @@ async function executeSearchDatabase(args) {
       category: p.category,
       brand: p.brand,
       specs: p.specs,
-      rrfScore: p.rrfScore,
+      rrfScore: p.rrfScore?.toFixed(4),
     })),
   };
 }
 
 async function executeSearchWeb(args) {
   const { query } = args;
-
-  console.log(`[Tool: search_web] Query: "${query}"`);
 
   const serperData = await searchWebTool(query);
 
@@ -485,11 +576,9 @@ async function executeSearchWeb(args) {
     };
   }
 
-  const topResults = serperData.organic.slice(0, 6);
-
   return {
     success: true,
-    results: topResults.map((r) => ({
+    results: serperData.organic.slice(0, 6).map((r) => ({
       title: r.title,
       snippet: r.snippet,
       link: r.link,
@@ -498,7 +587,6 @@ async function executeSearchWeb(args) {
 }
 
 // -------------------- MAIN CHAT ROUTE --------------------
-// -------------------- MAIN CHAT ROUTE (TEXT-ONLY MODE) --------------------
 app.post("/chat", async (req, res) => {
   let { query: message, sessionId } = req.body;
 
@@ -506,42 +594,74 @@ app.post("/chat", async (req, res) => {
 
   if (!sessionId) {
     sessionId = uuidv4();
-    console.log(`[New Session] ${sessionId}`);
+    console.log(`\n[New Session] ${sessionId}`);
   }
 
   try {
     const history = await getMemory(sessionId);
 
-    // ---------------------------------------------------------
-    // 🔥 UPDATED SYSTEM PROMPT FOR TEXT-ONLY UI
-    // ---------------------------------------------------------
     const messages = [
       {
         role: "system",
-        content: `You are Omnia AI, a shopping assistant for electronics in Kuwait.
+        content: `You are Omnia AI, a helpful shopping assistant for electronics in Kuwait.
 
-**UI MODE: TEXT-ONLY**
-The user cannot see visual cards. You must list the products explicitly in your text response.
+**STRICT KEYWORD EXTRACTION RULES:**
+1. **VARIANTS:** If the user searches for a numbered model (e.g., "iPhone 17", "Pixel 9") and DOES NOT use modifiers like "Pro", "Max", "Plus", or "Ultra", you **MUST** set the 'variant' tool parameter to 'base'. 
+   - Example: "iPhone 17" -> variant: "base"
+   - Example: "iPhone 17 Pro" -> variant: "pro"
+2. **BRANDS:** Infer the brand if implied (e.g. "Galaxy" -> Brand: "Samsung").
 
-**INSTRUCTIONS:**
-1. If you find products, list the **Top 3-5** matches clearly.
-2. **Format each product like this:**
-   
-   **1. [Product Name]**
-   - Price: [Price] KWD
-   - Store: [Store Name]
-   - Specs: [Key Specs like Storage, Color]
-   - Description: [Short 2-sentence description]
-   
-3. **Be Concise:** Do not write huge paragraphs. Use bullet points.
-4. **No Links:** Do not try to output markdown links or images, just text details.
-5. If no products are found, apologize and suggest an alternative.`,
+**YOUR JOB:**
+1. Help users find products by calling search_product_database
+2. Extract filters from user queries: brand, color, storage, variant (pro, max, base), price range, store
+3. Provide brief, conversational responses
+4. If no results, suggest alternatives or ask clarifying questions
+
+**CRITICAL RESPONSE RULE:**
+When you call search_product_database and get results:
+- DO NOT list product details in your text response
+- DO NOT format products with titles, prices, or specifications
+- The frontend will automatically display product cards with all details
+
+**CORRECT RESPONSE FORMAT:**
+After calling the tool and getting products, respond with:
+- A brief introduction (1-2 sentences)
+- Optional helpful context about the results
+- Questions to help narrow down choices (if applicable)
+
+**EXAMPLES:**
+
+User: "iPhone 15 Pro Max 512GB"
+Tool returns: 5 products
+Your response: "I found 5 iPhone 15 Pro Max models with 512GB storage! Prices range from 450 to 520 KWD across different stores and colors. Would you like me to filter by a specific store or color?"
+
+User: "black headphones under 50"
+Tool returns: 8 products
+Your response: "I found 8 black headphones under 50 KWD! There's a nice variety from brands like Sony, JBL, and Anker. Any specific features you're looking for, like noise cancellation or wireless?"
+
+User: "gaming laptop"
+Tool returns: 0 products
+Your response: "I couldn't find any gaming laptops with those exact specifications. Could you tell me your budget range? That would help me find better options for you."
+
+**WHAT NOT TO DO:**
+❌ "Here are the products:
+1. iPhone 15 Pro Max - 450 KWD - Store: Xcite..."
+❌ Listing product titles, prices, or specifications in your text
+❌ Using markdown lists or numbered lists for products
+❌ Including [View Product] links in your text
+
+**GUIDELINES:**
+- Keep responses concise (2-4 sentences usually)
+- Be conversational and helpful
+- Always call the search tool before saying products aren't available
+- Extract ALL relevant filters from user queries
+- Don't make assumptions - if unclear, ask the user
+- Focus on helping users narrow down choices, not displaying product details`,
       },
       ...history.map((m) => ({ role: m.role, content: m.content })),
       { role: "user", content: message },
     ];
 
-    // Call OpenAI
     const completion = await openai.chat.completions.create({
       model: LLM_MODEL,
       messages,
@@ -552,14 +672,14 @@ The user cannot see visual cards. You must list the products explicitly in your 
 
     const responseMessage = completion.choices[0].message;
     let finalResponse = responseMessage.content || "";
-    let toolResults = [];
     let products = [];
 
-    // Handle tool calls
     if (responseMessage.tool_calls) {
       console.log(
-        `[Agent] Processing ${responseMessage.tool_calls.length} tools...`
+        `\n[Agent] Processing ${responseMessage.tool_calls.length} tool call(s)...`
       );
+
+      const toolResults = [];
 
       for (const toolCall of responseMessage.tool_calls) {
         const functionName = toolCall.function.name;
@@ -568,34 +688,21 @@ The user cannot see visual cards. You must list the products explicitly in your 
         let result;
         if (functionName === "search_product_database") {
           result = await executeSearchDatabase(args);
-          if (result.success && result.products) {
+          if (result.success && result.products && result.products.length > 0) {
             products = result.products;
-
-            // 🔥 IMPORTANT: Pass the products back to the AI so it can read them!
-            // We give it the top 5 to list out.
-            result = {
-              ...result,
-              products: result.products.slice(0, 5),
-              note: "These are the products found. Please list them for the user.",
-            };
           }
         } else if (functionName === "search_web") {
           result = await executeSearchWeb(args);
         }
 
-        toolResults.push({ tool: functionName, result });
+        toolResults.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(result),
+        });
       }
 
-      // Send tool results back to OpenAI so it can generate the list
-      const followUpMessages = [
-        ...messages,
-        responseMessage,
-        ...responseMessage.tool_calls.map((tc, idx) => ({
-          role: "tool",
-          tool_call_id: tc.id,
-          content: JSON.stringify(toolResults[idx].result),
-        })),
-      ];
+      const followUpMessages = [...messages, responseMessage, ...toolResults];
 
       const finalCompletion = await openai.chat.completions.create({
         model: LLM_MODEL,
@@ -606,11 +713,43 @@ The user cannot see visual cards. You must list the products explicitly in your 
       finalResponse = finalCompletion.choices[0].message.content;
     }
 
-    // Save to memory
     await saveToMemory(sessionId, "user", message);
     await saveToMemory(sessionId, "assistant", finalResponse);
 
-    // We still send the products array just in case, but your frontend ignores it
+    // 🔍 DETAILED LOGGING BEFORE SENDING RESPONSE
+    console.log(`\n========================================`);
+    console.log(`[FINAL RESPONSE DEBUG]`);
+    console.log(`========================================`);
+    console.log(`Session ID: ${sessionId}`);
+    console.log(`\n[AI Reply Text]:`);
+    console.log(finalResponse);
+    console.log(`\n[Products Count]: ${products.length}`);
+
+    if (products.length > 0) {
+      console.log(`\n[Products Data]:`);
+      products.forEach((product, index) => {
+        console.log(`\n--- Product #${index + 1} ---`);
+        console.log(`Title: ${product.title}`);
+        console.log(`Price: ${product.price} KWD`);
+        console.log(`Store: ${product.storeName}`);
+        console.log(`Category: ${product.category}`);
+        console.log(`Brand: ${product.brand || "N/A"}`);
+        console.log(`Image URL: ${product.imageUrl || "N/A"}`);
+        console.log(`Product URL: ${product.productUrl}`);
+        console.log(
+          `Description: ${product.description?.substring(0, 100)}...`
+        );
+        console.log(`Specs:`, JSON.stringify(product.specs, null, 2));
+        console.log(`RRF Score: ${product.rrfScore}`);
+      });
+    } else {
+      console.log(`\n[No Products] - Empty array being sent`);
+    }
+
+    console.log(`\n========================================`);
+    console.log(`[SENDING TO FRONTEND]`);
+    console.log(`========================================\n`);
+
     return res.json({
       reply: finalResponse,
       products: products,
@@ -619,7 +758,7 @@ The user cannot see visual cards. You must list the products explicitly in your 
     });
   } catch (error) {
     console.error("[Chat Error]", error);
-    return res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error: " + error.message });
   }
 });
 
@@ -627,18 +766,31 @@ The user cannot see visual cards. You must list the products explicitly in your 
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    message: "Hybrid Search Assistant with RRF, GIN, HNSW",
+    message: "Omnia AI - Production-Ready Hybrid Search v2.0",
     features: [
-      "Hybrid Search",
-      "RRF Fusion",
-      "Tool-based Architecture",
-      "OpenAI Router",
+      "🔥 Push-Down Filtering at Database Level",
+      "🧠 Scalable Query Analysis (No Hardcoded Arrays)",
+      "🎯 Semantic Vector Search (HNSW Index)",
+      "📝 Ultra-Strict Fulltext Search (0.5 threshold)",
+      "🔗 JSONB Specs Filtering (GIN Index)",
+      "⚡ Fulltext-Only RRF Mode",
+      "🔄 Dynamic Result Limiting",
+      "🌐 Web Search Integration",
+      "💾 Redis Caching",
+      "📊 Optimized for 500k+ Products",
+      "✅ Exact Model Number Matching",
+      "🚀 Unlimited Brand Support",
     ],
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📊 Features: Hybrid Search (HNSW + GIN) with RRF`);
-  console.log(`🤖 Router: OpenAI with Tool Calling`);
+  console.log(`\n🚀 Omnia AI Server Running v2.0`);
+  console.log(`📍 http://localhost:${PORT}`);
+  console.log(`🔥 Production-Ready for 500k+ Products`);
+  console.log(`📊 Hybrid Search: Vector (HNSW) + Fulltext (GIN) + RRF`);
+  console.log(`⚡ Push-Down Filtering: Enabled`);
+  console.log(`🧠 Scalable Query Analysis: Enabled`);
+  console.log(`✅ Ultra-Strict Matching: Enabled (0.5 threshold)`);
+  console.log(`🎯 Fulltext-Only Mode: Enabled\n`);
 });

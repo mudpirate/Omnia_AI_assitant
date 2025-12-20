@@ -12,13 +12,13 @@ const MAX_CLICKS = 50;
 const STORE_NAME_FIXED = StoreName.XCITE;
 const DOMAIN = "https://www.xcite.com";
 const MAX_RETRIES = 3;
-const RETRY_DELAY = 5000; // 5 seconds
+const RETRY_DELAY = 5000;
 
 // --- CONCURRENCY SETTING ---
-const CONCURRENT_LIMIT = 3; // Reduced from 5 to be safer
-const LLM_MODEL = "gpt-4o-mini"; 
+const CONCURRENT_LIMIT = 3;
+const LLM_MODEL = "gpt-4o-mini";
 
-// --- SYSTEM PROMPT (Triangle of Truth) ---
+// --- SYSTEM PROMPT ---
 const SYSTEM_PROMPT = `
 You are a strict Data Extraction AI for an E-commerce Database.
 Your goal is to extract a flat JSON object of filtering attributes ("specs") from raw product data.
@@ -47,12 +47,28 @@ Your goal is to extract a flat JSON object of filtering attributes ("specs") fro
 - If a field is not found, omit it. Do not hallucinate.
 `;
 
+// --- BRAND EXTRACTION PROMPT (AI-POWERED) ---
+const BRAND_EXTRACTION_PROMPT = `
+Extract the brand name from this product title.
+Return ONLY a JSON object with a single "brand" field.
+Rules:
+- Return the actual brand/manufacturer name (e.g., "Apple", "Samsung", "Bose")
+- If no brand is identifiable, return the first word of the title
+- Be consistent with capitalization (e.g., "Apple" not "APPLE")
+- Do not include model numbers or product types
+
+Example outputs:
+{"brand": "Apple"}
+{"brand": "Samsung"}
+{"brand": "Sony"}
+`;
+
 // -------------------------------------------------------------------
 // --- HELPER FUNCTIONS ---
 // -------------------------------------------------------------------
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function getEmbedding(text) {
@@ -66,6 +82,31 @@ async function getEmbedding(text) {
   } catch (error) {
     console.error("⚠️ OpenAI Embedding Error:", error.message);
     return null;
+  }
+}
+
+// 🔥 NEW: AI-POWERED BRAND EXTRACTION (No hardcoded list)
+async function extractBrandWithAI(title) {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: LLM_MODEL,
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: BRAND_EXTRACTION_PROMPT },
+        { role: "user", content: `Product title: "${title}"` },
+      ],
+      temperature: 0,
+    });
+
+    const result = JSON.parse(completion.choices[0].message.content);
+    return result.brand || title.split(" ")[0];
+  } catch (error) {
+    console.error(
+      `⚠️ Brand extraction failed for "${title.substring(0, 30)}...":`,
+      error.message
+    );
+    // Fallback: return first word
+    return title.split(" ")[0];
   }
 }
 
@@ -83,7 +124,7 @@ async function generateSpecsWithAI(title, rawSpecsText, descriptionSnippet) {
   try {
     const completion = await openai.chat.completions.create({
       model: LLM_MODEL,
-      response_format: { type: "json_object" }, 
+      response_format: { type: "json_object" },
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userPrompt },
@@ -93,47 +134,21 @@ async function generateSpecsWithAI(title, rawSpecsText, descriptionSnippet) {
 
     return JSON.parse(completion.choices[0].message.content);
   } catch (error) {
-    console.error(`⚠️ AI Specs Extraction Failed for "${title.substring(0, 20)}...":`, error.message);
+    console.error(
+      `⚠️ AI Specs Extraction Failed for "${title.substring(0, 20)}...":`,
+      error.message
+    );
     return {};
   }
 }
 
-function mapCategory(rawInput) {
-  const lower = rawInput.toLowerCase();
-
-  if (lower.includes("headphone") || lower.includes("headset"))
-    return "HEADPHONE";
-  if (lower.includes("earphone") || lower.includes("buds") || lower.includes("airpods"))
-    return "EARPHONE";
-  if (lower.includes("laptop") || lower.includes("macbook"))
-    return "LAPTOP";
-  if (lower.includes("tablet") || lower.includes("ipad") || lower.includes("tab"))
-    return "TABLET";
-  if (lower.includes("watch")) return "WATCH";
-  if (lower.includes("phone") || lower.includes("mobile"))
-    return "MOBILE_PHONE";
-  if (lower.includes("desktop") || lower.includes("computer") || lower.includes("pc"))
-    return "DESKTOP";
-
-  return "ACCESSORY";
-}
-
-function extractBrand(title) {
-  const knownBrands = ["Apple", "Samsung", "Xiaomi", "Huawei", "Honor", "Lenovo", "HP", "Dell", "Asus", "Sony", "Bose", "JBL", "Microsoft"];
-  const titleLower = title.toLowerCase();
-  for (const brand of knownBrands) {
-    if (titleLower.includes(brand.toLowerCase())) return brand;
-  }
-  return title.split(" ")[0];
-}
-
 function generateCascadingContext(title, brand, specs, price, description) {
   let context = `${brand} ${title}.`;
-  
+
   const specString = Object.entries(specs)
     .map(([k, v]) => `${k}: ${v}`)
     .join(", ");
-    
+
   if (specString) context += ` Specs: ${specString}.`;
   context += ` Price: ${price} KWD.`;
 
@@ -152,23 +167,24 @@ async function retryPageNavigation(page, url, maxRetries = MAX_RETRIES) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`  Attempt ${attempt}/${maxRetries} - Loading: ${url}`);
-      
-      await page.goto(url, { 
-        waitUntil: "domcontentloaded", 
-        timeout: 60000 
+
+      await page.goto(url, {
+        waitUntil: "domcontentloaded",
+        timeout: 60000,
       });
-      
+
       console.log(`  ✓ Page loaded successfully`);
       return true;
-      
     } catch (error) {
       console.warn(`  ⚠️ Attempt ${attempt} failed: ${error.message}`);
-      
+
       if (attempt < maxRetries) {
-        console.log(`  ⏳ Waiting ${RETRY_DELAY/1000}s before retry...`);
+        console.log(`  ⏳ Waiting ${RETRY_DELAY / 1000}s before retry...`);
         await sleep(RETRY_DELAY);
       } else {
-        throw new Error(`Failed to load page after ${maxRetries} attempts: ${error.message}`);
+        throw new Error(
+          `Failed to load page after ${maxRetries} attempts: ${error.message}`
+        );
       }
     }
   }
@@ -182,69 +198,97 @@ async function getStockAndDescription(browser, url) {
 
   try {
     page = await browser.newPage();
-    
-    // Set more conservative timeouts and disable images/CSS for faster loading
+
     await page.setRequestInterception(true);
-    page.on('request', (req) => {
-      if(['image', 'stylesheet', 'font'].includes(req.resourceType())){
+    page.on("request", (req) => {
+      if (["image", "stylesheet", "font"].includes(req.resourceType())) {
         req.abort();
       } else {
         req.continue();
       }
     });
-    
+
     page.setDefaultTimeout(60000);
-    
-    // Use retry logic for navigation
-    await retryPageNavigation(page, url, 2); // Only 2 retries for product pages
+
+    await retryPageNavigation(page, url, 2);
 
     const pageDetails = await page.evaluate(() => {
       let availability = null;
       let rawDescription = null;
       let scrapedSpecs = "";
 
-      const productSchema = document.querySelector('[itemtype="https://schema.org/Product"]');
+      const productSchema = document.querySelector(
+        '[itemtype="https://schema.org/Product"]'
+      );
 
-      const outOfStockElement = document.querySelector(".typography-small.text-functional-red-800");
-      if (outOfStockElement && outOfStockElement.textContent.trim().toLowerCase().includes("out of stock online")) {
+      const outOfStockElement = document.querySelector(
+        ".typography-small.text-functional-red-800"
+      );
+      if (
+        outOfStockElement &&
+        outOfStockElement.textContent
+          .trim()
+          .toLowerCase()
+          .includes("out of stock online")
+      ) {
         availability = "Out of stock online";
       }
 
       if (!availability && productSchema) {
         const offersSchema = productSchema.querySelector('[itemprop="offers"]');
-        availability = offersSchema ? offersSchema.querySelector('[itemprop="availability"]')?.getAttribute("content") : null;
+        availability = offersSchema
+          ? offersSchema
+              .querySelector('[itemprop="availability"]')
+              ?.getAttribute("content")
+          : null;
       }
 
       if (!availability) {
-        const inStockElement = document.querySelector(".flex.items-center.gap-x-1 .typography-small");
-        if (inStockElement && inStockElement.textContent.trim().toLowerCase().includes("in stock")) {
+        const inStockElement = document.querySelector(
+          ".flex.items-center.gap-x-1 .typography-small"
+        );
+        if (
+          inStockElement &&
+          inStockElement.textContent.trim().toLowerCase().includes("in stock")
+        ) {
           availability = "In Stock";
         }
       }
 
-      const specContainer = document.querySelector(".ProductOverview_list__7LEwB ul");
+      const specContainer = document.querySelector(
+        ".ProductOverview_list__7LEwB ul"
+      );
       if (specContainer) {
         scrapedSpecs = Array.from(specContainer.querySelectorAll("li"))
-            .map(li => li.innerText.trim())
-            .join("\n");
+          .map((li) => li.innerText.trim())
+          .join("\n");
       }
 
       if (productSchema) {
-         rawDescription = productSchema.querySelector('[itemprop="description"]')?.getAttribute("content");
-      }
-      
-      if (!rawDescription && scrapedSpecs) {
-          rawDescription = scrapedSpecs.replace(/\n/g, " | ");
+        rawDescription = productSchema
+          .querySelector('[itemprop="description"]')
+          ?.getAttribute("content");
       }
 
-      return { availability, rawDescription: rawDescription || "", scrapedSpecs };
+      if (!rawDescription && scrapedSpecs) {
+        rawDescription = scrapedSpecs.replace(/\n/g, " | ");
+      }
+
+      return {
+        availability,
+        rawDescription: rawDescription || "",
+        scrapedSpecs,
+      };
     });
 
     const { availability, rawDescription, scrapedSpecs } = pageDetails;
 
     if (availability) {
       const lowerCaseStatus = availability.toLowerCase();
-      if (lowerCaseStatus.includes("out of stock") || availability === "https://schema.org/OutOfStock") {
+      if (
+        lowerCaseStatus.includes("out of stock") ||
+        availability === "https://schema.org/OutOfStock"
+      ) {
         stockStatus = StockStatus.OUT_OF_STOCK;
       }
     }
@@ -255,9 +299,10 @@ async function getStockAndDescription(browser, url) {
       .trim();
 
     rawSpecsText = scrapedSpecs;
-
   } catch (e) {
-    console.warn(`\n⚠️ Failed to check details for ${url}. Error: ${e.message}`);
+    console.warn(
+      `\n⚠️ Failed to check details for ${url}. Error: ${e.message}`
+    );
     stockStatus = StockStatus.OUT_OF_STOCK;
   } finally {
     if (page) await page.close();
@@ -270,159 +315,304 @@ async function getStockAndDescription(browser, url) {
 // --- MAIN PROCESSOR ---
 // -------------------------------------------------------------------
 
-async function scrapeProducts(browser, TARGET_URL, RAW_CATEGORY_NAME) {
-  const STRICT_CATEGORY = mapCategory(RAW_CATEGORY_NAME);
+async function scrapeProducts(browser, TARGET_URL, categoryName) {
+  // Normalize category name for database storage
+  const CATEGORY = categoryName.toUpperCase().replace(/\s+/g, "_");
 
   let allProductsData = [];
-  let createdCount = 0, updatedCount = 0, skippedCount = 0, errorCount = 0;
+  let createdCount = 0,
+    updatedCount = 0,
+    skippedCount = 0,
+    errorCount = 0;
 
-  // --- 1. Crawl Category Page (Gather Links) ---
   let categoryPage;
-  
+
   try {
-    console.log(`Navigating to ${RAW_CATEGORY_NAME}...`);
-    
+    console.log(
+      `\n🎯 Scraping Category: "${categoryName}" (stored as: ${CATEGORY})`
+    );
+    console.log(`📍 URL: ${TARGET_URL}\n`);
+
     categoryPage = await browser.newPage();
     categoryPage.setDefaultTimeout(60000);
-    
-    // Use retry logic for main navigation
+
     await retryPageNavigation(categoryPage, TARGET_URL);
-    
-    // Wait for products to appear
+
     try {
       await categoryPage.waitForSelector(PRODUCT_SELECTOR, { timeout: 10000 });
       console.log("✓ Product grid loaded");
     } catch (e) {
-      console.log("⚠️ Product selector not found initially - page may be empty or layout changed");
+      console.log(
+        "⚠️ Product selector not found initially - page may be empty or layout changed"
+      );
     }
-    
-    // --- PAGINATION LOGIC: Click "Show More" to Load All Products ---
+
+    // --- PAGINATION LOGIC ---
     let clickCount = 0;
     let previousCount = 0;
-    
+    let stableCount = 0;
+
     while (clickCount < MAX_CLICKS) {
       try {
-        // Count current products
-        const currentCount = await categoryPage.$$eval(
-          PRODUCT_SELECTOR, 
-          tiles => tiles.length
-        ).catch(() => 0);
-        
-        console.log(`  📦 Products loaded: ${currentCount} (click ${clickCount + 1}/${MAX_CLICKS})`);
-        
-        // If no new products loaded, we're done
-        if (currentCount === previousCount && clickCount > 0) {
-          console.log("  ✓ No more products to load.");
-          break;
+        const currentCount = await categoryPage
+          .$$eval(PRODUCT_SELECTOR, (tiles) => tiles.length)
+          .catch(() => 0);
+
+        console.log(
+          `  📦 Products loaded: ${currentCount} (click ${
+            clickCount + 1
+          }/${MAX_CLICKS})`
+        );
+
+        if (currentCount === previousCount) {
+          stableCount++;
+          if (stableCount >= 2) {
+            console.log("  ✓ No more products loading. All loaded.");
+            break;
+          }
+        } else {
+          stableCount = 0;
         }
-        
+
         if (currentCount === 0 && clickCount === 0) {
           console.log("  ⚠️ No products found on initial load");
           break;
         }
-        
+
         previousCount = currentCount;
-        
-        // Try to find and click the "Show More" button
+
         const showMoreButton = await categoryPage.$(SHOW_MORE_BUTTON_SELECTOR);
-        
+
         if (!showMoreButton) {
           console.log("  ✓ Show More button not found. All products loaded.");
           break;
         }
-        
-        // Check if button is visible and clickable
-        const isVisible = await categoryPage.evaluate(sel => {
+
+        const isVisible = await categoryPage.evaluate((sel) => {
           const btn = document.querySelector(sel);
           if (!btn) return false;
           const style = window.getComputedStyle(btn);
-          return style.display !== 'none' && style.visibility !== 'hidden' && style.opacity !== '0';
+          return (
+            style.display !== "none" &&
+            style.visibility !== "hidden" &&
+            style.opacity !== "0"
+          );
         }, SHOW_MORE_BUTTON_SELECTOR);
-        
+
         if (!isVisible) {
-          console.log("  ✓ Show More button no longer visible. All products loaded.");
+          console.log(
+            "  ✓ Show More button no longer visible. All products loaded."
+          );
           break;
         }
-        
-        // Click the button and wait for new content
+
         await showMoreButton.click();
-        await categoryPage.waitForTimeout(3000); // Increased wait time
-        
+        await sleep(3000);
+
         clickCount++;
-        
       } catch (error) {
         console.log(`  ⚠️ Pagination ended: ${error.message}`);
         break;
       }
     }
-    
+
     if (clickCount >= MAX_CLICKS) {
-      console.log(`  ⚠️ Reached maximum click limit (${MAX_CLICKS}). Some products may not be loaded.`);
+      console.log(
+        `  ⚠️ Reached maximum click limit (${MAX_CLICKS}). Some products may not be loaded.`
+      );
     }
-    
-    // --- Extract All Product Tiles ---
+
+    // --- SCROLL TO TRIGGER LAZY-LOADED IMAGES ---
+    console.log("\n📸 Triggering lazy-load for all images...");
+
+    const scrollHeight = await categoryPage.evaluate(
+      () => document.body.scrollHeight
+    );
+    const viewportHeight = await categoryPage.evaluate(
+      () => window.innerHeight
+    );
+    const scrollSteps = Math.ceil(scrollHeight / viewportHeight);
+
+    for (let step = 0; step <= scrollSteps; step++) {
+      await categoryPage.evaluate(
+        (viewportHeight, step) => {
+          window.scrollTo(0, viewportHeight * step);
+        },
+        viewportHeight,
+        step
+      );
+
+      await sleep(800);
+    }
+
+    await categoryPage.evaluate(() => window.scrollTo(0, 0));
+    await sleep(500);
+
+    console.log("✓ Lazy-load scroll complete. Extracting images...\n");
+
+    // --- ENHANCED IMAGE EXTRACTION WITH LAZY-LOAD SUPPORT ---
     allProductsData = await categoryPage.$$eval(
       PRODUCT_SELECTOR,
-      (tiles, category, store, domain) => {
-        return tiles.map(tile => {
-          try {
-             const title = tile.querySelector(".ProductTile_productName__wEJB5")?.textContent.trim() || "N/A";
-             const relativeUrl = tile.querySelector("a")?.getAttribute("href");
-             const productUrl = relativeUrl ? (relativeUrl.startsWith("http") ? relativeUrl : domain + relativeUrl) : "N/A";
-             
-             let priceText = tile.querySelector("span.text-2xl.text-functional-red-800.block")?.textContent.trim() || "N/A";
-             if(priceText === "N/A") {
-                 const h4 = tile.querySelector("h4");
-                 if(h4) priceText = h4.textContent.trim();
-             }
-             const price = parseFloat(priceText.replace(/KD/gi, "").replace(/,/g, "").trim()) || 0;
+      (tiles, domain) => {
+        return tiles
+          .map((tile) => {
+            try {
+              const title =
+                tile
+                  .querySelector(".ProductTile_productName__wEJB5")
+                  ?.textContent.trim() || "N/A";
+              const relativeUrl = tile.querySelector("a")?.getAttribute("href");
+              const productUrl = relativeUrl
+                ? relativeUrl.startsWith("http")
+                  ? relativeUrl
+                  : domain + relativeUrl
+                : "N/A";
 
-             // --- FIXED IMAGE EXTRACTION LOGIC ---
-             let imageUrl = "https://example.com/placeholder-image.png";
-             const imgElement = tile.querySelector("img[data-cs-capture]") || tile.querySelector("img");
-             
-             if (imgElement) {
-               // 1. Try to get high-res from srcset
-               const srcset = imgElement.getAttribute("srcset") || "";
-               if (srcset) {
-                 const srcsetUrls = srcset.split(",").map((s) => s.trim());
-                 const highRes = srcsetUrls.find((s) => s.includes("2x"));
-                 let urlToUse = highRes
-                   ? highRes.split(" ")[0]
-                   : srcsetUrls.length > 0
-                   ? srcsetUrls[0].split(" ")[0]
-                   : null;
-                 if (urlToUse && urlToUse.startsWith("http")) {
-                   imageUrl = urlToUse;
-                 }
-               } 
-               
-               // 2. Fallback to normal src, but explicitly block data:image (binary)
-               if (imageUrl === "https://example.com/placeholder-image.png") {
-                 const src = imgElement.getAttribute("src") || "";
-                 if (
-                   src &&
-                   src.startsWith("http") &&
-                   !src.includes("data:image")
-                 ) {
-                   imageUrl = src;
-                 }
-               }
-             }
-             // ------------------------------------
+              let priceText =
+                tile
+                  .querySelector("span.text-2xl.text-functional-red-800.block")
+                  ?.textContent.trim() || "N/A";
+              if (priceText === "N/A") {
+                const h4 = tile.querySelector("h4");
+                if (h4) priceText = h4.textContent.trim();
+              }
+              const price =
+                parseFloat(
+                  priceText.replace(/KD/gi, "").replace(/,/g, "").trim()
+                ) || 0;
 
-             return { storeName: store, title, price, imageUrl, productUrl };
-          } catch(e) { 
-            console.error('Tile extraction error:', e);
-            return null; 
-          }
-        }).filter(p => p !== null);
+              let imageUrl = null;
+              const allImages = Array.from(tile.querySelectorAll("img"));
+
+              for (const img of allImages) {
+                const src = img.getAttribute("src") || img.src || "";
+                if (
+                  src &&
+                  src.startsWith("http") &&
+                  src.includes("cdn") &&
+                  !src.startsWith("data:") &&
+                  !src.includes("placeholder") &&
+                  src.length > 30
+                ) {
+                  imageUrl = src;
+                  break;
+                }
+              }
+
+              if (!imageUrl) {
+                for (const img of allImages) {
+                  const srcset = img.getAttribute("srcset") || "";
+                  if (srcset) {
+                    const srcsetUrls = srcset.split(",").map((s) => s.trim());
+                    for (const entry of srcsetUrls) {
+                      const url = entry.split(" ")[0].trim();
+                      if (
+                        url &&
+                        url.startsWith("http") &&
+                        url.includes("cdn") &&
+                        !url.startsWith("data:") &&
+                        !url.includes("placeholder") &&
+                        url.length > 30
+                      ) {
+                        imageUrl = url;
+                        break;
+                      }
+                    }
+                    if (imageUrl) break;
+                  }
+                }
+              }
+
+              if (!imageUrl) {
+                for (const img of allImages) {
+                  const dataSrc = img.getAttribute("data-src") || "";
+                  if (
+                    dataSrc &&
+                    dataSrc.startsWith("http") &&
+                    dataSrc.includes("cdn") &&
+                    !dataSrc.startsWith("data:") &&
+                    !dataSrc.includes("placeholder") &&
+                    dataSrc.length > 30
+                  ) {
+                    imageUrl = dataSrc;
+                    break;
+                  }
+                }
+              }
+
+              if (!imageUrl) {
+                for (const img of allImages) {
+                  const src = img.getAttribute("src") || img.src || "";
+                  if (
+                    src &&
+                    src.startsWith("http") &&
+                    !src.startsWith("data:") &&
+                    !src.includes("placeholder") &&
+                    src.length > 30
+                  ) {
+                    imageUrl = src;
+                    break;
+                  }
+                }
+              }
+
+              if (!imageUrl) {
+                for (const img of allImages) {
+                  const srcset = img.getAttribute("srcset") || "";
+                  if (srcset) {
+                    const srcsetUrls = srcset.split(",").map((s) => s.trim());
+                    const highRes =
+                      srcsetUrls.find((s) => s.includes("2x")) || srcsetUrls[0];
+                    if (highRes) {
+                      const url = highRes.split(" ")[0].trim();
+                      if (
+                        url &&
+                        url.startsWith("http") &&
+                        !url.startsWith("data:") &&
+                        !url.includes("placeholder") &&
+                        url.length > 30
+                      ) {
+                        imageUrl = url;
+                        break;
+                      }
+                    }
+                  }
+                }
+              }
+
+              if (!imageUrl) {
+                imageUrl = "https://via.placeholder.com/300x300?text=No+Image";
+              }
+
+              return { title, price, imageUrl, productUrl };
+            } catch (e) {
+              console.error("Tile extraction error:", e);
+              return null;
+            }
+          })
+          .filter((p) => p !== null);
       },
-      STRICT_CATEGORY,
-      STORE_NAME_FIXED,
       DOMAIN
     );
 
+    if (allProductsData.length > 0) {
+      console.log("\n📸 Sample Image URLs (first 3 products):");
+      allProductsData.slice(0, 3).forEach((p, i) => {
+        console.log(`  ${i + 1}. ${p.title.substring(0, 40)}...`);
+        console.log(`     Image: ${p.imageUrl}`);
+      });
+
+      const cdnCount = allProductsData.filter((p) =>
+        p.imageUrl.includes("cdn")
+      ).length;
+      const placeholderCount = allProductsData.filter((p) =>
+        p.imageUrl.includes("placeholder")
+      ).length;
+      console.log(`\n  ✓ CDN images: ${cdnCount}/${allProductsData.length}`);
+      console.log(
+        `  ⚠️ Placeholders: ${placeholderCount}/${allProductsData.length}\n`
+      );
+    }
   } catch (error) {
     console.error(`❌ Error during category page scraping: ${error.message}`);
     throw error;
@@ -430,32 +620,47 @@ async function scrapeProducts(browser, TARGET_URL, RAW_CATEGORY_NAME) {
     if (categoryPage) await categoryPage.close();
   }
 
-  // --- 2. Filter Valid Products ---
-  const validProducts = allProductsData.filter(p => p.title !== "N/A" && p.productUrl !== "N/A" && p.price > 0);
-  console.log(`\n✅ Found ${validProducts.length} valid products. Starting detailed processing...\n`);
+  const validProducts = allProductsData.filter(
+    (p) => p.title !== "N/A" && p.productUrl !== "N/A" && p.price > 0
+  );
+  console.log(
+    `\n✅ Found ${validProducts.length} valid products. Starting detailed processing...\n`
+  );
 
   if (validProducts.length === 0) {
-    console.log("⚠️ No valid products found. Possible reasons:");
-    console.log("   1. The URL is correct but category is empty");
-    console.log("   2. The product selector '.ProductList_tileWrapper__V1Z9h' may have changed");
-    console.log("   3. Network connection issues");
-    console.log("   4. Website structure has changed");
+    console.log("⚠️ No valid products found.");
     return;
   }
 
-  // --- 3. Process Products (Scrape -> AI -> DB) ---
+  // --- PROCESS PRODUCTS ---
   const productUpdateTask = async (product) => {
-    const { stock, description, rawSpecsText } = await getStockAndDescription(browser, product.productUrl);
-    const specs = await generateSpecsWithAI(product.title, rawSpecsText, description);
-    
-    const brand = extractBrand(product.title);
-    const searchKey = generateCascadingContext(product.title, brand, specs, product.price, description);
+    const { stock, description, rawSpecsText } = await getStockAndDescription(
+      browser,
+      product.productUrl
+    );
+
+    // 🔥 AI-powered brand extraction (no hardcoded list)
+    const brand = await extractBrandWithAI(product.title);
+
+    const specs = await generateSpecsWithAI(
+      product.title,
+      rawSpecsText,
+      description
+    );
+
+    const searchKey = generateCascadingContext(
+      product.title,
+      brand,
+      specs,
+      product.price,
+      description
+    );
     const vector = await getEmbedding(searchKey);
 
     const upsertData = {
       title: product.title,
       description: description,
-      category: STRICT_CATEGORY,
+      category: CATEGORY,
       price: product.price,
       imageUrl: product.imageUrl,
       stock: stock,
@@ -465,47 +670,75 @@ async function scrapeProducts(browser, TARGET_URL, RAW_CATEGORY_NAME) {
       searchKey: searchKey,
     };
 
-    const record = await prisma.product.upsert({
+    const existing = await prisma.product.findUnique({
       where: {
-        storeName_productUrl: { storeName: product.storeName, productUrl: product.productUrl },
+        storeName_productUrl: {
+          storeName: STORE_NAME_FIXED,
+          productUrl: product.productUrl,
+        },
       },
-      update: upsertData,
-      create: {
-        ...upsertData,
-        storeName: product.storeName,
-        productUrl: product.productUrl,
-        scrapedAt: new Date(),
-      },
-      select: { id: true, createdAt: true, title: true, stock: true },
+      select: { id: true, createdAt: true },
     });
+
+    let record;
+    if (existing) {
+      record = await prisma.product.update({
+        where: { id: existing.id },
+        data: upsertData,
+        select: { id: true, createdAt: true, title: true, stock: true },
+      });
+    } else {
+      record = await prisma.product.create({
+        data: {
+          ...upsertData,
+          storeName: STORE_NAME_FIXED,
+          productUrl: product.productUrl,
+          scrapedAt: new Date(),
+        },
+        select: { id: true, createdAt: true, title: true, stock: true },
+      });
+    }
 
     if (vector) {
       const vectorString = `[${vector.join(",")}]`;
       await prisma.$executeRaw`UPDATE "Product" SET "descriptionEmbedding" = ${vectorString}::vector WHERE id = ${record.id}`;
     }
 
-    return { result: record, status: stock, isNew: record.createdAt.getTime() > Date.now() - 5000 };
+    return {
+      result: record,
+      status: stock,
+      isNew: !existing,
+    };
   };
 
   // --- Batch Loop ---
   for (let i = 0; i < validProducts.length; i += CONCURRENT_LIMIT) {
     const batch = validProducts.slice(i, i + CONCURRENT_LIMIT);
-    console.log(`➡️ Processing batch ${Math.ceil((i + 1) / CONCURRENT_LIMIT)} of ${Math.ceil(validProducts.length / CONCURRENT_LIMIT)}...`);
+    console.log(
+      `➡️ Processing batch ${Math.ceil(
+        (i + 1) / CONCURRENT_LIMIT
+      )} of ${Math.ceil(validProducts.length / CONCURRENT_LIMIT)}...`
+    );
 
-    const batchResults = await Promise.allSettled(batch.map(p => productUpdateTask(p)));
+    const batchResults = await Promise.allSettled(
+      batch.map((p) => productUpdateTask(p))
+    );
 
     for (const res of batchResults) {
       if (res.status === "fulfilled") {
-        if (res.value.isNew) createdCount++; else updatedCount++;
+        if (res.value.isNew) createdCount++;
+        else updatedCount++;
       } else {
         errorCount++;
-        console.error(`❌ Error processing item: ${res.reason}`);
+        console.error(`❌ Error: ${res.reason?.message || res.reason}`);
       }
     }
   }
 
-  console.log(`\n=== JOB SUMMARY ===`);
-  console.log(`✅ Created: ${createdCount} | 🔄 Updated: ${updatedCount} | ❌ Errors: ${errorCount}`);
+  console.log(`\n=== JOB SUMMARY for "${categoryName}" ===`);
+  console.log(
+    `✅ Created: ${createdCount} | 🔄 Updated: ${updatedCount} | ❌ Errors: ${errorCount}`
+  );
 }
 
 export default scrapeProducts;
