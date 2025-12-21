@@ -557,20 +557,22 @@ async function hybridSearch(
   // No results - try relaxed filters
   console.log(`[Hybrid Search] No results. Trying relaxed filters...`);
 
-  // CRITICAL: Keep category in relaxed mode to prevent cross-category contamination
-  // Example: If user searches "iPhone case" and we have no cases,
-  // we should return 0 results, NOT show iPhones
+  // CRITICAL: Keep core specs in relaxed mode
+  // Hard Constraints (ALWAYS keep): category, brand, model, storage, RAM
+  // Soft Preferences (drop): variant, color
   const relaxedFilters = {
     minPrice: filters.minPrice,
     maxPrice: filters.maxPrice,
     storeName: filters.storeName,
-    category: filters.category, // ✅ PRESERVE category filter
-    brand: filters.brand, // ✅ PRESERVE brand filter
-    modelNumber: filters.modelNumber, // ✅ PRESERVE model number
+    category: filters.category, // ✅ PRESERVE - Cases ≠ Phones
+    brand: filters.brand, // ✅ PRESERVE - Apple ≠ Samsung
+    modelNumber: filters.modelNumber, // ✅ PRESERVE - iPhone 15 ≠ iPhone 14
+    storage: filters.storage, // ✅ PRESERVE - 512GB is a specific requirement
+    ram: filters.ram, // ✅ PRESERVE - 16GB RAM is a specific requirement
   };
 
   console.log(
-    `[Hybrid Search] Relaxed filters (kept category/brand/model):`,
+    `[Hybrid Search] Relaxed filters (kept category/brand/model/storage/ram):`,
     JSON.stringify(relaxedFilters, null, 2)
   );
 
