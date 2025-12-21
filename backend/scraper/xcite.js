@@ -18,7 +18,7 @@ const RETRY_DELAY = 5000;
 const CONCURRENT_LIMIT = 3;
 const LLM_MODEL = "gpt-4o-mini";
 
-// --- SYSTEM PROMPT ---
+// --- ENHANCED SYSTEM PROMPT WITH STRICT NORMALIZATION ---
 const SYSTEM_PROMPT = `
 You are a strict Data Extraction AI for an E-commerce Database.
 Your goal is to extract a flat JSON object of filtering attributes ("specs") from raw product data.
@@ -28,23 +28,189 @@ Your goal is to extract a flat JSON object of filtering attributes ("specs") fro
 - **TIER 2 (High Detail):** SPECS TABLE. Use this for technical details missing from the title (Material, Voltage, Ingredients, Hz).
 - **TIER 3 (Context):** DESCRIPTION. Use only as a fallback. NEVER use it to override the Title.
 
-### 2. NORMALIZATION RULES (Crucial)
-- **Keys:** Snake_case and lowercase (e.g., 'screen_size', not 'Screen Size').
-- **Values:** Lowercase strings (e.g., 'silver', not 'Silver').
-- **Storage:** Convert to 'gb' or 'tb' (no spaces). Example: '256 GB' -> '256gb', '1 TB' -> '1024gb'.
-- **Colors:** Normalize fancy names. 'Midnight' -> 'black', 'Starlight' -> 'silver', 'Titanium Blue' -> 'blue'.
-- **measurements:** Standardize units (e.g., '2 Liters' -> '2l', '500 ML' -> '500ml', '1.5 KG' -> '1.5kg').
+### 2. CRITICAL NORMALIZATION RULES (MANDATORY)
+- **Keys:** Snake_case and lowercase ONLY (e.g., 'screen_size', 'ram', 'storage').
+- **Values:** Lowercase strings (e.g., 'silver', not 'Silver' or 'SILVER').
+- **Storage:** ALWAYS convert to 'gb' or 'tb' with NO spaces. Examples:
+  * '256 GB' -> '256gb'
+  * '1 TB' -> '1tb'
+  * '512GB' -> '512gb'
+  * '2TB' -> '2tb'
+- **RAM:** ALWAYS convert to 'gb' with NO spaces. Examples:
+  * '16 GB' -> '16gb'
+  * '8GB' -> '8gb'
+  * '32 GB RAM' -> '32gb'
+- **Colors:** Normalize fancy marketing names to basic colors:
+  * 'Midnight' -> 'black'
+  * 'Starlight' -> 'silver'
+  * 'Titanium Blue' -> 'blue'
+  * 'Titanium Grey' -> 'gray'
+  * 'Space Black' -> 'black'
+  * 'Natural Titanium' -> 'silver'
+- **Network:** Lowercase, no spaces: '5g', '4g', 'wifi', 'lte'
+- **Variant:** Extract the model variant/suffix that appears AFTER the model number in the title.
+  * Always lowercase, preserve spaces for multi-word variants
+  * Common variants by brand:
+    - Apple: "base", "plus", "pro", "pro max", "mini", "se"
+    - Samsung: "base", "plus", "ultra", "fe", "fold", "flip"
+    - Google: "base", "pro", "a", "fold"
+    - OnePlus: "base", "pro", "r", "t", "nord"
+    - Xiaomi: "base", "pro", "ultra", "lite"
+    - Nothing: "base", "a"
+    - Motorola: "edge", "edge pro", "g power", "razr ultra"
+    - Honor: "base", "pro", "lite", "magic pro"
+    - Oppo/Realme/Vivo: "find pro", "reno", "gt pro", "x pro"
+  * If no variant suffix exists, use "base"
+  * Examples:
+    - "iPhone 15 Pro Max" → "pro max"
+    - "Galaxy S24 Ultra" → "ultra"
+    - "Pixel 8a" → "a"
+    - "OnePlus 12R" → "r"
+    - "Nothing Phone (2)" → "base"
+    - "Galaxy Z Fold 5" → "fold"
+    - "Xiaomi 14 Ultra" → "ultra"
+    - "Moto Edge 40 Pro" → "edge pro"
+- **Measurements:** Standardize units (no spaces):
+  * '2 Liters' -> '2l'
+  * '500 ML' -> '500ml'
+  * '1.5 KG' -> '1.5kg'
+  * '45mm' -> '45mm'
 
-### 3. CATEGORY-SPECIFIC LOGIC
-- **Electronics:** - Extract 'variant' strictly as: 'pro', 'pro_max', 'plus', 'mini', or 'base'.
-   - Extract 'network': '5g', '4g', 'wifi'.
-- **Fashion:** Extract 'gender' ('men', 'women', 'unisex', 'kids'), 'size', 'material'.
-- **Grocery:** Extract 'dietary' (e.g., 'gluten_free'), 'volume', 'pack_count'.
+### 3. CATEGORY-SPECIFIC CRITICAL KEYS (MANDATORY)
 
-### 4. OUTPUT FORMAT
-- Return ONLY a flat JSON object.
-- Do NOT include Price, Stock, or Store Name (these are stored elsewhere).
-- If a field is not found, omit it. Do not hallucinate.
+**MOBILE PHONES** - MUST include these critical keys:
+- \`ram\`: e.g., "6gb", "8gb", "12gb", "16gb"
+- \`storage\`: e.g., "64gb", "128gb", "256gb", "512gb", "1tb"
+- \`color\`: normalized color name
+- \`network\`: e.g., "5g", "4g", "lte"
+- \`variant\`: brand-specific variant suffix (see normalization rules above)
+  * Apple: "base", "plus", "pro", "pro max", "mini", "se"
+  * Samsung: "base", "plus", "ultra", "fe", "fold", "flip"
+  * Google: "base", "pro", "a"
+  * Others: extract the actual suffix from title
+Optional keys: screen_size, battery, processor, camera, sim
+
+Example (iPhone):
+{
+  "variant": "pro max",
+  "ram": "12gb",
+  "storage": "512gb",
+  "color": "black",
+  "network": "5g",
+  "screen_size": "6.8in",
+  "battery": "5000mah",
+  "processor": "a17 pro",
+  "camera": "200mp"
+}
+
+Example (Samsung):
+{
+  "variant": "ultra",
+  "ram": "12gb",
+  "storage": "256gb",
+  "color": "titanium gray",
+  "network": "5g",
+  "screen_size": "6.8in",
+  "processor": "snapdragon 8 gen 3"
+}
+
+Example (Google Pixel):
+{
+  "variant": "a",
+  "ram": "8gb",
+  "storage": "128gb",
+  "color": "blue",
+  "network": "5g",
+  "screen_size": "6.1in"
+}
+
+**LAPTOPS** - MUST include these critical keys:
+- \`ram\`: e.g., "8gb", "16gb", "32gb", "64gb"
+- \`storage\`: e.g., "256gb", "512gb", "1tb", "2tb"
+- \`processor\`: e.g., "m3 pro", "intel i7", "ryzen 7"
+- \`screen_size\`: e.g., "13in", "14in", "15.6in", "16in"
+Optional keys: graphics, os, color, keyboard
+
+Example:
+{
+  "ram": "16gb",
+  "storage": "512gb",
+  "processor": "m3 pro",
+  "screen_size": "14in",
+  "graphics": "14-core gpu",
+  "os": "macos",
+  "color": "space black"
+}
+
+**TABLETS** - MUST include these critical keys:
+- \`storage\`: e.g., "64gb", "128gb", "256gb", "512gb"
+- \`connectivity\`: e.g., "wifi", "wifi + cellular"
+- \`screen_size\`: e.g., "10.2in", "11in", "12.9in"
+Optional keys: ram, color, processor, os
+
+Example:
+{
+  "storage": "256gb",
+  "connectivity": "wifi + cellular",
+  "screen_size": "11in",
+  "color": "blue",
+  "processor": "m2"
+}
+
+**HEADPHONES** - MUST include these critical keys:
+- \`type\`: e.g., "over-ear", "in-ear", "on-ear"
+- \`connectivity\`: e.g., "wireless bluetooth", "wired", "wireless"
+- \`color\`: normalized color name
+Optional keys: noise_cancellation, battery_life, microphone
+
+Example:
+{
+  "type": "over-ear",
+  "connectivity": "wireless bluetooth",
+  "color": "silver",
+  "noise_cancellation": "active",
+  "battery_life": "30 hours"
+}
+
+**SMARTWATCHES** - MUST include these critical keys:
+- \`size\`: case size, e.g., "40mm", "44mm", "45mm"
+- \`connectivity\`: e.g., "gps", "gps + cellular"
+- \`color\`: normalized color name
+Optional keys: case_material, strap_material, water_resistance
+
+Example:
+{
+  "size": "45mm",
+  "connectivity": "gps + cellular",
+  "color": "black",
+  "case_material": "aluminum",
+  "strap_material": "sport band"
+}
+
+**CLOTHES/SHOES** - MUST include these critical keys:
+- \`size\`: standardized format, e.g., "s", "m", "l", "xl" or "42", "43", "44"
+- \`gender\`: e.g., "men", "women", "unisex", "kids"
+- \`color\`: normalized color name
+Optional keys: material, fit, style, pattern
+
+Example:
+{
+  "size": "l",
+  "gender": "men",
+  "color": "white",
+  "material": "cotton",
+  "fit": "regular fit"
+}
+
+### 4. OUTPUT FORMAT RULES
+- Return ONLY a flat JSON object
+- ALL keys must be lowercase with underscores (snake_case)
+- ALL values must be lowercase strings
+- Do NOT include: Price, Stock, Store Name (stored separately)
+- ALWAYS include the critical keys for the detected category
+- If a critical key cannot be determined, set it to null but DO NOT omit it
+- Do not hallucinate data - only extract what exists
+- Additional non-critical keys are allowed but critical keys are MANDATORY
 `;
 
 // --- BRAND EXTRACTION PROMPT (AI-POWERED) ---
@@ -85,7 +251,7 @@ async function getEmbedding(text) {
   }
 }
 
-// 🔥 NEW: AI-POWERED BRAND EXTRACTION (No hardcoded list)
+// 🔥 AI-POWERED BRAND EXTRACTION (No hardcoded list)
 async function extractBrandWithAI(title) {
   try {
     const completion = await openai.chat.completions.create({

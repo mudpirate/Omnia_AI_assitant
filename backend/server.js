@@ -45,7 +45,7 @@ const TOOLS = [
     function: {
       name: "search_product_database",
       description:
-        "Search for any product in the database. You are responsible for extracting strict filters.",
+        "Search for products. Extract all specifications accurately from the user query.",
       parameters: {
         type: "object",
         properties: {
@@ -56,17 +56,17 @@ const TOOLS = [
           category: {
             type: "string",
             description:
-              "Category if mentioned (e.g., smartphone, laptop, headphone, tablet)",
+              "Category if mentioned (e.g., smartphone, laptop, headphone, tablet, desktop, clothing, shoes)",
           },
           brand: {
             type: "string",
             description:
-              "Brand name if mentioned (e.g., Apple, Samsung, Sony). Infer brand from model names (e.g. iPhone -> Apple).",
+              "Brand name. CRITICAL: Infer the brand if the model name implies it (e.g. 'iPhone' -> 'Apple', 'Galaxy' -> 'Samsung', 'Pixel' -> 'Google', 'Air Jordan' -> 'Nike', 'XPS' -> 'Dell').",
           },
           variant: {
             type: "string",
             description:
-              "CRITICAL: The model variant. If user searches for a numbered model (e.g. 'iPhone 17') WITHOUT modifiers like 'Pro', 'Max', 'Plus', you MUST set this to 'base'. If 'iPhone 17 Pro', set to 'pro'. Values: 'base', 'pro', 'pro_max', 'plus', 'ultra'.",
+              "Model variant. IMPORTANT: Extract the FULL variant string as mentioned by user. Examples: 'Pro Max' -> 'pro_max', 'Pro' -> 'pro', 'Plus' -> 'plus', 'Ultra' -> 'ultra', 'Mini' -> 'mini'. If just a number with no modifier (e.g. 'iPhone 15'), set to 'base'.",
           },
           color: {
             type: "string",
@@ -75,7 +75,20 @@ const TOOLS = [
           storage: {
             type: "string",
             description:
-              "Storage capacity if mentioned (e.g., '512gb', '1tb', '256gb')",
+              "Storage/ROM/SSD capacity ONLY. CRITICAL RULES: (1) Only extract if user mentions 'storage', 'ROM', 'SSD', or uses numbers >= 64GB WITHOUT the word 'RAM'. (2) If query is '256gb phone' or '512gb storage' -> extract the storage value. (3) If query is '16gb ram and 256gb' -> storage is '256gb' (NOT 16gb). (4) Common storage values: 64gb, 128gb, 256gb, 512gb, 1tb, 2tb. Examples: '256gb iphone' -> '256gb', '1tb laptop' -> '1tb', '16gb ram 512gb phone' -> '512gb'",
+          },
+          ram: {
+            type: "string",
+            description:
+              "RAM/Memory size ONLY. CRITICAL RULES: (1) Only extract if user explicitly mentions 'RAM' or 'memory'. (2) If query is '16gb ram phone' -> extract '16gb'. (3) If query is '8gb memory laptop' -> extract '8gb'. (4) If query is just '256gb phone' with NO 'RAM' keyword -> DO NOT extract as RAM (it's storage). (5) Common RAM values: 4gb, 8gb, 12gb, 16gb, 32gb, 64gb. Examples: '16gb ram iphone' -> '16gb', '8gb ram and 256gb storage' -> '8gb', '12gb memory phone' -> '12gb'",
+          },
+          size: {
+            type: "string",
+            description: "For clothes/shoes (e.g. 'M', 'L', '42', '10', 'XL')",
+          },
+          gender: {
+            type: "string",
+            description: "For clothes (e.g. 'Men', 'Women', 'Kids')",
           },
           max_price: {
             type: "number",
@@ -124,36 +137,7 @@ async function getQueryEmbedding(text) {
   return { embedding, vectorLiteral };
 }
 
-// -------------------- INTELLIGENT QUERY ANALYZER (SCALABLE) --------------------
-function analyzeQueryForFilters(query) {
-  const q = query.toLowerCase();
-  const extracted = {};
-
-  // 1. Extract Storage (512gb, 1tb, 256gb, etc.)
-  // We keep this regex as a helper for numeric storage values, but rely on LLM for everything else.
-  const gbMatch = q.match(/(\d+)\s*gb/i);
-  const tbMatch = q.match(/(\d+)\s*tb/i);
-
-  if (gbMatch) {
-    extracted.storage = `${gbMatch[1]}gb`;
-  } else if (tbMatch) {
-    const gb = parseInt(tbMatch[1]) * 1024;
-    extracted.storage = `${gb}gb`;
-  }
-
-  // NOTE: Manual brand/variant regex mapping has been removed.
-  // We now rely 100% on the LLM Tool Definitions and System Prompt for this logic.
-
-  console.log(`[Query Analyzer] Extracted:`, extracted);
-  return extracted;
-}
-
 // -------------------- PUSH-DOWN FILTER BUILDER --------------------
-/**
- * 🔥 BUILD SQL WHERE CLAUSE WITH STRICT JSON FILTERING & TITLE MATCHING
- * - REMOVED: searchKey filtering
- * - ADDED: Strict Number Matching directly in the WHERE clause (Applies to Vector Search too!)
- */
 function buildPushDownFilters(filters = {}, rawQuery = "") {
   const conditions = [];
 
@@ -184,16 +168,18 @@ function buildPushDownFilters(filters = {}, rawQuery = "") {
     conditions.push(`LOWER("category") LIKE '%${catLower}%'`);
   }
 
-  // 5. Brand (Strict Column Match) - NO SEARCH KEY FALLBACK
+  // 5. Brand (Strict Column Match) - Relying on LLM Inference
   if (filters.brand) {
     const brandLower = filters.brand.toLowerCase().replace(/'/g, "''");
     conditions.push(`LOWER("brand") = '${brandLower}'`);
   }
 
-  // 6. Variant (Strict JSON Match)
+  // 6. Variant (IMPROVED - Use ILIKE for flexible matching)
+  // This handles "pro max", "pro", "plus", etc. more flexibly
   if (filters.variant) {
     const variantLower = filters.variant.toLowerCase().replace(/'/g, "''");
-    conditions.push(`"specs"->>'variant' = '${variantLower}'`);
+    // Use ILIKE to match variants that contain the search term
+    conditions.push(`"specs"->>'variant' ILIKE '%${variantLower}%'`);
   }
 
   // 7. Storage (Strict JSON Match)
@@ -208,12 +194,28 @@ function buildPushDownFilters(filters = {}, rawQuery = "") {
     conditions.push(`"specs"->>'color' ILIKE '%${colorLower}%'`);
   }
 
-  // 9. 🔥 STRICT NUMBER MATCHING (Moved here to apply to Vector Search too)
-  // If user searches "14", we enforce that the TITLE must contain "14" as a distinct number.
+  // 9. RAM Filter (Strict JSON Match)
+  if (filters.ram) {
+    const ramLower = filters.ram.toLowerCase().replace(/'/g, "''");
+    conditions.push(`"specs"->>'ram' ILIKE '%${ramLower}%'`);
+  }
+
+  // 10. Size Filter (Clothes)
+  if (filters.size) {
+    const sizeLower = filters.size.toLowerCase().replace(/'/g, "''");
+    conditions.push(`"specs"->>'size' ILIKE '${sizeLower}'`);
+  }
+
+  // 11. Gender Filter (Clothes)
+  if (filters.gender) {
+    const genderLower = filters.gender.toLowerCase().replace(/'/g, "''");
+    conditions.push(`"specs"->>'gender' ILIKE '${genderLower}'`);
+  }
+
+  // 12. Strict Number Matching
   if (rawQuery) {
     const q = rawQuery.toLowerCase();
     const allNumbers = q.match(/\b(\d+)\b/g) || [];
-
     if (allNumbers.length > 0) {
       console.log(
         `[Filter Builder] Enforcing strict numbers in TITLE: [${allNumbers.join(
@@ -240,7 +242,6 @@ async function vectorSearch(
   limit = 100,
   rawQuery = ""
 ) {
-  // Pass rawQuery so strict numbers are enforced on the Title
   const whereClause = buildPushDownFilters(filters, rawQuery);
 
   const query = `
@@ -269,22 +270,17 @@ async function vectorSearch(
   }
 }
 
-// -------------------- ULTRA-STRICT FULLTEXT SEARCH --------------------
-/**
- * 🔥 UPDATED: Uses TITLE instead of SearchKey
- */
+// -------------------- IMPROVED FULLTEXT SEARCH WITH MULTI-STRATEGY --------------------
 async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
-  // Pass searchQuery here too so filters match
   const whereClause = buildPushDownFilters(filters, searchQuery);
   const searchTerm = searchQuery.toLowerCase().trim().replace(/'/g, "''");
 
   if (!searchTerm) return [];
 
   try {
-    // CRITICAL: Very high similarity threshold for precision
+    // Strategy 1: Try with 0.3 threshold (lower = more permissive)
     await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.5;`);
 
-    // Using "title" instead of "searchKey"
     const query = `
       SELECT 
         "title", "price", "storeName", "productUrl", "category", 
@@ -298,9 +294,46 @@ async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
     `;
 
     const startTime = Date.now();
-    const results = await prisma.$queryRawUnsafe(query);
-    const duration = Date.now() - startTime;
+    let results = await prisma.$queryRawUnsafe(query);
 
+    // Strategy 2: If no results, try word-by-word ILIKE matching
+    if (results.length === 0) {
+      console.log(
+        `[Fulltext Search] No trigram matches, trying ILIKE strategy...`
+      );
+
+      // Extract key terms from search query (remove common words)
+      const words = searchTerm
+        .split(/\s+/)
+        .filter(
+          (word) =>
+            word.length > 2 && !["the", "and", "for", "with"].includes(word)
+        );
+
+      if (words.length > 0) {
+        const likeConditions = words
+          .map((word) => `LOWER("title") LIKE '%${word}%'`)
+          .join(" AND ");
+
+        const fallbackQuery = `
+          SELECT 
+            "title", "price", "storeName", "productUrl", "category", 
+            "imageUrl", "stock", "description", "brand", "specs",
+            0.5 as rank
+          FROM "Product"
+          WHERE ${likeConditions}
+            AND ${whereClause}
+          LIMIT ${limit};
+        `;
+
+        results = await prisma.$queryRawUnsafe(fallbackQuery);
+        console.log(
+          `[Fulltext Search] ILIKE strategy found ${results.length} products`
+        );
+      }
+    }
+
+    const duration = Date.now() - startTime;
     console.log(
       `[Fulltext Search] Found ${results.length} products in ${duration}ms`
     );
@@ -365,13 +398,17 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
       finalScore: item.fulltextScore * 0.95 + item.vectorScore * 0.05,
       ...item,
     }));
-    console.log(`[RRF] ✅ Using ONLY fulltext matches`);
+    console.log(
+      `[RRF] ✅ Using ONLY fulltext matches (${fulltextMatches.length} products)`
+    );
   } else {
     finalResults = vectorOnlyMatches.map((item) => ({
       finalScore: item.vectorScore * 0.02,
       ...item,
     }));
-    console.log(`[RRF] ⚠️  No fulltext matches, using vector fallback`);
+    console.log(
+      `[RRF] ⚠️  No fulltext matches, using vector fallback (${vectorOnlyMatches.length} products)`
+    );
   }
 
   // Sort by final score
@@ -397,7 +434,7 @@ async function hybridSearch(
 
   const startTime = Date.now();
 
-  // Run both searches - Pass searchQuery to vectorSearch for strict number filtering
+  // Run both searches
   const [vectorResults, fulltextResults] = await Promise.all([
     vectorSearch(vectorLiteral, filters, limit * 2, searchQuery),
     fulltextSearch(searchQuery, filters, limit * 2),
@@ -410,18 +447,19 @@ async function hybridSearch(
   if (vectorResults.length > 0 || fulltextResults.length > 0) {
     const fusedResults = reciprocalRankFusion(vectorResults, fulltextResults);
     const duration = Date.now() - startTime;
+    console.log(
+      `[Hybrid Search] ✅ Completed in ${duration}ms with ${fusedResults.length} results`
+    );
     return fusedResults.slice(0, limit);
   }
 
-  // No results - try relaxed filters (but keep strict number matching!)
+  // No results - try relaxed filters
   console.log(`[Hybrid Search] No results. Trying relaxed filters...`);
 
   const relaxedFilters = {
     minPrice: filters.minPrice,
     maxPrice: filters.maxPrice,
     storeName: filters.storeName,
-    // We KEEP brand/category strict if needed, or relax them.
-    // Usually relaxed search drops complex filters but keeps price/store.
   };
 
   const [relaxedVector, relaxedFulltext] = await Promise.all([
@@ -498,6 +536,9 @@ async function executeSearchDatabase(args) {
     storage,
     variant,
     category,
+    ram,
+    size,
+    gender,
   } = args;
 
   console.log(`\n[Tool: search_product_database] Query: "${query}"`);
@@ -506,17 +547,18 @@ async function executeSearchDatabase(args) {
     JSON.stringify(args, null, 2)
   );
 
-  const queryAnalysis = analyzeQueryForFilters(query);
-
   const mergedFilters = {
     minPrice: min_price || 0,
     maxPrice: max_price || null,
     storeName: store_name || null,
-    brand: brand || queryAnalysis.brand || null,
+    brand: brand || null,
     color: color || null,
-    storage: storage || queryAnalysis.storage || null,
+    storage: storage || null,
     variant: variant || null,
     category: category || null,
+    ram: ram || null,
+    size: size || null,
+    gender: gender || null,
   };
 
   const finalFilters = {};
@@ -538,7 +580,6 @@ async function executeSearchDatabase(args) {
   const { vectorLiteral } = await getQueryEmbedding(query);
   const results = await hybridSearch(query, vectorLiteral, finalFilters, 50);
 
-  // ⭐ DYNAMIC LIMITING: Return only what exists (max 5)
   const actualCount = Math.min(results.length, 5);
   const productsToReturn = results.slice(0, actualCount);
 
@@ -605,15 +646,59 @@ app.post("/chat", async (req, res) => {
         role: "system",
         content: `You are Omnia AI, a helpful shopping assistant for electronics in Kuwait.
 
+        **CRITICAL: ALWAYS CALL search_product_database BEFORE RESPONDING ABOUT PRODUCTS!**
+NEVER claim to have found products without actually calling the search tool first.
+NEVER make up prices, specifications, or product details.
+
+**CRITICAL RAM vs STORAGE EXTRACTION RULES:**
+
+You MUST carefully distinguish between RAM and Storage based on these rules:
+
+1. **RAM Extraction (only when explicitly mentioned):**
+   - Extract RAM ONLY if the query contains "RAM" or "memory" keywords
+   - Examples:
+     * "16gb ram phone" → ram: "16gb", storage: null
+     * "8gb ram laptop" → ram: "8gb", storage: null
+     * "12gb memory phone" → ram: "12gb", storage: null
+     * "16gb ram and 256gb storage" → ram: "16gb", storage: "256gb"
+     * "32gb ram 1tb laptop" → ram: "32gb", storage: "1tb"
+
+2. **Storage Extraction (default for capacity numbers):**
+   - Extract as storage if the query mentions "storage", "ROM", "SSD", or uses numbers >= 64GB WITHOUT the word "RAM"
+   - Examples:
+     * "256gb phone" → ram: null, storage: "256gb"
+     * "512gb storage" → ram: null, storage: "512gb"
+     * "128gb iphone" → ram: null, storage: "128gb"
+     * "1tb laptop" → ram: null, storage: "1tb"
+     * "16gb ram 256gb" → ram: "16gb", storage: "256gb"
+
+3. **Combined Queries (most important):**
+   - When both RAM and storage are mentioned, extract BOTH separately
+   - The keyword "RAM" or "memory" determines which number is RAM
+   - Examples:
+     * "16gb ram and 256gb phone" → ram: "16gb", storage: "256gb"
+     * "8gb ram 512gb storage laptop" → ram: "8gb", storage: "512gb"
+     * "12gb ram 1tb" → ram: "12gb", storage: "1tb"
+     * "16gb memory 128gb storage" → ram: "16gb", storage: "128gb"
+
+4. **Edge Cases:**
+   - "16gb phone" (no RAM keyword) → ram: null, storage: "16gb" (unusual but follow the rule)
+   - "8gb laptop" (no RAM keyword) → ram: null, storage: "8gb" (unusual but follow the rule)
+   - If unsure, larger numbers (>= 64GB) are usually storage, smaller (4-32GB) context-dependent
+
 **STRICT KEYWORD EXTRACTION RULES:**
-1. **VARIANTS:** If the user searches for a numbered model (e.g., "iPhone 17", "Pixel 9") and DOES NOT use modifiers like "Pro", "Max", "Plus", or "Ultra", you **MUST** set the 'variant' tool parameter to 'base'. 
-   - Example: "iPhone 17" -> variant: "base"
-   - Example: "iPhone 17 Pro" -> variant: "pro"
-2. **BRANDS:** Infer the brand if implied (e.g. "Galaxy" -> Brand: "Samsung").
+1. **VARIANTS:** Extract the FULL variant phrase from user query:
+   - "iPhone 15 Pro Max" → variant: "pro max" (NOT just "pro")
+   - "iPhone 15 Pro" → variant: "pro"
+   - "iPhone 15 Plus" → variant: "plus"
+   - "iPhone 15" → variant: "base"
+   - "Galaxy S24 Ultra" → variant: "ultra"
+   
+2. **BRANDS:** Infer the brand if implied (e.g. "Galaxy" → Brand: "Samsung").
 
 **YOUR JOB:**
 1. Help users find products by calling search_product_database
-2. Extract filters from user queries: brand, color, storage, variant (pro, max, base), price range, store
+2. Extract filters from user queries: brand, color, storage, variant, price range, store, RAM
 3. Provide brief, conversational responses
 4. If no results, suggest alternatives or ask clarifying questions
 
@@ -635,6 +720,10 @@ User: "iPhone 15 Pro Max 512GB"
 Tool returns: 5 products
 Your response: "I found 5 iPhone 15 Pro Max models with 512GB storage! Prices range from 450 to 520 KWD across different stores and colors. Would you like me to filter by a specific store or color?"
 
+User: "16gb ram and 256gb phone"
+Tool call: ram: "16gb", storage: "256gb"
+Your response: "I found several phones with 16GB RAM and 256GB storage! What's your preferred brand or price range?"
+
 User: "black headphones under 50"
 Tool returns: 8 products
 Your response: "I found 8 black headphones under 50 KWD! There's a nice variety from brands like Sony, JBL, and Anker. Any specific features you're looking for, like noise cancellation or wireless?"
@@ -654,7 +743,7 @@ Your response: "I couldn't find any gaming laptops with those exact specificatio
 - Keep responses concise (2-4 sentences usually)
 - Be conversational and helpful
 - Always call the search tool before saying products aren't available
-- Extract ALL relevant filters from user queries
+- Extract ALL relevant filters from user queries, especially RAM and storage separately
 - Don't make assumptions - if unclear, ask the user
 - Focus on helping users narrow down choices, not displaying product details`,
       },
@@ -667,7 +756,7 @@ Your response: "I couldn't find any gaming laptops with those exact specificatio
       messages,
       tools: TOOLS,
       tool_choice: "auto",
-      temperature: 0.7,
+      temperature: 0.1,
     });
 
     const responseMessage = completion.choices[0].message;
@@ -716,7 +805,6 @@ Your response: "I couldn't find any gaming laptops with those exact specificatio
     await saveToMemory(sessionId, "user", message);
     await saveToMemory(sessionId, "assistant", finalResponse);
 
-    // 🔍 DETAILED LOGGING BEFORE SENDING RESPONSE
     console.log(`\n========================================`);
     console.log(`[FINAL RESPONSE DEBUG]`);
     console.log(`========================================`);
@@ -766,12 +854,12 @@ Your response: "I couldn't find any gaming laptops with those exact specificatio
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    message: "Omnia AI - Production-Ready Hybrid Search v2.0",
+    message: "Omnia AI - Production-Ready Hybrid Search v2.2",
     features: [
       "🔥 Push-Down Filtering at Database Level",
-      "🧠 Scalable Query Analysis (No Hardcoded Arrays)",
+      "🧠 Scalable Query Analysis",
       "🎯 Semantic Vector Search (HNSW Index)",
-      "📝 Ultra-Strict Fulltext Search (0.5 threshold)",
+      "📝 Multi-Strategy Fulltext Search (0.3 threshold + ILIKE fallback)",
       "🔗 JSONB Specs Filtering (GIN Index)",
       "⚡ Fulltext-Only RRF Mode",
       "🔄 Dynamic Result Limiting",
@@ -780,17 +868,23 @@ app.get("/health", (req, res) => {
       "📊 Optimized for 500k+ Products",
       "✅ Exact Model Number Matching",
       "🚀 Unlimited Brand Support",
+      "🧩 Advanced RAM/Storage Separation",
+      "🎭 Flexible Variant Matching (ILIKE)",
     ],
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 Omnia AI Server Running v2.0`);
+  console.log(`\n🚀 Omnia AI Server Running v2.2`);
   console.log(`📍 http://localhost:${PORT}`);
   console.log(`🔥 Production-Ready for 500k+ Products`);
   console.log(`📊 Hybrid Search: Vector (HNSW) + Fulltext (GIN) + RRF`);
   console.log(`⚡ Push-Down Filtering: Enabled`);
   console.log(`🧠 Scalable Query Analysis: Enabled`);
-  console.log(`✅ Ultra-Strict Matching: Enabled (0.5 threshold)`);
-  console.log(`🎯 Fulltext-Only Mode: Enabled\n`);
+  console.log(
+    `✅ Multi-Strategy Fulltext: Enabled (0.3 threshold + ILIKE fallback)`
+  );
+  console.log(`🎯 Fulltext-Only Mode: Enabled`);
+  console.log(`🧩 RAM/Storage Separation: Enhanced`);
+  console.log(`🎭 Flexible Variant Matching: ILIKE-based\n`);
 });

@@ -1,7 +1,9 @@
-// runner.js
+// runner.js - Optimized for Large-Scale Multi-Store Scraping
 import puppeteer from "puppeteer";
 import { PrismaClient } from "@prisma/client";
 import pLimit from "p-limit";
+import fs from "fs/promises";
+import path from "path";
 
 // Import all store scrapers
 import scrapeProductsEureka from "./eureka.js";
@@ -11,17 +13,21 @@ import scrapeProductsBest from "./best.js";
 // import scrapeProductsLulu from "./lulu.js";
 
 // ============================================================================
-// CONFIGURATION
+// CONFIGURATION - Optimized for 5+ Stores, 10+ Categories Each
 // ============================================================================
 
 const CONFIG = {
-  // How many stores to scrape concurrently
-  maxConcurrentStores: 3,
+  // CONCURRENCY SETTINGS
+  maxConcurrentStores: 2, // Process 2 stores at a time (prevents resource exhaustion)
+  maxConcurrentCategoriesPerStore: 1, // Categories per store run sequentially (safer)
+  storeStartDelay: 5000, // 5s delay between starting stores (anti-detection)
+  categoryDelay: 3000, // 3s delay between categories within same store
 
-  // Delay between starting each store (ms) - helps avoid detection
-  storeStartDelay: 3000,
+  // RETRY SETTINGS
+  maxRetries: 2, // Retry failed categories up to 2 times
+  retryDelay: 10000, // 10s delay before retry
 
-  // Browser settings (shared across all stores)
+  // BROWSER SETTINGS
   browserSettings: {
     headless: true,
     defaultViewport: null,
@@ -31,8 +37,24 @@ const CONFIG = {
       "--start-maximized",
       "--disable-dev-shm-usage", // Prevents memory issues
       "--disable-gpu",
+      "--disable-web-security", // Sometimes needed for CDN images
+      "--disable-features=IsolateOrigins,site-per-process",
+      "--disable-blink-features=AutomationControlled", // Anti-detection
+      "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     ],
   },
+
+  // MEMORY MANAGEMENT
+  browserPoolSize: 2, // Reuse browsers (don't create new one for each store)
+  closeIdleBrowserAfter: 300000, // Close browser after 5min idle (saves memory)
+
+  // PROGRESS TRACKING
+  saveProgressInterval: 60000, // Save progress every 1 minute
+  progressFile: "./scraper-progress.json",
+
+  // LOGGING
+  verboseLogging: false, // Set to true for detailed logs
+  logFile: "./scraper-log.txt",
 };
 
 // ============================================================================
@@ -42,40 +64,50 @@ const CONFIG = {
 const SCRAPING_JOBS = {
   // EUREKA STORE
   eureka: {
-    scraper: scrapeProductsEureka, // Import function
+    scraper: scrapeProductsEureka,
+    priority: 1, // Lower number = higher priority
     jobs: [
-      {
-        url: "https://www.eureka.com.kw/products/browse/phones/mobile-phones",
-        category: "mobilephones",
-      },
       // {
-      //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
-      //   category: "tablets",
+      //   url: "",
+      //   category: "mobilephones",
       // },
-      // {
-      //   url: "https://www.eureka.com.kw/products/browse/audio/accessories",
-      //   category: "headphones",
-      // },
-      // {
-      //   url: "https://www.eureka.com.kw/products/browse/smart-watches/watches",
-      //   category: "smartwatch",
-      // },
-      // Add more Eureka categories here
+      // // {
+      // //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
+      // //   category: "tablets",
+      // // },
+      // // Add more Eureka categories here
     ],
   },
 
   // XCITE STORE
   xcite: {
     scraper: scrapeProductsXcite,
+    priority: 1,
     jobs: [
-      {
-        url: "https://www.xcite.com/mobile-phones/c",
-        category: "mobilephones",
-      },
       // {
-      //   url: "https://www.xcite.com/laptops/c",
-      //   category: "laptops",
+      //   url: "https://www.xcite.com/mobile-phones/c",
+      //   category: "mobilephones",
       // },
+      {
+        url: "https://www.xcite.com/laptops/c",
+        category: "laptops",
+      },
+      {
+        url: "https://www.xcite.com/tablets/c",
+        category: "tablets",
+      },
+      {
+        url: "https://www.xcite.com/computer-desktops/c",
+        category: "desktops",
+      },
+      {
+        url: "https://www.xcite.com/personal-audio/c",
+        category: "audio",
+      },
+      {
+        url: "https://www.xcite.com/smart-watches/c",
+        category: "smartwatches",
+      },
       // Add more Xcite categories here
     ],
   },
@@ -83,46 +115,195 @@ const SCRAPING_JOBS = {
   // BEST STORE
   best: {
     scraper: scrapeProductsBest,
+    priority: 2,
     jobs: [
-      {
-        url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:xiaomi:brand:honor:brand:motorola",
-        category: "mobilephones",
-      },
-      {
-        url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:samsung:brand:apple",
-        category: "mobilephones",
-      },
-      {
-        url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:infinix:brand:vivo:brand:oppo:brand:nothing:brand:realme:brand:google:brand:oneplus:brand:huawei:brand:zentality",
-        category: "mobilephones",
-      },
-      // Add more Best categories here
+      // Add Best categories here
     ],
   },
 
-  // Add more stores as needed
-  // lulu: {
-  //   scraper: scrapeProductsLulu,
-  //   jobs: [...]
-  // },
+  // Add more stores...
 };
 
 // ============================================================================
-// STORE SCRAPER CLASS
+// BROWSER POOL - Reuse browsers to save memory
+// ============================================================================
+
+class BrowserPool {
+  constructor(poolSize, browserSettings) {
+    this.poolSize = poolSize;
+    this.browserSettings = browserSettings;
+    this.browsers = [];
+    this.inUse = new Set();
+    this.lastUsed = new Map();
+  }
+
+  async getBrowser() {
+    // Find available browser
+    const availableBrowser = this.browsers.find((b) => !this.inUse.has(b));
+
+    if (availableBrowser) {
+      this.inUse.add(availableBrowser);
+      this.lastUsed.set(availableBrowser, Date.now());
+      return availableBrowser;
+    }
+
+    // Create new browser if under pool size
+    if (this.browsers.length < this.poolSize) {
+      const browser = await puppeteer.launch(this.browserSettings);
+      this.browsers.push(browser);
+      this.inUse.add(browser);
+      this.lastUsed.set(browser, Date.now());
+      console.log(
+        `🌐 [Browser Pool] Created browser ${this.browsers.length}/${this.poolSize}`
+      );
+      return browser;
+    }
+
+    // Wait for available browser
+    console.log(`⏳ [Browser Pool] Waiting for available browser...`);
+    await sleep(5000);
+    return this.getBrowser();
+  }
+
+  releaseBrowser(browser) {
+    this.inUse.delete(browser);
+    this.lastUsed.set(browser, Date.now());
+  }
+
+  async closeIdleBrowsers(maxIdleTime) {
+    const now = Date.now();
+    const browsersToClose = [];
+
+    for (const [browser, lastUsed] of this.lastUsed.entries()) {
+      if (!this.inUse.has(browser) && now - lastUsed > maxIdleTime) {
+        browsersToClose.push(browser);
+      }
+    }
+
+    for (const browser of browsersToClose) {
+      try {
+        await browser.close();
+        this.browsers = this.browsers.filter((b) => b !== browser);
+        this.lastUsed.delete(browser);
+        console.log(`🔒 [Browser Pool] Closed idle browser`);
+      } catch (error) {
+        console.error(
+          `⚠️ [Browser Pool] Error closing browser:`,
+          error.message
+        );
+      }
+    }
+  }
+
+  async closeAll() {
+    for (const browser of this.browsers) {
+      try {
+        await browser.close();
+      } catch (error) {
+        console.error(
+          `⚠️ [Browser Pool] Error closing browser:`,
+          error.message
+        );
+      }
+    }
+    this.browsers = [];
+    this.inUse.clear();
+    this.lastUsed.clear();
+  }
+}
+
+// ============================================================================
+// PROGRESS TRACKER - Resume from where you left off
+// ============================================================================
+
+class ProgressTracker {
+  constructor(progressFile) {
+    this.progressFile = progressFile;
+    this.progress = {
+      stores: {},
+      startTime: null,
+      lastSaved: null,
+    };
+  }
+
+  async load() {
+    try {
+      const data = await fs.readFile(this.progressFile, "utf-8");
+      this.progress = JSON.parse(data);
+      console.log(
+        `📂 [Progress] Loaded previous progress from ${this.progressFile}`
+      );
+      return true;
+    } catch (error) {
+      console.log(`📝 [Progress] No previous progress found, starting fresh`);
+      return false;
+    }
+  }
+
+  async save() {
+    try {
+      this.progress.lastSaved = Date.now();
+      await fs.writeFile(
+        this.progressFile,
+        JSON.stringify(this.progress, null, 2)
+      );
+      if (CONFIG.verboseLogging) {
+        console.log(`💾 [Progress] Saved to ${this.progressFile}`);
+      }
+    } catch (error) {
+      console.error(`⚠️ [Progress] Error saving:`, error.message);
+    }
+  }
+
+  markCategoryComplete(storeName, category, success) {
+    if (!this.progress.stores[storeName]) {
+      this.progress.stores[storeName] = { completed: [], failed: [] };
+    }
+
+    if (success) {
+      this.progress.stores[storeName].completed.push(category);
+    } else {
+      this.progress.stores[storeName].failed.push(category);
+    }
+  }
+
+  isCategoryComplete(storeName, category) {
+    return (
+      this.progress.stores[storeName]?.completed?.includes(category) || false
+    );
+  }
+
+  async clear() {
+    try {
+      await fs.unlink(this.progressFile);
+      console.log(`🗑️  [Progress] Cleared progress file`);
+    } catch (error) {
+      // File doesn't exist, that's fine
+    }
+  }
+}
+
+// ============================================================================
+// STORE SCRAPER CLASS - Enhanced with Retry Logic
 // ============================================================================
 
 class StoreScraper {
-  constructor(storeName, storeConfig, config) {
+  constructor(storeName, storeConfig, config, browserPool, progressTracker) {
     this.storeName = storeName;
-    this.scraper = storeConfig.scraper; // The imported scrape function
+    this.scraper = storeConfig.scraper;
     this.jobs = storeConfig.jobs;
+    this.priority = storeConfig.priority || 999;
     this.config = config;
+    this.browserPool = browserPool;
+    this.progressTracker = progressTracker;
     this.browser = null;
 
     this.stats = {
       total: storeConfig.jobs.length,
       success: 0,
       failed: 0,
+      skipped: 0,
+      retried: 0,
       startTime: null,
       endTime: null,
       errors: [],
@@ -133,20 +314,40 @@ class StoreScraper {
     console.log(`\n${"=".repeat(70)}`);
     console.log(`🏪 Starting Store: ${this.storeName.toUpperCase()}`);
     console.log(`   Categories to scrape: ${this.stats.total}`);
+    console.log(`   Priority: ${this.priority}`);
     console.log(`${"=".repeat(70)}\n`);
 
     this.stats.startTime = Date.now();
 
     try {
-      // Launch ONE browser for this entire store
-      this.browser = await puppeteer.launch(this.config.browserSettings);
-      console.log(`✅ [${this.storeName}] Browser launched successfully`);
+      // Get browser from pool instead of creating new one
+      this.browser = await this.browserPool.getBrowser();
+      console.log(`✅ [${this.storeName}] Browser acquired from pool`);
 
       // Process all jobs for this store SEQUENTIALLY
-      // (Sequential is safer for anti-bot detection)
       for (let i = 0; i < this.jobs.length; i++) {
         const job = this.jobs[i];
-        await this.runJob(job, i + 1);
+
+        // Check if already completed
+        if (
+          this.progressTracker.isCategoryComplete(this.storeName, job.category)
+        ) {
+          console.log(
+            `⏭️  [${this.storeName}] Skipping ${job.category} (already completed)`
+          );
+          this.stats.skipped++;
+          continue;
+        }
+
+        await this.runJobWithRetry(job, i + 1);
+
+        // Delay between categories (anti-detection)
+        if (i < this.jobs.length - 1) {
+          console.log(
+            `⏳ Waiting ${this.config.categoryDelay}ms before next category...`
+          );
+          await sleep(this.config.categoryDelay);
+        }
       }
 
       this.stats.endTime = Date.now();
@@ -174,17 +375,71 @@ class StoreScraper {
       };
     } finally {
       if (this.browser) {
-        await this.browser.close();
-        console.log(`🔒 [${this.storeName}] Browser closed`);
+        this.browserPool.releaseBrowser(this.browser);
+        console.log(`🔓 [${this.storeName}] Browser released back to pool`);
       }
     }
   }
 
-  async runJob(job, jobNumber) {
+  async runJobWithRetry(job, jobNumber) {
+    let attempt = 0;
+    let success = false;
+
+    while (attempt <= this.config.maxRetries && !success) {
+      try {
+        if (attempt > 0) {
+          console.log(
+            `🔄 [${this.storeName}] Retry attempt ${attempt}/${this.config.maxRetries} for ${job.category}`
+          );
+          await sleep(this.config.retryDelay);
+          this.stats.retried++;
+        }
+
+        await this.runJob(job, jobNumber, attempt);
+        success = true;
+
+        // Mark as complete
+        this.progressTracker.markCategoryComplete(
+          this.storeName,
+          job.category,
+          true
+        );
+        await this.progressTracker.save();
+      } catch (error) {
+        attempt++;
+
+        if (attempt > this.config.maxRetries) {
+          console.error(
+            `❌ [${this.storeName}] ${job.category} FAILED after ${this.config.maxRetries} retries`
+          );
+          this.stats.failed++;
+
+          const errorInfo = {
+            category: job.category,
+            url: job.url,
+            message: error.message,
+            attempts: attempt,
+          };
+          this.stats.errors.push(errorInfo);
+
+          this.progressTracker.markCategoryComplete(
+            this.storeName,
+            job.category,
+            false
+          );
+          await this.progressTracker.save();
+        }
+      }
+    }
+  }
+
+  async runJob(job, jobNumber, attemptNumber) {
+    const attemptLabel =
+      attemptNumber > 0 ? ` (Attempt ${attemptNumber + 1})` : "";
     console.log(
       `\n--- 🚀 [${this.storeName}] Job ${jobNumber}/${
         this.stats.total
-      }: ${job.category.toUpperCase()} ---`
+      }: ${job.category.toUpperCase()}${attemptLabel} ---`
     );
     console.log(`    URL: ${job.url.substring(0, 80)}...`);
 
@@ -192,7 +447,6 @@ class StoreScraper {
 
     try {
       // Call the store-specific scraper function
-      // Each scraper has signature: scrapeProducts(browser, url, category)
       await this.scraper(this.browser, job.url, job.category);
 
       const duration = Date.now() - jobStartTime;
@@ -205,24 +459,12 @@ class StoreScraper {
       );
     } catch (error) {
       const duration = Date.now() - jobStartTime;
-      this.stats.failed++;
-
-      const errorInfo = {
-        category: job.category,
-        url: job.url,
-        message: error.message,
-        duration: Math.floor(duration / 1000),
-      };
-      this.stats.errors.push(errorInfo);
-
       console.error(
-        `❌ [${this.storeName}] ${job.category} FAILED after ${Math.floor(
+        `⚠️ [${this.storeName}] ${job.category} error after ${Math.floor(
           duration / 1000
-        )}s`
+        )}s: ${error.message}`
       );
-      console.error(`   Reason: ${error.message}`);
-
-      // Don't throw - continue with next job
+      throw error; // Re-throw for retry logic
     }
   }
 
@@ -237,13 +479,19 @@ class StoreScraper {
     console.log(`   Total Jobs: ${this.stats.total}`);
     console.log(`   ✅ Success: ${this.stats.success}`);
     console.log(`   ❌ Failed: ${this.stats.failed}`);
+    console.log(`   ⏭️  Skipped: ${this.stats.skipped}`);
+    console.log(`   🔄 Retried: ${this.stats.retried}`);
     console.log(`   ⏱️  Duration: ${minutes}m ${seconds}s`);
 
     if (this.stats.errors.length > 0) {
       console.log(`\n   ⚠️  Errors:`);
       this.stats.errors.forEach((err, idx) => {
         if (err.category) {
-          console.log(`      ${idx + 1}. ${err.category}: ${err.message}`);
+          console.log(
+            `      ${idx + 1}. ${err.category}: ${err.message} (${
+              err.attempts
+            } attempts)`
+          );
         } else {
           console.log(`      ${idx + 1}. ${err.message}`);
         }
@@ -255,18 +503,36 @@ class StoreScraper {
 }
 
 // ============================================================================
-// MAIN ORCHESTRATOR
+// MAIN ORCHESTRATOR - Optimized for Large-Scale
 // ============================================================================
 
 async function runAllScrapers() {
   const prisma = new PrismaClient();
   const startTime = Date.now();
 
+  // Initialize browser pool and progress tracker
+  const browserPool = new BrowserPool(
+    CONFIG.browserPoolSize,
+    CONFIG.browserSettings
+  );
+  const progressTracker = new ProgressTracker(CONFIG.progressFile);
+
+  // Load previous progress
+  await progressTracker.load();
+
   console.log(`\n${"═".repeat(70)}`);
-  console.log(`🤖 MULTI-STORE AUTOMATED SCRAPER SYSTEM`);
+  console.log(`🤖 MULTI-STORE AUTOMATED SCRAPER SYSTEM - LARGE-SCALE EDITION`);
   console.log(`${"═".repeat(70)}`);
 
   const storeNames = Object.keys(SCRAPING_JOBS);
+
+  // Sort stores by priority
+  storeNames.sort((a, b) => {
+    const priorityA = SCRAPING_JOBS[a].priority || 999;
+    const priorityB = SCRAPING_JOBS[b].priority || 999;
+    return priorityA - priorityB;
+  });
+
   const totalStores = storeNames.length;
   const totalJobs = Object.values(SCRAPING_JOBS).reduce(
     (sum, store) => sum + store.jobs.length,
@@ -277,8 +543,23 @@ async function runAllScrapers() {
   console.log(`   Total Stores: ${totalStores}`);
   console.log(`   Total Categories: ${totalJobs}`);
   console.log(`   Max Concurrent Stores: ${CONFIG.maxConcurrentStores}`);
+  console.log(`   Browser Pool Size: ${CONFIG.browserPoolSize}`);
+  console.log(`   Max Retries per Category: ${CONFIG.maxRetries}`);
   console.log(`   Store Start Delay: ${CONFIG.storeStartDelay}ms`);
-  console.log(`\n📦 Stores to process: ${storeNames.join(", ")}\n`);
+  console.log(`   Category Delay: ${CONFIG.categoryDelay}ms`);
+  console.log(
+    `\n📦 Stores to process (by priority): ${storeNames.join(", ")}\n`
+  );
+
+  // Set up auto-save interval
+  const saveInterval = setInterval(async () => {
+    await progressTracker.save();
+  }, CONFIG.saveProgressInterval);
+
+  // Set up idle browser cleanup
+  const cleanupInterval = setInterval(async () => {
+    await browserPool.closeIdleBrowsers(CONFIG.closeIdleBrowserAfter);
+  }, 60000); // Check every minute
 
   try {
     // Create concurrency limiter for stores
@@ -298,7 +579,9 @@ async function runAllScrapers() {
         const scraper = new StoreScraper(
           storeName,
           SCRAPING_JOBS[storeName],
-          CONFIG
+          CONFIG,
+          browserPool,
+          progressTracker
         );
         return await scraper.run();
       });
@@ -307,16 +590,34 @@ async function runAllScrapers() {
     // Wait for all stores to complete
     const results = await Promise.allSettled(storeScrapers);
 
+    // Clear intervals
+    clearInterval(saveInterval);
+    clearInterval(cleanupInterval);
+
+    // Final save
+    await progressTracker.save();
+
     // Print final report
-    printFinalReport(results, startTime);
+    await printFinalReport(results, startTime, progressTracker);
+
+    // Ask if user wants to clear progress
+    console.log(
+      `\n💡 To clear progress and start fresh next time, delete: ${CONFIG.progressFile}`
+    );
   } catch (error) {
     console.error(`\n${"═".repeat(70)}`);
     console.error(`❌ MASTER RUNNER CRITICAL FAILURE`);
     console.error(`${"═".repeat(70)}`);
     console.error(error);
   } finally {
+    clearInterval(saveInterval);
+    clearInterval(cleanupInterval);
+
+    await browserPool.closeAll();
     await prisma.$disconnect();
-    console.log("\n🔒 Database connection closed.");
+
+    console.log("\n🔒 All browsers closed");
+    console.log("🔒 Database connection closed");
   }
 }
 
@@ -328,7 +629,7 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function printFinalReport(results, startTime) {
+async function printFinalReport(results, startTime, progressTracker) {
   const endTime = Date.now();
   const totalDuration = endTime - startTime;
   const hours = Math.floor(totalDuration / 3600000);
@@ -343,9 +644,12 @@ function printFinalReport(results, startTime) {
 
   let totalJobsSuccess = 0;
   let totalJobsFailed = 0;
+  let totalJobsSkipped = 0;
+  let totalRetries = 0;
   let storesCompleted = 0;
   let storesFailed = 0;
   const failedStores = [];
+  const failedCategories = [];
 
   console.log(`📊 Store-by-Store Results:\n`);
 
@@ -364,6 +668,8 @@ function printFinalReport(results, startTime) {
 
       console.log(`      Categories Success: ${store.stats.success}`);
       console.log(`      Categories Failed: ${store.stats.failed}`);
+      console.log(`      Categories Skipped: ${store.stats.skipped}`);
+      console.log(`      Total Retries: ${store.stats.retried}`);
 
       const duration = store.stats.endTime - store.stats.startTime;
       const mins = Math.floor(duration / 60000);
@@ -372,6 +678,8 @@ function printFinalReport(results, startTime) {
 
       totalJobsSuccess += store.stats.success;
       totalJobsFailed += store.stats.failed;
+      totalJobsSkipped += store.stats.skipped;
+      totalRetries += store.stats.retried;
 
       if (store.error) {
         console.log(`      Error: ${store.error}`);
@@ -382,6 +690,7 @@ function printFinalReport(results, startTime) {
         store.stats.errors.forEach((err) => {
           if (err.category) {
             console.log(`         - ${err.category}: ${err.message}`);
+            failedCategories.push(`${store.storeName}/${err.category}`);
           }
         });
       }
@@ -400,6 +709,8 @@ function printFinalReport(results, startTime) {
   console.log(`   Stores Failed: ${storesFailed}/${results.length}`);
   console.log(`   Total Categories Success: ${totalJobsSuccess}`);
   console.log(`   Total Categories Failed: ${totalJobsFailed}`);
+  console.log(`   Total Categories Skipped: ${totalJobsSkipped}`);
+  console.log(`   Total Retries Performed: ${totalRetries}`);
 
   let durationStr = "";
   if (hours > 0) {
@@ -421,10 +732,56 @@ function printFinalReport(results, startTime) {
     console.log(`\n   ⚠️  Failed Stores: ${failedStores.join(", ")}`);
   }
 
+  if (failedCategories.length > 0) {
+    console.log(`\n   ⚠️  Failed Categories (${failedCategories.length}):`);
+    failedCategories.forEach((cat, idx) => {
+      console.log(`      ${idx + 1}. ${cat}`);
+    });
+  }
+
   console.log();
   console.log(`${"═".repeat(70)}`);
   console.log(`🎉 All scraping operations completed!`);
   console.log(`${"═".repeat(70)}\n`);
+
+  // Save final summary
+  const summaryFile = `./scraper-summary-${
+    new Date().toISOString().split("T")[0]
+  }.json`;
+  const summary = {
+    completedAt: new Date().toISOString(),
+    duration: {
+      hours,
+      minutes,
+      seconds,
+      totalMs: totalDuration,
+    },
+    stats: {
+      stores: {
+        total: results.length,
+        completed: storesCompleted,
+        failed: storesFailed,
+      },
+      categories: {
+        success: totalJobsSuccess,
+        failed: totalJobsFailed,
+        skipped: totalJobsSkipped,
+      },
+      retries: totalRetries,
+      successRate:
+        totalJobsSuccess + totalJobsFailed > 0
+          ? (
+              (totalJobsSuccess / (totalJobsSuccess + totalJobsFailed)) *
+              100
+            ).toFixed(1) + "%"
+          : "N/A",
+    },
+    failedStores,
+    failedCategories,
+  };
+
+  await fs.writeFile(summaryFile, JSON.stringify(summary, null, 2));
+  console.log(`📄 Summary saved to: ${summaryFile}\n`);
 }
 
 // ============================================================================
@@ -441,8 +798,22 @@ process.on("uncaughtException", (error) => {
   process.exit(1);
 });
 
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  console.log("\n\n⚠️  Received SIGINT, gracefully shutting down...");
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  console.log("\n\n⚠️  Received SIGTERM, gracefully shutting down...");
+  process.exit(0);
+});
+
 // ============================================================================
 // EXECUTION
 // ============================================================================
+
+console.log(`\n🚀 Starting Large-Scale Multi-Store Scraper...`);
+console.log(`⏰ Started at: ${new Date().toLocaleString()}\n`);
 
 runAllScrapers();
