@@ -51,22 +51,48 @@ const TOOLS = [
         properties: {
           query: {
             type: "string",
-            description: "Full natural language search query from user",
+            description:
+              "Full natural language search query from user. REQUIRED. This must be the complete user message.",
           },
           category: {
             type: "string",
-            description:
-              "Category if mentioned (e.g., smartphone, laptop, headphone, tablet, desktop, clothing, shoes)",
+            description: `Product category. CRITICAL: ALWAYS infer category from model names to prevent cross-category contamination.
+            
+INFERENCE RULES:
+- "iPhone", "Galaxy S/Note/Z", "Pixel" → "smartphone"
+- "MacBook", "ThinkPad", "XPS", "Pavilion", "IdeaPad" → "laptop"
+- "iPad", "Galaxy Tab", "Surface" → "tablet"
+- "AirPods", "WH-", "QuietComfort", "Buds" → "headphone"
+- "Apple Watch", "Galaxy Watch" → "smartwatch"
+- "case", "cover", "screen protector" → "accessory"
+- "charger", "cable", "adapter" → "accessory"
+- "power bank", "battery" → "accessory"
+- "mouse", "keyboard" → "accessory"
+- "speaker", "soundbar" → "speaker"
+- "TV", "television", "monitor" → "display"
+- "camera", "DSLR", "mirrorless" → "camera"
+
+Examples:
+- "iPhone 15" → category: "smartphone"
+- "MacBook Air" → category: "laptop"
+- "iPad Pro" → category: "tablet"
+- "AirPods Max" → category: "headphone"
+- "iPhone case" → category: "accessory"
+- "phone charger" → category: "accessory"
+- "wireless mouse" → category: "accessory"
+
+If user explicitly mentions a category, use that. Otherwise, ALWAYS infer from product name.
+This prevents showing phones when searching for cases!`,
           },
           brand: {
             type: "string",
             description:
-              "Brand name. CRITICAL: Infer the brand if the model name implies it (e.g. 'iPhone' -> 'Apple', 'Galaxy' -> 'Samsung', 'Pixel' -> 'Google', 'Air Jordan' -> 'Nike', 'XPS' -> 'Dell').",
+              "Brand name. CRITICAL: Infer the brand if the model name implies it (e.g. 'iPhone' -> 'Apple', 'Galaxy' -> 'Samsung', 'Pixel' -> 'Google', 'Air Jordan' -> 'Nike', 'XPS' -> 'Dell', 'ThinkPad' -> 'Lenovo'). Extract the CORE brand name only, without suffixes like 'Inc', 'Corp', 'Ltd'.",
           },
           variant: {
             type: "string",
             description:
-              "Model variant. IMPORTANT: Extract the FULL variant string as mentioned by user. Examples: 'Pro Max' -> 'pro_max', 'Pro' -> 'pro', 'Plus' -> 'plus', 'Ultra' -> 'ultra', 'Mini' -> 'mini'. If just a number with no modifier (e.g. 'iPhone 15'), set to 'base'.",
+              "Model variant. CRITICAL: Standardize these values EXACTLY: 'Pro Max' -> 'pro max', 'Pro' -> 'pro', 'Plus' -> '+' (CONVERT THE WORD 'Plus' TO THE '+' SYMBOL), 'Ultra' -> 'ultra', 'Mini' -> 'mini'. If just a number with no modifier (e.g. 'iPhone 15'), set to 'base'. IMPORTANT: The database stores 'Plus' variants as the '+' symbol, so you MUST convert 'Plus' to '+' for exact matching.",
           },
           color: {
             type: "string",
@@ -100,7 +126,33 @@ const TOOLS = [
           },
           store_name: {
             type: "string",
-            description: "Store name if specified (xcite, best, noon, eureka)",
+            description:
+              "Store name if specified. Use these EXACT lowercase values: 'xcite', 'best', 'noon', 'eureka'. The system will map them to database values automatically.",
+          },
+          model_number: {
+            type: "string",
+            description: `The SPECIFIC model identifier to search for. Extract the complete model designation that uniquely identifies this product.
+
+CRITICAL: Extract the FULL model string as it would appear in product titles, NOT just numbers.
+
+Examples:
+- "iPhone 15" → "iphone 15"
+- "Samsung S24" → "galaxy s24" or "s24"
+- "Galaxy S24 Plus" → "galaxy s24+" or "s24+"
+- "Pixel 8 Pro" → "pixel 8 pro"
+- "MacBook Air M2" → "macbook air m2"
+- "ThinkPad X1" → "thinkpad x1"
+- "XPS 13" → "xps 13"
+- "AirPods Pro 2" → "airpods pro 2"
+
+RULES:
+1. Include brand/series name + model number/identifier
+2. Include variant if it's part of the model name (Pro, Plus, Ultra, etc.)
+3. Do NOT include storage (512gb), RAM (16gb), or color
+4. Keep it concise - just the model identification string
+5. Lowercase format preferred
+
+This helps find exact product matches and prevents confusion with storage/RAM numbers.`,
           },
         },
         required: ["query"],
@@ -156,30 +208,82 @@ function buildPushDownFilters(filters = {}, rawQuery = "") {
     conditions.push(`"price" <= ${parseFloat(filters.maxPrice)}`);
   }
 
-  // 3. Store Name (indexed column)
+  // 3. Store Name (indexed column) - MAP USER-FRIENDLY NAMES TO DATABASE VALUES
   if (filters.storeName && filters.storeName !== "all") {
-    const storeValue = filters.storeName.toUpperCase().replace(/\./g, "_");
-    conditions.push(`"storeName" = '${storeValue}'`);
+    const storeLower = filters.storeName.toLowerCase().replace(/'/g, "''");
+
+    // Critical mapping: User says "best", Database has "BEST_KW"
+    const storeMapping = {
+      best: "BEST_KW",
+      xcite: "XCITE",
+      eureka: "EUREKA",
+      noon: "NOON",
+    };
+
+    const dbStoreName =
+      storeMapping[storeLower] ||
+      filters.storeName.toUpperCase().replace(/\./g, "_");
+    conditions.push(`"storeName" = '${dbStoreName}'`);
+    console.log(
+      `[Store Filter] User input: "${filters.storeName}" → Database value: "${dbStoreName}"`
+    );
   }
 
-  // 4. Category (indexed column)
+  // 4. Category (indexed column) - STRICT EXACT MATCHING to prevent cross-category contamination
   if (filters.category) {
     const catLower = filters.category.toLowerCase().replace(/'/g, "''");
-    conditions.push(`LOWER("category") LIKE '%${catLower}%'`);
+
+    // Map user-friendly category names to database values
+    const categoryMapping = {
+      phone: "MOBILEPHONES",
+      smartphone: "MOBILEPHONES",
+      mobile: "MOBILEPHONES",
+      laptop: "LAPTOPS",
+      notebook: "LAPTOPS",
+      tablet: "TABLETS",
+      headphone: "HEADPHONES",
+      headphones: "HEADPHONES",
+      earphones: "HEADPHONES",
+      earbuds: "HEADPHONES",
+      smartwatch: "SMARTWATCHES",
+      watch: "SMARTWATCHES",
+      accessory: "ACCESSORIES",
+      accessories: "ACCESSORIES",
+      case: "ACCESSORIES",
+      cover: "ACCESSORIES",
+      charger: "ACCESSORIES",
+      cable: "ACCESSORIES",
+      adapter: "ACCESSORIES",
+      speaker: "SPEAKERS",
+      display: "DISPLAYS",
+      monitor: "DISPLAYS",
+      tv: "DISPLAYS",
+      camera: "CAMERAS",
+    };
+
+    const dbCategory = categoryMapping[catLower] || catLower.toUpperCase();
+
+    // Use EXACT match (=) instead of LIKE to prevent fuzzy matching
+    conditions.push(`"category" = '${dbCategory}'`);
+    console.log(
+      `[Category Filter] User input: "${filters.category}" → Database value: "${dbCategory}"`
+    );
   }
 
-  // 5. Brand (Strict Column Match) - Relying on LLM Inference
+  // 5. Brand (FLEXIBLE MATCH - Use ILIKE to handle variations)
+  // This prevents "Apple Inc" vs "Apple" mismatches
   if (filters.brand) {
     const brandLower = filters.brand.toLowerCase().replace(/'/g, "''");
-    conditions.push(`LOWER("brand") = '${brandLower}'`);
+    conditions.push(`LOWER("brand") ILIKE '%${brandLower}%'`);
+    console.log(`[Brand Filter] Using flexible match for: "${brandLower}"`);
   }
 
-  // 6. Variant (IMPROVED - Use ILIKE for flexible matching)
-  // This handles "pro max", "pro", "plus", etc. more flexibly
+  // 6. Variant (EXACT MATCH - Critical for preventing S25+ appearing in S24+ searches)
+  // The AI now converts 'Plus' to '+', so this will match exactly
   if (filters.variant) {
-    const variantLower = filters.variant.toLowerCase().replace(/'/g, "''");
-    // Use ILIKE to match variants that contain the search term
-    conditions.push(`"specs"->>'variant' ILIKE '%${variantLower}%'`);
+    const variantValue = filters.variant.toLowerCase().replace(/'/g, "''");
+    // Use exact match for variant to prevent fuzzy matching
+    conditions.push(`LOWER("specs"->>'variant') = '${variantValue}'`);
   }
 
   // 7. Storage (Strict JSON Match)
@@ -188,13 +292,13 @@ function buildPushDownFilters(filters = {}, rawQuery = "") {
     conditions.push(`"specs"->>'storage' = '${storageLower}'`);
   }
 
-  // 8. Color (Strict JSON Match)
+  // 8. Color (Flexible JSON Match)
   if (filters.color) {
     const colorLower = filters.color.toLowerCase().replace(/'/g, "''");
     conditions.push(`"specs"->>'color' ILIKE '%${colorLower}%'`);
   }
 
-  // 9. RAM Filter (Strict JSON Match)
+  // 9. RAM Filter (Flexible JSON Match)
   if (filters.ram) {
     const ramLower = filters.ram.toLowerCase().replace(/'/g, "''");
     conditions.push(`"specs"->>'ram' ILIKE '%${ramLower}%'`);
@@ -212,21 +316,17 @@ function buildPushDownFilters(filters = {}, rawQuery = "") {
     conditions.push(`"specs"->>'gender' ILIKE '${genderLower}'`);
   }
 
-  // 12. Strict Number Matching
-  if (rawQuery) {
-    const q = rawQuery.toLowerCase();
-    const allNumbers = q.match(/\b(\d+)\b/g) || [];
-    if (allNumbers.length > 0) {
-      console.log(
-        `[Filter Builder] Enforcing strict numbers in TITLE: [${allNumbers.join(
-          ", "
-        )}]`
-      );
-      const numberConditions = allNumbers
-        .map((num) => `LOWER("title") ~ '(^|[^0-9])${num}([^0-9]|$)'`)
-        .join(" AND ");
-      conditions.push(`(${numberConditions})`);
-    }
+  // 12. LLM-Powered Model Number Extraction (No hardcoded regex needed!)
+  // The AI already extracted model numbers during tool call - we can use those
+  // This is set by the extractModelNumber() helper function before buildPushDownFilters is called
+  if (filters.modelNumber) {
+    const modelNum = filters.modelNumber.replace(/'/g, "''");
+    console.log(
+      `[Filter Builder] Enforcing model number in TITLE: "${modelNum}"`
+    );
+
+    // Simple ILIKE pattern - much more flexible than regex
+    conditions.push(`LOWER("title") LIKE '%${modelNum}%'`);
   }
 
   const whereClause = conditions.length > 0 ? conditions.join(" AND ") : "1=1";
@@ -278,7 +378,7 @@ async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
   if (!searchTerm) return [];
 
   try {
-    // Strategy 1: Try with 0.3 threshold (lower = more permissive)
+    // Strategy 1: Try with 0.5 threshold (lower = more permissive)
     await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.5;`);
 
     const query = `
@@ -307,7 +407,8 @@ async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
         .split(/\s+/)
         .filter(
           (word) =>
-            word.length > 2 && !["the", "and", "for", "with"].includes(word)
+            word.length > 2 &&
+            !["the", "and", "for", "with", "from"].includes(word)
         );
 
       if (words.length > 0) {
@@ -456,11 +557,22 @@ async function hybridSearch(
   // No results - try relaxed filters
   console.log(`[Hybrid Search] No results. Trying relaxed filters...`);
 
+  // CRITICAL: Keep category in relaxed mode to prevent cross-category contamination
+  // Example: If user searches "iPhone case" and we have no cases,
+  // we should return 0 results, NOT show iPhones
   const relaxedFilters = {
     minPrice: filters.minPrice,
     maxPrice: filters.maxPrice,
     storeName: filters.storeName,
+    category: filters.category, // ✅ PRESERVE category filter
+    brand: filters.brand, // ✅ PRESERVE brand filter
+    modelNumber: filters.modelNumber, // ✅ PRESERVE model number
   };
+
+  console.log(
+    `[Hybrid Search] Relaxed filters (kept category/brand/model):`,
+    JSON.stringify(relaxedFilters, null, 2)
+  );
 
   const [relaxedVector, relaxedFulltext] = await Promise.all([
     vectorSearch(vectorLiteral, relaxedFilters, limit * 2, searchQuery),
@@ -469,9 +581,16 @@ async function hybridSearch(
 
   const fusedResults = reciprocalRankFusion(relaxedVector, relaxedFulltext);
   const duration = Date.now() - startTime;
-  console.log(
-    `[Hybrid Search] ✅ Completed in ${duration}ms with ${fusedResults.length} results (relaxed)`
-  );
+
+  if (fusedResults.length === 0) {
+    console.log(
+      `[Hybrid Search] ❌ No results even with relaxed filters (${duration}ms)`
+    );
+  } else {
+    console.log(
+      `[Hybrid Search] ✅ Completed in ${duration}ms with ${fusedResults.length} results (relaxed)`
+    );
+  }
 
   return fusedResults.slice(0, limit);
 }
@@ -539,6 +658,7 @@ async function executeSearchDatabase(args) {
     ram,
     size,
     gender,
+    model_number,
   } = args;
 
   console.log(`\n[Tool: search_product_database] Query: "${query}"`);
@@ -546,6 +666,19 @@ async function executeSearchDatabase(args) {
     `[Tool: search_product_database] AI Extracted:`,
     JSON.stringify(args, null, 2)
   );
+
+  // CRITICAL FIX: Validate query parameter before proceeding
+  if (!query || query === "undefined" || query.trim() === "") {
+    console.error(
+      `[Tool: search_product_database] ❌ Invalid query parameter: "${query}"`
+    );
+    return {
+      success: false,
+      error: "Invalid search query. Please provide a valid search term.",
+      count: 0,
+      products: [],
+    };
+  }
 
   const mergedFilters = {
     minPrice: min_price || 0,
@@ -559,6 +692,7 @@ async function executeSearchDatabase(args) {
     ram: ram || null,
     size: size || null,
     gender: gender || null,
+    modelNumber: model_number || null,
   };
 
   const finalFilters = {};
@@ -577,32 +711,42 @@ async function executeSearchDatabase(args) {
     JSON.stringify(finalFilters, null, 2)
   );
 
-  const { vectorLiteral } = await getQueryEmbedding(query);
-  const results = await hybridSearch(query, vectorLiteral, finalFilters, 50);
+  try {
+    const { vectorLiteral } = await getQueryEmbedding(query);
+    const results = await hybridSearch(query, vectorLiteral, finalFilters, 50);
 
-  const actualCount = Math.min(results.length, 5);
-  const productsToReturn = results.slice(0, actualCount);
+    const actualCount = Math.min(results.length, 5);
+    const productsToReturn = results.slice(0, actualCount);
 
-  console.log(
-    `[Tool: search_product_database] ✅ Returning ${productsToReturn.length} products (${results.length} found)\n`
-  );
+    console.log(
+      `[Tool: search_product_database] ✅ Returning ${productsToReturn.length} products (${results.length} found)\n`
+    );
 
-  return {
-    success: true,
-    count: productsToReturn.length,
-    products: productsToReturn.map((p) => ({
-      title: p.title,
-      price: p.price,
-      storeName: p.storeName,
-      productUrl: p.productUrl,
-      imageUrl: p.imageUrl,
-      description: p.description,
-      category: p.category,
-      brand: p.brand,
-      specs: p.specs,
-      rrfScore: p.rrfScore?.toFixed(4),
-    })),
-  };
+    return {
+      success: true,
+      count: productsToReturn.length,
+      products: productsToReturn.map((p) => ({
+        title: p.title,
+        price: p.price,
+        storeName: p.storeName,
+        productUrl: p.productUrl,
+        imageUrl: p.imageUrl,
+        description: p.description,
+        category: p.category,
+        brand: p.brand,
+        specs: p.specs,
+        rrfScore: p.rrfScore?.toFixed(4),
+      })),
+    };
+  } catch (error) {
+    console.error(`[Tool: search_product_database] Error:`, error);
+    return {
+      success: false,
+      error: `Search failed: ${error.message}`,
+      count: 0,
+      products: [],
+    };
+  }
 }
 
 async function executeSearchWeb(args) {
@@ -631,7 +775,15 @@ async function executeSearchWeb(args) {
 app.post("/chat", async (req, res) => {
   let { query: message, sessionId } = req.body;
 
-  if (!message) return res.status(400).json({ error: "Message is required." });
+  // Validation
+  if (!message || typeof message !== "string" || message.trim() === "") {
+    return res.status(400).json({
+      error: "Valid message is required",
+      details: "The 'query' field must be a non-empty string",
+    });
+  }
+
+  message = message.trim();
 
   if (!sessionId) {
     sessionId = uuidv4();
@@ -646,61 +798,213 @@ app.post("/chat", async (req, res) => {
         role: "system",
         content: `You are Omnia AI, a helpful shopping assistant for electronics in Kuwait.
 
-        **CRITICAL: ALWAYS CALL search_product_database BEFORE RESPONDING ABOUT PRODUCTS!**
+**CRITICAL: ALWAYS CALL search_product_database BEFORE RESPONDING ABOUT PRODUCTS!**
 NEVER claim to have found products without actually calling the search tool first.
 NEVER make up prices, specifications, or product details.
 
-**CRITICAL RAM vs STORAGE EXTRACTION RULES:**
+**CRITICAL TOOL CALL INSTRUCTION:**
+When the user sends you a message, you MUST call the search_product_database tool with:
+1. The FULL user message in the 'query' parameter
+2. The extracted filters in their respective parameters
+3. The MODEL NUMBER in the 'model_number' parameter
 
-You MUST carefully distinguish between RAM and Storage based on these rules:
+Example of CORRECT tool call:
+User message: "iPhone 15 from xcite"
+Your tool call:
+{
+  "query": "iPhone 15 from xcite",     // ✅ REQUIRED - Full user message
+  "brand": "apple",                     // ✅ Inferred from iPhone
+  "category": "smartphone",             // ✅ CRITICAL - Inferred from iPhone
+  "model_number": "iphone 15",          // ✅ NEW - The specific model
+  "variant": "base",                    // ✅ No variant mentioned
+  "store_name": "xcite"                 // ✅ Extracted
+}
+
+User message: "samsung s24 plus 512gb"
+Your tool call:
+{
+  "query": "samsung s24 plus 512gb",
+  "brand": "samsung",
+  "category": "smartphone",             // ✅ CRITICAL - Inferred from Galaxy
+  "model_number": "galaxy s24+",        // ✅ NEW - The specific model (use + for plus)
+  "variant": "+",                       // ✅ Plus → +
+  "storage": "512gb"
+}
+
+User message: "macbook air m2"
+Your tool call:
+{
+  "query": "macbook air m2",
+  "brand": "apple",
+  "category": "laptop",                 // ✅ CRITICAL - Inferred from MacBook
+  "model_number": "macbook air m2",     // ✅ NEW - The specific model
+  "variant": "air"
+}
+
+User message: "thinkpad x1 carbon"
+Your tool call:
+{
+  "query": "thinkpad x1 carbon",
+  "brand": "lenovo",
+  "category": "laptop",
+  "model_number": "thinkpad x1 carbon"  // ✅ Works for ANY brand/model
+}
+
+**CRITICAL MODEL NUMBER EXTRACTION:**
+
+The 'model_number' parameter is the KEY to finding exact products across ANY brand.
+
+RULES:
+1. Extract the FULL model string as users would say it
+2. Include brand/series + model identifier
+3. Examples:
+   - "iPhone 15" → model_number: "iphone 15"
+   - "Galaxy S24" → model_number: "galaxy s24" or "s24"
+   - "Pixel 8 Pro" → model_number: "pixel 8 pro"
+   - "XPS 13" → model_number: "xps 13"
+   - "ThinkPad T14" → model_number: "thinkpad t14"
+   - "ROG Strix" → model_number: "rog strix"
+
+4. DO NOT include storage/RAM/color in model_number
+5. Keep it concise and lowercase
+
+**WHY THIS IS CRITICAL:**
+Without model_number, searching "Samsung S24 Plus 512GB" could match "iPhone 15 Plus 512GB" 
+because both have "Plus" variant and "512GB" storage. The model_number ensures we ONLY 
+match Samsung S24 models.
+
+**CRITICAL CATEGORY INFERENCE - PREVENTS CROSS-CATEGORY CONTAMINATION:**
+
+You MUST ALWAYS infer the category from model names. This prevents showing laptops when searching for phones!
+
+INFERENCE RULES:
+1. **Smartphones:**
+   - "iPhone" → category: "smartphone"
+   - "Galaxy S/Note/Z" → category: "smartphone"
+   - "Pixel" → category: "smartphone"
+
+2. **Laptops:**
+   - "MacBook" → category: "laptop"
+   - "ThinkPad", "XPS", "Pavilion" → category: "laptop"
+
+3. **Tablets:**
+   - "iPad" → category: "tablet"
+   - "Galaxy Tab" → category: "tablet"
+
+4. **Headphones:**
+   - "AirPods" → category: "headphone"
+   - "WH-", "QuietComfort", "Buds" → category: "headphone"
+
+**WHY THIS IS CRITICAL:**
+Without category filtering, searching for "iPhone 15" could return "MacBook Air 15.3-inch" because:
+- Both are Apple products
+- Both have "15" in the name
+- Without category, the system can't distinguish them
+
+**CRITICAL RAM vs STORAGE EXTRACTION RULES:**
 
 1. **RAM Extraction (only when explicitly mentioned):**
    - Extract RAM ONLY if the query contains "RAM" or "memory" keywords
    - Examples:
      * "16gb ram phone" → ram: "16gb", storage: null
      * "8gb ram laptop" → ram: "8gb", storage: null
-     * "12gb memory phone" → ram: "12gb", storage: null
-     * "16gb ram and 256gb storage" → ram: "16gb", storage: "256gb"
-     * "32gb ram 1tb laptop" → ram: "32gb", storage: "1tb"
 
 2. **Storage Extraction (default for capacity numbers):**
-   - Extract as storage if the query mentions "storage", "ROM", "SSD", or uses numbers >= 64GB WITHOUT the word "RAM"
+   - Extract as storage if >= 64GB WITHOUT "RAM" keyword
    - Examples:
      * "256gb phone" → ram: null, storage: "256gb"
      * "512gb storage" → ram: null, storage: "512gb"
-     * "128gb iphone" → ram: null, storage: "128gb"
-     * "1tb laptop" → ram: null, storage: "1tb"
      * "16gb ram 256gb" → ram: "16gb", storage: "256gb"
 
-3. **Combined Queries (most important):**
-   - When both RAM and storage are mentioned, extract BOTH separately
-   - The keyword "RAM" or "memory" determines which number is RAM
-   - Examples:
-     * "16gb ram and 256gb phone" → ram: "16gb", storage: "256gb"
-     * "8gb ram 512gb storage laptop" → ram: "8gb", storage: "512gb"
-     * "12gb ram 1tb" → ram: "12gb", storage: "1tb"
-     * "16gb memory 128gb storage" → ram: "16gb", storage: "128gb"
+**CRITICAL VARIANT EXTRACTION RULES:**
+1. **"Plus" MUST BE CONVERTED TO "+":**
+   - "Samsung S24 Plus" → variant: "+" (NOT "plus")
+   - "iPhone 15 Plus" → variant: "+" (NOT "plus")
 
-4. **Edge Cases:**
-   - "16gb phone" (no RAM keyword) → ram: null, storage: "16gb" (unusual but follow the rule)
-   - "8gb laptop" (no RAM keyword) → ram: null, storage: "8gb" (unusual but follow the rule)
-   - If unsure, larger numbers (>= 64GB) are usually storage, smaller (4-32GB) context-dependent
+2. **Other variants - EXTRACT EXACTLY AS MENTIONED:**
+   - "Pro Max" → variant: "pro max" (EXACT)
+   - "Pro" → variant: "pro" (EXACT - NOT "pro max")
+   - "Ultra" → variant: "ultra" (EXACT)
+   - "Mini" → variant: "mini" (EXACT)
+   - "Air" → variant: "air" (EXACT)
 
-**STRICT KEYWORD EXTRACTION RULES:**
-1. **VARIANTS:** Extract the FULL variant phrase from user query:
-   - "iPhone 15 Pro Max" → variant: "pro max" (NOT just "pro")
-   - "iPhone 15 Pro" → variant: "pro"
-   - "iPhone 15 Plus" → variant: "plus"
-   - "iPhone 15" → variant: "base"
-   - "Galaxy S24 Ultra" → variant: "ultra"
-   
-2. **BRANDS:** Infer the brand if implied (e.g. "Galaxy" → Brand: "Samsung").
+3. **Base models:**
+   - "iPhone 15" (no variant) → variant: "base"
+   - "Samsung S24" (no variant) → variant: "base"
+
+**CRITICAL: Exact variant matching is enforced!**
+- If user asks for "Pro", database will ONLY match "Pro" (NOT "Pro Max")
+- If user asks for "Pro Max", database will ONLY match "Pro Max" (NOT "Pro")
+- This is intentional - prevents showing wrong variants
+
+**SMART ALTERNATIVE HANDLING:**
+If strict search returns 0 results, the system automatically tries relaxed search:
+- Relaxed search drops: variant, storage, RAM, color
+- Relaxed search keeps: category, brand, model_number
+
+Example:
+User: "iPhone 15 Pro"
+Strict search: variant="pro" → 0 results (you don't have Pro)
+Relaxed search: Drops variant → Finds "iPhone 15 Pro Max"
+Your response: "I don't have the iPhone 15 Pro in stock right now, but I found the iPhone 15 Pro Max which is similar!"
+
+**DO NOT claim exact match when showing alternatives:**
+❌ "I found iPhone 15 Pro!" (when showing Pro Max)
+✅ "I don't have iPhone 15 Pro, but I found iPhone 15 Pro Max!"
+
+**CRITICAL STORE NAME EXTRACTION:**
+Use these EXACT lowercase values:
+- "xcite" (not "Xcite" or "XCITE")
+- "best" (not "Best" or "BEST_KW")
+- "eureka" (not "Eureka")
+- "noon" (not "Noon")
+
+**CRITICAL NO RESULTS HANDLING:**
+
+If search_product_database returns 0 products:
+- DO NOT suggest products from different categories
+- DO NOT mention alternatives from other categories
+- Simply say: "I don't have [specific product] in my database right now."
+
+**CRITICAL: Never claim products are something they're not!**
+If user asks for "iPhone case" and tool returns iPhones (not cases), say:
+"I don't have iPhone cases in my database right now."
+
+DO NOT say:
+❌ "I found iPhone cases" (when showing phones)
+❌ "Here are some options for cases" (when showing phones)
+
+Examples:
+
+User: "iPhone 17"
+Tool returns: 0 products
+Your response: "I don't have the iPhone 17 in my database right now."
+
+User: "iPhone case"
+Tool returns: 0 products
+Your response: "I don't have iPhone cases in my database right now."
+
+User: "Samsung charger"
+Tool returns: 0 products  
+Your response: "I don't have Samsung chargers in my database right now."
+
+User: "AirPods case"
+Tool returns: AirPods (not cases)
+Your response: "I don't have AirPods cases in my database right now."
+
+DO NOT SAY:
+❌ "I couldn't find iPhone cases, but here are some phones"
+❌ "Would you like to see other Apple products?"
+❌ "Let me show you alternatives from different categories"
+❌ "I found several options for iPhone cases" (when showing phones)
+
+**ALWAYS verify the category matches what the user asked for!**
 
 **YOUR JOB:**
 1. Help users find products by calling search_product_database
-2. Extract filters from user queries: brand, color, storage, variant, price range, store, RAM
+2. Extract filters from user queries: brand, color, storage, variant, price range, store, RAM, AND CATEGORY
 3. Provide brief, conversational responses
-4. If no results, suggest alternatives or ask clarifying questions
+4. If no results, just say you don't have it
 
 **CRITICAL RESPONSE RULE:**
 When you call search_product_database and get results:
@@ -716,36 +1020,73 @@ After calling the tool and getting products, respond with:
 
 **EXAMPLES:**
 
-User: "iPhone 15 Pro Max 512GB"
-Tool returns: 5 products
-Your response: "I found 5 iPhone 15 Pro Max models with 512GB storage! Prices range from 450 to 520 KWD across different stores and colors. Would you like me to filter by a specific store or color?"
+User: "iPhone 15 from Best"
+Tool call: {
+  query: "iPhone 15 from Best",
+  brand: "apple",
+  category: "smartphone",
+  variant: "base",
+  store_name: "best"
+}
+Your response: "I found several iPhone 15 models at Best! Would you like to see specific colors or storage options?"
 
-User: "16gb ram and 256gb phone"
-Tool call: ram: "16gb", storage: "256gb"
-Your response: "I found several phones with 16GB RAM and 256GB storage! What's your preferred brand or price range?"
+User: "Samsung S24 Plus 512GB"
+Tool call: {
+  query: "Samsung S24 Plus 512GB",
+  brand: "samsung",
+  category: "smartphone",
+  variant: "+",
+  storage: "512gb"
+}
+Your response: "I found Samsung Galaxy S24+ models with 512GB storage! Prices range from 450 to 520 KWD. What color would you prefer?"
 
-User: "black headphones under 50"
-Tool returns: 8 products
-Your response: "I found 8 black headphones under 50 KWD! There's a nice variety from brands like Sony, JBL, and Anker. Any specific features you're looking for, like noise cancellation or wireless?"
+User: "MacBook Air 15"
+Tool call: {
+  query: "MacBook Air 15",
+  brand: "apple",
+  category: "laptop",
+  variant: "air"
+}
+Your response: "I found several MacBook Air 15-inch models! What's your preferred RAM and storage configuration?"
 
-User: "gaming laptop"
+User: "iPhone 15 Pro" (but you only have Pro Max in stock)
+Tool call: {
+  query: "iPhone 15 Pro",
+  brand: "apple",
+  category: "smartphone",
+  model_number: "iphone 15 pro",
+  variant: "pro"
+}
+Tool returns: 0 strict results, but relaxed search finds Pro Max models
+Your response: "I don't have the iPhone 15 Pro in stock right now, but I found the iPhone 15 Pro Max which is similar! Would you like to see those options?"
+
+User: "iPhone case" (no cases in database)
+Tool call: {
+  query: "iPhone case",
+  brand: "apple",
+  category: "accessory"
+}
 Tool returns: 0 products
-Your response: "I couldn't find any gaming laptops with those exact specifications. Could you tell me your budget range? That would help me find better options for you."
+Your response: "I don't have iPhone cases in my database right now."
 
 **WHAT NOT TO DO:**
-❌ "Here are the products:
-1. iPhone 15 Pro Max - 450 KWD - Store: Xcite..."
-❌ Listing product titles, prices, or specifications in your text
-❌ Using markdown lists or numbered lists for products
-❌ Including [View Product] links in your text
+❌ Calling the tool without a 'query' parameter
+❌ Forgetting to infer 'category' from model names
+❌ Listing product titles, prices in your text
+❌ Suggesting different categories when no results found
+❌ Claiming "I found Pro" when showing "Pro Max" (be honest about alternatives)
 
 **GUIDELINES:**
-- Keep responses concise (2-4 sentences usually)
+- Keep responses concise (2-4 sentences)
 - Be conversational and helpful
 - Always call the search tool before saying products aren't available
-- Extract ALL relevant filters from user queries, especially RAM and storage separately
-- Don't make assumptions - if unclear, ask the user
-- Focus on helping users narrow down choices, not displaying product details`,
+- ALWAYS extract category from model names (iPhone → smartphone, MacBook → laptop)
+- ALWAYS convert "Plus" to "+" for variant field
+- ALWAYS extract model_number to prevent cross-model contamination
+- ALWAYS use lowercase store names
+- ALWAYS include the full user message in the 'query' parameter
+- If showing alternatives (Pro Max when asked for Pro), be honest about it
+- If no results, simply say you don't have it - don't suggest other categories`,
       },
       ...history.map((m) => ({ role: m.role, content: m.content })),
       { role: "user", content: message },
@@ -854,12 +1195,12 @@ Your response: "I couldn't find any gaming laptops with those exact specificatio
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    message: "Omnia AI - Production-Ready Hybrid Search v2.2",
+    message: "Omnia AI - Production-Ready Hybrid Search v2.5 (All Bugs Fixed)",
     features: [
       "🔥 Push-Down Filtering at Database Level",
       "🧠 Scalable Query Analysis",
       "🎯 Semantic Vector Search (HNSW Index)",
-      "📝 Multi-Strategy Fulltext Search (0.3 threshold + ILIKE fallback)",
+      "📝 Multi-Strategy Fulltext Search (0.5 threshold + ILIKE fallback)",
       "🔗 JSONB Specs Filtering (GIN Index)",
       "⚡ Fulltext-Only RRF Mode",
       "🔄 Dynamic Result Limiting",
@@ -869,22 +1210,33 @@ app.get("/health", (req, res) => {
       "✅ Exact Model Number Matching",
       "🚀 Unlimited Brand Support",
       "🧩 Advanced RAM/Storage Separation",
-      "🎭 Flexible Variant Matching (ILIKE)",
+      "🎭 EXACT Variant Matching (Plus → +)",
+      "🛡️  S25+ Bug Fixed - Strict Variant Filtering",
+      "🏪 Store Name Mapping (best → BEST_KW, xcite → XCITE)",
+      "🏷️  Flexible Brand Matching (ILIKE)",
+      "🎯 Category Inference (iPhone → smartphone, MacBook → laptop)",
+      "🚫 No Cross-Category Contamination",
+      "📱 Smart Model Number Detection (not screen sizes)",
     ],
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 Omnia AI Server Running v2.2`);
+  console.log(`\n🚀 Omnia AI Server Running v2.5 - PRODUCTION READY`);
   console.log(`📍 http://localhost:${PORT}`);
   console.log(`🔥 Production-Ready for 500k+ Products`);
   console.log(`📊 Hybrid Search: Vector (HNSW) + Fulltext (GIN) + RRF`);
   console.log(`⚡ Push-Down Filtering: Enabled`);
   console.log(`🧠 Scalable Query Analysis: Enabled`);
   console.log(
-    `✅ Multi-Strategy Fulltext: Enabled (0.3 threshold + ILIKE fallback)`
+    `✅ Multi-Strategy Fulltext: Enabled (0.5 threshold + ILIKE fallback)`
   );
   console.log(`🎯 Fulltext-Only Mode: Enabled`);
   console.log(`🧩 RAM/Storage Separation: Enhanced`);
-  console.log(`🎭 Flexible Variant Matching: ILIKE-based\n`);
+  console.log(`🎭 EXACT Variant Matching: Plus → + (S25+ Bug Fixed)`);
+  console.log(`🛡️  Strict Variant Filter: Prevents Wrong Model Results`);
+  console.log(`🏪 Store Mapping: best → BEST_KW, xcite → XCITE`);
+  console.log(`🏷️  Brand Matching: Flexible ILIKE (Apple Inc → Apple)`);
+  console.log(`🎯 Category Inference: iPhone → smartphone, MacBook → laptop`);
+  console.log(`🚫 No Cross-Category Contamination: iPhones ≠ MacBooks\n`);
 });

@@ -67,14 +67,34 @@ const SCRAPING_JOBS = {
     scraper: scrapeProductsEureka,
     priority: 1, // Lower number = higher priority
     jobs: [
-      // {
-      //   url: "",
-      //   category: "mobilephones",
-      // },
-      // // {
-      // //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
-      // //   category: "tablets",
-      // // },
+      {
+        url: "https://www.eureka.com.kw/products/browse/phones/mobile-phones",
+        category: "mobilephones",
+      },
+      {
+        url: "https://www.eureka.com.kw/products/browse/computers-tablets/laptops",
+        category: "laptops",
+      },
+      {
+        url: "https://www.eureka.com.kw/products/browse/computers-tablets/desktops-monitors/desk-top-comp",
+        category: "desktops",
+      },
+      {
+        url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
+        category: "tablets",
+      },
+      {
+        url: "https://www.eureka.com.kw/products/browse/audio/home-theaters",
+        category: "audio",
+      },
+      {
+        url: "https://www.eureka.com.kw/products/browse/audio/accessories?sort%3Dpriceh2l",
+        category: "audio",
+      },
+      {
+        url: "https://www.eureka.com.kw/products/browse/smart-watches/watches",
+        category: "smartwatches",
+      },
       // // Add more Eureka categories here
     ],
   },
@@ -88,22 +108,22 @@ const SCRAPING_JOBS = {
       //   url: "https://www.xcite.com/mobile-phones/c",
       //   category: "mobilephones",
       // },
-      {
-        url: "https://www.xcite.com/laptops/c",
-        category: "laptops",
-      },
-      {
-        url: "https://www.xcite.com/tablets/c",
-        category: "tablets",
-      },
-      {
-        url: "https://www.xcite.com/computer-desktops/c",
-        category: "desktops",
-      },
-      {
-        url: "https://www.xcite.com/personal-audio/c",
-        category: "audio",
-      },
+      // {
+      //   url: "https://www.xcite.com/laptops/c",
+      //   category: "laptops",
+      // },
+      // {
+      //   url: "https://www.xcite.com/tablets/c",
+      //   category: "tablets",
+      // },
+      // {
+      //   url: "https://www.xcite.com/computer-desktops/c",
+      //   category: "desktops",
+      // },
+      // {
+      //   url: "https://www.xcite.com/personal-audio/c",
+      //   category: "audio",
+      // },
       {
         url: "https://www.xcite.com/smart-watches/c",
         category: "smartwatches",
@@ -117,7 +137,43 @@ const SCRAPING_JOBS = {
     scraper: scrapeProductsBest,
     priority: 2,
     jobs: [
-      // Add Best categories here
+      {
+        url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:samsung:brand:apple",
+        category: "mobilephones",
+      },
+      {
+        url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:xiaomi:brand:honor",
+        category: "mobilephones",
+      },
+      {
+        url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:xiaomi:brand:honor",
+        category: "mobilephones",
+      },
+      {
+        url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:motorola:brand:infinix:brand:vivo:brand:oppo:brand:nothing:brand:google:brand:oneplus:brand:huawei:brand:realmer",
+        category: "mobilephones",
+      },
+      {
+        url: "https://best.com.kw/en/c/laptops-nn",
+        category: "laptops",
+      },
+      {
+        url: "https://best.com.kw/en/c/desktops-nn",
+        category: "desktops",
+      },
+      {
+        url: "https://best.com.kw/en/c/tablets-nn",
+        category: "tablets",
+      },
+
+      {
+        url: "https://best.com.kw/en/c/headphones-and-earphones-nn",
+        category: "audio",
+      },
+      {
+        url: "https://best.com.kw/en/search/smartwatches",
+        category: "smartwatches",
+      },
     ],
   },
 

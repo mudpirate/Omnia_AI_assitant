@@ -2,11 +2,36 @@
   "stores": {
     "xcite": {
       "completed": [
-        "mobilephones"
+        "mobilephones",
+        "laptops",
+        "tablets",
+        "desktops",
+        "audio",
+        "smartwatches"
+      ],
+      "failed": []
+    },
+    "eureka": {
+      "completed": [
+        "mobilephones",
+        "laptops",
+        "desktops",
+        "tablets",
+        "audio",
+        "smartwatches"
+      ],
+      "failed": []
+    },
+    "best": {
+      "completed": [
+        "mobilephones",
+        "laptops",
+        "desktops",
+        "tablets"
       ],
       "failed": []
     }
   },
   "startTime": null,
-  "lastSaved": 1766307979939
+  "lastSaved": 1766344906619
 }
