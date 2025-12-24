@@ -60,15 +60,16 @@ const TOOLS = [
   - "iPhone", "Galaxy S/Note/Z", "Pixel" → "smartphone"
   - "MacBook", "ThinkPad", "XPS", "Pavilion", "IdeaPad" → "laptop"
   - "iPad", "Galaxy Tab", "Surface" → "tablet"
-  - "AirPods", "WH-", "QuietComfort", "Buds" → "headphone"
+  - "AirPods", "WH-", "QuietComfort", "Buds", "headphone", "headphones", "earbuds", "earphones" → "headphone"
   - "Apple Watch", "Galaxy Watch" → "smartwatch"
   - "case", "cover", "screen protector" → "accessory"
   - "charger", "cable", "adapter" → "accessory"
   - "power bank", "battery" → "accessory"
   - "mouse", "keyboard" → "accessory"
-  - "speaker", "soundbar" → "speaker"
+  - "speaker", "speakers", "soundbar" → "speaker"
   - "TV", "television", "monitor" → "display"
   - "camera", "DSLR", "mirrorless" → "camera"
+  - "desktop", "PC", "tower" → "desktop"
 
   Examples:
   - "iPhone 15" → category: "smartphone"
@@ -78,6 +79,9 @@ const TOOLS = [
   - "iPhone case" → category: "accessory"
   - "phone charger" → category: "accessory"
   - "wireless mouse" → category: "accessory"
+  - "bluetooth speaker" → category: "speaker"
+  - "gaming desktop" → category: "desktop"
+  - "wireless headphones" → category: "headphone"
 
   If user explicitly mentions a category, use that. Otherwise, ALWAYS infer from product name.
   This prevents showing phones when searching for cases!`,
@@ -236,14 +240,22 @@ const TOOLS = [
 ];
 
 async function getQueryEmbedding(text) {
+  console.log("\n🧠 [EMBEDDING] Generating embedding for query:", text);
+
   const embeddingRes = await openai.embeddings.create({
     model: EMBEDDING_MODEL,
     input: text,
   });
   const embedding = embeddingRes.data[0]?.embedding;
   if (!embedding) throw new Error("Failed to generate embedding");
+
   const vectorLiteral =
     "[" + embedding.map((x) => Number(x).toFixed(6)).join(",") + "]";
+
+  console.log("✅ [EMBEDDING] Successfully generated");
+  console.log("   📊 Dimensions:", embedding.length);
+  console.log("   📏 Vector literal length:", vectorLiteral.length, "chars");
+
   return { embedding, vectorLiteral };
 }
 
@@ -252,33 +264,49 @@ function normalizeStorage(storageValue) {
 
   const storageLower = storageValue.toLowerCase().trim();
 
+  console.log("💾 [STORAGE NORMALIZATION]");
+  console.log("   Input:", storageValue);
+
   const tbMatch = storageLower.match(/^(\d+(?:\.\d+)?)\s*tb$/);
   if (tbMatch) {
     const tbValue = parseFloat(tbMatch[1]);
     const gbValue = Math.round(tbValue * 1024);
-    return `${gbValue}gb`;
+    const normalized = `${gbValue}gb`;
+    console.log("   ✅ Converted TB to GB:", normalized);
+    return normalized;
   }
 
   const gbMatch = storageLower.match(/^(\d+)\s*gb$/);
   if (gbMatch) {
-    return `${gbMatch[1]}gb`;
+    const normalized = `${gbMatch[1]}gb`;
+    console.log("   ✅ Normalized GB:", normalized);
+    return normalized;
   }
 
+  console.log("   ⚠️  No normalization applied, using as-is:", storageLower);
   return storageLower;
 }
 
 function buildPushDownFilters(filters = {}, rawQuery = "") {
+  console.log("\n🔍 [FILTER BUILDER] Building WHERE clause");
+  console.log("   📥 Input filters:", JSON.stringify(filters, null, 2));
+  console.log("   📝 Raw query:", rawQuery);
+
   const conditions = [];
 
   const CORE_FIELDS = {
     minPrice: (value) => {
       if (value && value > 0) {
-        conditions.push(`"price" >= ${parseFloat(value)}`);
+        const condition = `"price" >= ${parseFloat(value)}`;
+        conditions.push(condition);
+        console.log("   💰 Min price filter:", condition);
       }
     },
     maxPrice: (value) => {
       if (value && value < Infinity && value !== null) {
-        conditions.push(`"price" <= ${parseFloat(value)}`);
+        const condition = `"price" <= ${parseFloat(value)}`;
+        conditions.push(condition);
+        console.log("   💰 Max price filter:", condition);
       }
     },
     storeName: (value) => {
@@ -292,7 +320,13 @@ function buildPushDownFilters(filters = {}, rawQuery = "") {
         };
         const dbStoreName =
           storeMapping[storeLower] || value.toUpperCase().replace(/\./g, "_");
-        conditions.push(`"storeName" = '${dbStoreName}'`);
+        const condition = `"storeName" = '${dbStoreName}'`;
+        conditions.push(condition);
+        console.log(
+          "   🏪 Store filter:",
+          condition,
+          `(${storeLower} → ${dbStoreName})`
+        );
       }
     },
     category: (value) => {
@@ -305,10 +339,10 @@ function buildPushDownFilters(filters = {}, rawQuery = "") {
           laptop: "LAPTOPS",
           notebook: "LAPTOPS",
           tablet: "TABLETS",
-          headphone: "HEADPHONES",
-          headphones: "HEADPHONES",
-          earphones: "HEADPHONES",
-          earbuds: "HEADPHONES",
+          headphone: "AUDIO",
+          headphones: "AUDIO",
+          earphones: "AUDIO",
+          earbuds: "AUDIO",
           smartwatch: "SMARTWATCHES",
           watch: "SMARTWATCHES",
           accessory: "ACCESSORIES",
@@ -318,26 +352,40 @@ function buildPushDownFilters(filters = {}, rawQuery = "") {
           charger: "ACCESSORIES",
           cable: "ACCESSORIES",
           adapter: "ACCESSORIES",
-          speaker: "SPEAKERS",
+          speaker: "AUDIO",
+          speakers: "AUDIO",
           display: "DISPLAYS",
           monitor: "DISPLAYS",
           tv: "DISPLAYS",
           camera: "CAMERAS",
+          desktop: "DESKTOPS",
+          pc: "DESKTOPS",
+          tower: "DESKTOPS",
         };
         const dbCategory = categoryMapping[catLower] || catLower.toUpperCase();
-        conditions.push(`"category" = '${dbCategory}'`);
+        const condition = `"category" = '${dbCategory}'`;
+        conditions.push(condition);
+        console.log(
+          "   📂 Category filter:",
+          condition,
+          `(${catLower} → ${dbCategory})`
+        );
       }
     },
     brand: (value) => {
       if (value) {
         const brandLower = value.toLowerCase().replace(/'/g, "''");
-        conditions.push(`LOWER("brand") ILIKE '%${brandLower}%'`);
+        const condition = `LOWER("brand") ILIKE '%${brandLower}%'`;
+        conditions.push(condition);
+        console.log("   🏷️  Brand filter:", condition);
       }
     },
     modelNumber: (value) => {
       if (value) {
         const modelNum = value.replace(/'/g, "''");
-        conditions.push(`LOWER("title") LIKE '%${modelNum}%'`);
+        const condition = `LOWER("title") LIKE '%${modelNum}%'`;
+        conditions.push(condition);
+        console.log("   🔢 Model number filter:", condition);
       }
     },
   };
@@ -363,7 +411,9 @@ function buildPushDownFilters(filters = {}, rawQuery = "") {
     "warranty",
   ];
 
-  conditions.push(`"stock" = 'IN_STOCK'`);
+  const stockCondition = `"stock" = 'IN_STOCK'`;
+  conditions.push(stockCondition);
+  console.log("   📦 Stock filter:", stockCondition);
 
   Object.keys(filters).forEach((key) => {
     const value = filters[key];
@@ -374,17 +424,27 @@ function buildPushDownFilters(filters = {}, rawQuery = "") {
       CORE_FIELDS[key](value);
     } else if (EXACT_MATCH_SPECS.includes(key)) {
       const specValue = value.toString().toLowerCase().replace(/'/g, "''");
-      conditions.push(`LOWER("specs"->>'${key}') = '${specValue}'`);
+      const condition = `LOWER("specs"->>'${key}') = '${specValue}'`;
+      conditions.push(condition);
+      console.log(`   🎯 EXACT MATCH spec [${key}]:`, condition);
     } else if (FLEXIBLE_MATCH_SPECS.includes(key)) {
       const specValue = value.toString().toLowerCase().replace(/'/g, "''");
-      conditions.push(`LOWER("specs"->>'${key}') ILIKE '%${specValue}%'`);
+      const condition = `LOWER("specs"->>'${key}') ILIKE '%${specValue}%'`;
+      conditions.push(condition);
+      console.log(`   🔄 FLEXIBLE MATCH spec [${key}]:`, condition);
     } else if (key !== "query") {
       const specValue = value.toString().toLowerCase().replace(/'/g, "''");
-      conditions.push(`LOWER("specs"->>'${key}') ILIKE '%${specValue}%'`);
+      const condition = `LOWER("specs"->>'${key}') ILIKE '%${specValue}%'`;
+      conditions.push(condition);
+      console.log(`   ❓ OTHER spec [${key}]:`, condition);
     }
   });
 
   const whereClause = conditions.length > 0 ? conditions.join(" AND ") : "1=1";
+
+  console.log("   ✅ Final WHERE clause:");
+  console.log("   ", whereClause);
+  console.log("   📊 Total conditions:", conditions.length);
 
   return whereClause;
 }
@@ -395,6 +455,9 @@ async function vectorSearch(
   limit = 100,
   rawQuery = ""
 ) {
+  console.log("\n🎯 [VECTOR SEARCH] Starting vector search");
+  console.log("   🔢 Limit:", limit);
+
   const whereClause = buildPushDownFilters(filters, rawQuery);
 
   const query = `
@@ -409,23 +472,54 @@ async function vectorSearch(
       LIMIT ${limit};
     `;
 
+  console.log("   📝 SQL Query (truncated):", query.substring(0, 500) + "...");
+
   try {
     const results = await prisma.$queryRawUnsafe(query);
+    console.log("   ✅ Vector search completed");
+    console.log("   📊 Results found:", results.length);
+
+    if (results.length > 0) {
+      console.log("   🔝 Top 3 results:");
+      results.slice(0, 3).forEach((r, i) => {
+        console.log(`      ${i + 1}. ${r.title}`);
+        console.log(
+          `         Price: ${r.price} KWD | Store: ${r.storeName} | Category: ${r.category}`
+        );
+        console.log(`         Similarity: ${r.similarity?.toFixed(4)}`);
+        if (r.specs) {
+          console.log(
+            `         Specs:`,
+            JSON.stringify(r.specs).substring(0, 100)
+          );
+        }
+      });
+    }
+
     return results;
   } catch (error) {
-    console.error("[Vector Search] Error:", error.message);
+    console.error("   ❌ [Vector Search] Error:", error.message);
+    console.error("   Full error:", error);
     return [];
   }
 }
 
 async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
+  console.log("\n📝 [FULLTEXT SEARCH] Starting fulltext search");
+  console.log("   🔍 Search term:", searchQuery);
+  console.log("   🔢 Limit:", limit);
+
   const whereClause = buildPushDownFilters(filters, searchQuery);
   const searchTerm = searchQuery.toLowerCase().trim().replace(/'/g, "''");
 
-  if (!searchTerm) return [];
+  if (!searchTerm) {
+    console.log("   ⚠️  Empty search term, returning no results");
+    return [];
+  }
 
   try {
     await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.5;`);
+    console.log("   ⚙️  Set similarity threshold to 0.5");
 
     const query = `
         SELECT 
@@ -439,9 +533,17 @@ async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
         LIMIT ${limit};
       `;
 
+    console.log(
+      "   📝 Primary SQL Query (truncated):",
+      query.substring(0, 500) + "..."
+    );
+
     let results = await prisma.$queryRawUnsafe(query);
+    console.log("   📊 Primary search results:", results.length);
 
     if (results.length === 0) {
+      console.log("   🔄 No results from primary search, trying fallback...");
+
       const words = searchTerm
         .split(/\s+/)
         .filter(
@@ -449,6 +551,8 @@ async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
             word.length > 2 &&
             !["the", "and", "for", "with", "from"].includes(word)
         );
+
+      console.log("   📝 Extracted keywords:", words);
 
       if (words.length > 0) {
         const likeConditions = words
@@ -466,18 +570,40 @@ async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
             LIMIT ${limit};
           `;
 
+        console.log(
+          "   📝 Fallback SQL Query (truncated):",
+          fallbackQuery.substring(0, 500) + "..."
+        );
         results = await prisma.$queryRawUnsafe(fallbackQuery);
+        console.log("   📊 Fallback search results:", results.length);
       }
+    }
+
+    if (results.length > 0) {
+      console.log("   🔝 Top 3 fulltext results:");
+      results.slice(0, 3).forEach((r, i) => {
+        console.log(`      ${i + 1}. ${r.title}`);
+        console.log(
+          `         Price: ${r.price} KWD | Store: ${r.storeName} | Category: ${r.category}`
+        );
+        console.log(`         Rank: ${r.rank?.toFixed(4)}`);
+      });
     }
 
     return results;
   } catch (error) {
-    console.error("[Fulltext Search] Error:", error.message);
+    console.error("   ❌ [Fulltext Search] Error:", error.message);
+    console.error("   Full error:", error);
     return [];
   }
 }
 
 function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
+  console.log("\n🔀 [RRF FUSION] Starting Reciprocal Rank Fusion");
+  console.log("   📊 Vector results:", vectorResults.length);
+  console.log("   📊 Fulltext results:", fulltextResults.length);
+  console.log("   ⚙️  K parameter:", k);
+
   const scores = new Map();
 
   vectorResults.forEach((product, index) => {
@@ -491,6 +617,7 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
       fulltextRank: null,
     });
   });
+  console.log("   ✅ Processed vector results");
 
   fulltextResults.forEach((product, index) => {
     const key = product.productUrl || product.title;
@@ -510,6 +637,7 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
       });
     }
   });
+  console.log("   ✅ Processed fulltext results");
 
   const fulltextMatches = Array.from(scores.values()).filter(
     (item) => item.fulltextRank !== null
@@ -519,6 +647,9 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
     (item) => item.fulltextRank === null
   );
 
+  console.log("   📊 Fulltext matches:", fulltextMatches.length);
+  console.log("   📊 Vector-only matches:", vectorOnlyMatches.length);
+
   let finalResults;
 
   if (fulltextMatches.length > 0) {
@@ -526,11 +657,15 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
       finalScore: item.fulltextScore * 0.95 + item.vectorScore * 0.05,
       ...item,
     }));
+    console.log(
+      "   ✅ Using fulltext-weighted scoring (95% fulltext, 5% vector)"
+    );
   } else {
     finalResults = vectorOnlyMatches.map((item) => ({
       finalScore: item.vectorScore * 0.02,
       ...item,
     }));
+    console.log("   ✅ Using vector-only scoring (2% weight)");
   }
 
   finalResults.sort((a, b) => b.finalScore - a.finalScore);
@@ -539,6 +674,16 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
     ...item.product,
     rrfScore: item.finalScore,
   }));
+
+  console.log("   📊 Total fused results:", fused.length);
+  if (fused.length > 0) {
+    console.log("   🏆 Top 5 fused results:");
+    fused.slice(0, 5).forEach((r, i) => {
+      console.log(`      ${i + 1}. ${r.title}`);
+      console.log(`         RRF Score: ${r.rrfScore?.toFixed(6)}`);
+      console.log(`         Price: ${r.price} KWD | Category: ${r.category}`);
+    });
+  }
 
   return fused;
 }
@@ -549,6 +694,11 @@ async function hybridSearch(
   filters = {},
   limit = 50
 ) {
+  console.log("\n🚀 [HYBRID SEARCH] Starting hybrid search");
+  console.log("   🔍 Query:", searchQuery);
+  console.log("   🔢 Limit:", limit);
+  console.log("   🎛️  Filters:", JSON.stringify(filters, null, 2));
+
   const [vectorResults, fulltextResults] = await Promise.all([
     vectorSearch(vectorLiteral, filters, limit * 2, searchQuery),
     fulltextSearch(searchQuery, filters, limit * 2),
@@ -556,8 +706,16 @@ async function hybridSearch(
 
   if (vectorResults.length > 0 || fulltextResults.length > 0) {
     const fusedResults = reciprocalRankFusion(vectorResults, fulltextResults);
-    return fusedResults.slice(0, limit);
+    const finalResults = fusedResults.slice(0, limit);
+    console.log(
+      "   ✅ Hybrid search completed with",
+      finalResults.length,
+      "results"
+    );
+    return finalResults;
   }
+
+  console.log("   ⚠️  No results found, trying RELAXED search...");
 
   const relaxedFilters = {
     minPrice: filters.minPrice,
@@ -570,14 +728,26 @@ async function hybridSearch(
     ram: filters.ram,
   };
 
+  console.log(
+    "   🎛️  Relaxed filters:",
+    JSON.stringify(relaxedFilters, null, 2)
+  );
+
   const [relaxedVector, relaxedFulltext] = await Promise.all([
     vectorSearch(vectorLiteral, relaxedFilters, limit * 2, searchQuery),
     fulltextSearch(searchQuery, relaxedFilters, limit * 2),
   ]);
 
   const fusedResults = reciprocalRankFusion(relaxedVector, relaxedFulltext);
+  const finalResults = fusedResults.slice(0, limit);
 
-  return fusedResults.slice(0, limit);
+  console.log(
+    "   ✅ Relaxed search completed with",
+    finalResults.length,
+    "results"
+  );
+
+  return finalResults;
 }
 
 async function searchWebTool(query) {
@@ -625,6 +795,12 @@ async function searchWebTool(query) {
 }
 
 async function executeSearchDatabase(args) {
+  console.log("\n" + "=".repeat(80));
+  console.log("🔧 [TOOL: search_product_database] EXECUTION STARTED");
+  console.log("=".repeat(80));
+  console.log("📥 Raw arguments received:");
+  console.log(JSON.stringify(args, null, 2));
+
   const {
     query,
     max_price,
@@ -642,7 +818,9 @@ async function executeSearchDatabase(args) {
   } = args;
 
   if (!query || query === "undefined" || query.trim() === "") {
-    console.error(`[Tool: search_product_database] Invalid query: "${query}"`);
+    console.error(
+      `❌ [Tool: search_product_database] Invalid query: "${query}"`
+    );
     return {
       success: false,
       error: "Invalid search query. Please provide a valid search term.",
@@ -650,6 +828,8 @@ async function executeSearchDatabase(args) {
       products: [],
     };
   }
+
+  console.log("✅ Query validation passed:", query);
 
   const normalizedStorage = storage ? normalizeStorage(storage) : null;
 
@@ -668,6 +848,9 @@ async function executeSearchDatabase(args) {
     modelNumber: model_number || null,
   };
 
+  console.log("🔄 Merged filters (before cleanup):");
+  console.log(JSON.stringify(mergedFilters, null, 2));
+
   const finalFilters = {};
   Object.keys(mergedFilters).forEach((key) => {
     if (
@@ -679,12 +862,45 @@ async function executeSearchDatabase(args) {
     }
   });
 
+  console.log("✨ Final filters (after cleanup):");
+  console.log(JSON.stringify(finalFilters, null, 2));
+
   try {
     const { vectorLiteral } = await getQueryEmbedding(query);
     const results = await hybridSearch(query, vectorLiteral, finalFilters, 50);
 
     const actualCount = Math.min(results.length, 5);
     const productsToReturn = results.slice(0, actualCount);
+
+    console.log("\n📦 [PRODUCTS TO FRONTEND]");
+    console.log("   Total results from search:", results.length);
+    console.log("   Products being sent to frontend:", productsToReturn.length);
+
+    if (productsToReturn.length > 0) {
+      console.log("\n   📋 Detailed product list:");
+      productsToReturn.forEach((p, i) => {
+        console.log(`\n   Product ${i + 1}:`);
+        console.log(`   ├─ Title: ${p.title}`);
+        console.log(`   ├─ Price: ${p.price} KWD`);
+        console.log(`   ├─ Store: ${p.storeName}`);
+        console.log(`   ├─ Category: ${p.category}`);
+        console.log(`   ├─ Brand: ${p.brand}`);
+        console.log(`   ├─ RRF Score: ${p.rrfScore?.toFixed(4)}`);
+        console.log(`   ├─ URL: ${p.productUrl}`);
+        console.log(`   ├─ Image: ${p.imageUrl ? "Yes" : "No"}`);
+        if (p.specs) {
+          console.log(
+            `   └─ Specs: ${JSON.stringify(p.specs).substring(0, 150)}...`
+          );
+        }
+      });
+    } else {
+      console.log("   ⚠️  NO PRODUCTS TO SEND TO FRONTEND");
+    }
+
+    console.log("\n" + "=".repeat(80));
+    console.log("✅ [TOOL: search_product_database] EXECUTION COMPLETED");
+    console.log("=".repeat(80) + "\n");
 
     return {
       success: true,
@@ -703,7 +919,8 @@ async function executeSearchDatabase(args) {
       })),
     };
   } catch (error) {
-    console.error(`[Tool: search_product_database] Error:`, error);
+    console.error(`❌ [Tool: search_product_database] Error:`, error);
+    console.error("Full error stack:", error.stack);
     return {
       success: false,
       error: `Search failed: ${error.message}`,
@@ -738,6 +955,12 @@ async function executeSearchWeb(args) {
 app.post("/chat", async (req, res) => {
   let { query: message, sessionId } = req.body;
 
+  console.log("\n" + "█".repeat(80));
+  console.log("📨 NEW CHAT REQUEST RECEIVED");
+  console.log("█".repeat(80));
+  console.log("User message:", message);
+  console.log("Session ID:", sessionId || "NEW SESSION");
+
   if (!message || typeof message !== "string" || message.trim() === "") {
     return res.status(400).json({
       error: "Valid message is required",
@@ -749,10 +972,12 @@ app.post("/chat", async (req, res) => {
 
   if (!sessionId) {
     sessionId = uuidv4();
+    console.log("Generated new session ID:", sessionId);
   }
 
   try {
     const history = await getMemory(sessionId);
+    console.log("📚 Retrieved chat history:", history.length, "messages");
 
     const messages = [
       {
@@ -873,6 +1098,27 @@ app.post("/chat", async (req, res) => {
     "model_number": "thinkpad x1 carbon"
   }
 
+  User message: "wireless headphones"
+  Your tool call:
+  {
+    "query": "wireless headphones",
+    "category": "headphone"
+  }
+
+  User message: "bluetooth speaker"
+  Your tool call:
+  {
+    "query": "bluetooth speaker",
+    "category": "speaker"
+  }
+
+  User message: "gaming desktop"
+  Your tool call:
+  {
+    "query": "gaming desktop",
+    "category": "desktop"
+  }
+
   **CRITICAL MODEL NUMBER EXTRACTION:**
 
   The 'model_number' parameter is the KEY to finding exact products across ANY brand.
@@ -914,9 +1160,15 @@ app.post("/chat", async (req, res) => {
     - "iPad" → category: "tablet"
     - "Galaxy Tab" → category: "tablet"
 
-  4. **Headphones:**
-    - "AirPods" → category: "headphone"
+  4. **Headphones/Audio:**
+    - "AirPods", "headphones", "headphone", "earbuds", "earphones" → category: "headphone"
     - "WH-", "QuietComfort", "Buds" → category: "headphone"
+
+  5. **Speakers:**
+    - "speaker", "speakers", "soundbar" → category: "speaker"
+
+  6. **Desktops:**
+    - "desktop", "PC", "tower", "gaming pc" → category: "desktop"
 
   **WHY THIS IS CRITICAL:**
   Without category filtering, searching for "iPhone 15" could return "MacBook Air 15.3-inch" because:
@@ -1250,6 +1502,20 @@ app.post("/chat", async (req, res) => {
   Tool returns: 0 products
   Your response: "I don't have iPhone cases in my database right now."
 
+  User: "wireless headphones"
+  Tool call: {
+    query: "wireless headphones",
+    category: "headphone"
+  }
+  Your response: "I found several wireless headphone options. Would you like to see specific brands or price ranges?"
+
+  User: "bluetooth speaker"
+  Tool call: {
+    query: "bluetooth speaker",
+    category: "speaker"
+  }
+  Your response: "I found bluetooth speakers available. What's your budget?"
+
   **WHAT NOT TO DO:**
   ❌ Calling the tool without a 'query' parameter
   ❌ Forgetting to infer 'category' from model names
@@ -1316,6 +1582,7 @@ app.post("/chat", async (req, res) => {
       { role: "user", content: message },
     ];
 
+    console.log("🤖 Calling OpenAI API...");
     const completion = await openai.chat.completions.create({
       model: LLM_MODEL,
       messages,
@@ -1328,6 +1595,12 @@ app.post("/chat", async (req, res) => {
     let finalResponse = responseMessage.content || "";
     let products = [];
 
+    console.log("📥 OpenAI response received");
+    console.log(
+      "   Tool calls:",
+      responseMessage.tool_calls ? responseMessage.tool_calls.length : 0
+    );
+
     if (responseMessage.tool_calls) {
       const toolResults = [];
 
@@ -1335,11 +1608,15 @@ app.post("/chat", async (req, res) => {
         const functionName = toolCall.function.name;
         const args = JSON.parse(toolCall.function.arguments);
 
+        console.log("\n🔧 Executing tool:", functionName);
+        console.log("   Arguments:", JSON.stringify(args, null, 2));
+
         let result;
         if (functionName === "search_product_database") {
           result = await executeSearchDatabase(args);
           if (result.success && result.products && result.products.length > 0) {
             products = result.products;
+            console.log("✅ Products set for frontend:", products.length);
           }
         } else if (functionName === "search_web") {
           result = await executeSearchWeb(args);
@@ -1354,6 +1631,7 @@ app.post("/chat", async (req, res) => {
 
       const followUpMessages = [...messages, responseMessage, ...toolResults];
 
+      console.log("🤖 Calling OpenAI API for final response...");
       const finalCompletion = await openai.chat.completions.create({
         model: LLM_MODEL,
         messages: followUpMessages,
@@ -1361,10 +1639,16 @@ app.post("/chat", async (req, res) => {
       });
 
       finalResponse = finalCompletion.choices[0].message.content;
+      console.log("✅ Final response generated");
     }
 
     await saveToMemory(sessionId, "user", message);
     await saveToMemory(sessionId, "assistant", finalResponse);
+
+    console.log("\n📤 SENDING RESPONSE TO FRONTEND");
+    console.log("   Reply length:", finalResponse.length, "chars");
+    console.log("   Products count:", products.length);
+    console.log("█".repeat(80) + "\n");
 
     return res.json({
       reply: finalResponse,
@@ -1373,7 +1657,8 @@ app.post("/chat", async (req, res) => {
       history: await getMemory(sessionId),
     });
   } catch (error) {
-    console.error("[Chat Error]", error);
+    console.error("❌ [Chat Error]", error);
+    console.error("Full stack:", error.stack);
     return res.status(500).json({ error: "Server error: " + error.message });
   }
 });
@@ -1381,7 +1666,7 @@ app.post("/chat", async (req, res) => {
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    message: "Omnia AI - Production-Ready Hybrid Search",
+    message: "Omnia AI - Production-Ready Hybrid Search WITH DETAILED LOGGING",
     features: [
       "Push-Down Filtering",
       "Scalable Query Analysis",
@@ -1402,12 +1687,13 @@ app.get("/health", (req, res) => {
       "No Cross-Category Contamination",
       "Smart Model Number Detection",
       "Storage Normalization",
+      "COMPREHENSIVE LOGGING",
     ],
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 Omnia AI Server Running - PRODUCTION READY`);
+  console.log("\n🚀 Omnia AI Server Running - PRODUCTION READY WITH LOGGING");
   console.log(`📍 http://localhost:${PORT}`);
   console.log(`🔥 Production-Ready for 500k+ Products`);
   console.log(`📊 Hybrid Search: Vector + Fulltext + RRF`);
@@ -1415,5 +1701,6 @@ app.listen(PORT, () => {
   console.log(`🧠 Scalable Query Analysis: Enabled`);
   console.log(`✅ Multi-Strategy Fulltext: Enabled`);
   console.log(`🎯 Fulltext-Only Mode: Enabled`);
-  console.log(`💽 Storage Normalization: Enabled\n`);
+  console.log(`💽 Storage Normalization: Enabled`);
+  console.log(`📝 DETAILED LOGGING: ENABLED\n`);
 });
