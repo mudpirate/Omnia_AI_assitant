@@ -23,7 +23,6 @@ app.use(cors());
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ limit: "20mb", extended: true }));
 
-// -------------------- REDIS MEMORY --------------------
 async function saveToMemory(sessionId, role, content) {
   const key = `chat:${sessionId}`;
   const message = JSON.stringify({ role, content });
@@ -38,7 +37,6 @@ async function getMemory(sessionId) {
   return rawHistory.map((item) => JSON.parse(item));
 }
 
-// -------------------- TOOL DEFINITIONS --------------------
 const TOOLS = [
   {
     type: "function",
@@ -154,6 +152,67 @@ const TOOLS = [
 
   This helps find exact product matches and prevents confusion with storage/RAM numbers.`,
           },
+          megapixels: {
+            type: "string",
+            description: "Camera megapixels (e.g., '24mp', '48mp', '108mp')",
+          },
+          screen_size: {
+            type: "string",
+            description: "Screen/display size (e.g., '6.7', '15.6', '27')",
+          },
+          refresh_rate: {
+            type: "string",
+            description:
+              "Display refresh rate (e.g., '120hz', '144hz', '240hz')",
+          },
+          resolution: {
+            type: "string",
+            description: "Screen resolution (e.g., '4K', '1080p', 'QHD', '8K')",
+          },
+          processor: {
+            type: "string",
+            description:
+              "CPU/Processor (e.g., 'i7', 'i9', 'M2', 'Snapdragon 8 Gen 3')",
+          },
+          gpu: {
+            type: "string",
+            description:
+              "Graphics card (e.g., 'RTX 4060', 'RTX 4090', 'AMD Radeon')",
+          },
+          battery: {
+            type: "string",
+            description:
+              "Battery capacity (e.g., '5000mah', '10000mah', '100wh')",
+          },
+          weight: {
+            type: "string",
+            description: "Product weight (e.g., '1.5kg', '200g', '15kg')",
+          },
+          material: {
+            type: "string",
+            description:
+              "Build material (e.g., 'aluminum', 'titanium', 'plastic', 'glass')",
+          },
+          connectivity: {
+            type: "string",
+            description:
+              "Connectivity options (e.g., '5G', 'WiFi 6', 'Bluetooth 5.3')",
+          },
+          ports: {
+            type: "string",
+            description:
+              "Available ports (e.g., 'USB-C', 'HDMI', 'Thunderbolt 4')",
+          },
+          operating_system: {
+            type: "string",
+            description:
+              "OS (e.g., 'Windows 11', 'macOS', 'Android 14', 'iOS 17')",
+          },
+          warranty: {
+            type: "string",
+            description:
+              "Warranty period (e.g., '1 year', '2 years', 'AppleCare')",
+          },
         },
         required: ["query"],
       },
@@ -176,7 +235,6 @@ const TOOLS = [
   },
 ];
 
-// -------------------- EMBEDDING GENERATION --------------------
 async function getQueryEmbedding(text) {
   const embeddingRes = await openai.embeddings.create({
     model: EMBEDDING_MODEL,
@@ -189,181 +247,148 @@ async function getQueryEmbedding(text) {
   return { embedding, vectorLiteral };
 }
 
-// -------------------- STORAGE NORMALIZATION --------------------
 function normalizeStorage(storageValue) {
   if (!storageValue) return null;
 
   const storageLower = storageValue.toLowerCase().trim();
 
-  // Convert TB to GB (1TB = 1024GB)
   const tbMatch = storageLower.match(/^(\d+(?:\.\d+)?)\s*tb$/);
   if (tbMatch) {
     const tbValue = parseFloat(tbMatch[1]);
     const gbValue = Math.round(tbValue * 1024);
-    console.log(`[Storage Normalization] ${storageValue} → ${gbValue}gb`);
     return `${gbValue}gb`;
   }
 
-  // Already in GB format - just ensure consistency
   const gbMatch = storageLower.match(/^(\d+)\s*gb$/);
   if (gbMatch) {
     return `${gbMatch[1]}gb`;
   }
 
-  // Return as-is if unrecognized format
-  console.log(
-    `[Storage Normalization] Unknown format: ${storageValue} (passing through)`
-  );
   return storageLower;
 }
 
-// -------------------- PUSH-DOWN FILTER BUILDER --------------------
 function buildPushDownFilters(filters = {}, rawQuery = "") {
   const conditions = [];
 
-  // 1. ALWAYS filter stock (indexed column)
+  const CORE_FIELDS = {
+    minPrice: (value) => {
+      if (value && value > 0) {
+        conditions.push(`"price" >= ${parseFloat(value)}`);
+      }
+    },
+    maxPrice: (value) => {
+      if (value && value < Infinity && value !== null) {
+        conditions.push(`"price" <= ${parseFloat(value)}`);
+      }
+    },
+    storeName: (value) => {
+      if (value && value !== "all") {
+        const storeLower = value.toLowerCase().replace(/'/g, "''");
+        const storeMapping = {
+          best: "BEST_KW",
+          xcite: "XCITE",
+          eureka: "EUREKA",
+          noon: "NOON",
+        };
+        const dbStoreName =
+          storeMapping[storeLower] || value.toUpperCase().replace(/\./g, "_");
+        conditions.push(`"storeName" = '${dbStoreName}'`);
+      }
+    },
+    category: (value) => {
+      if (value) {
+        const catLower = value.toLowerCase().replace(/'/g, "''");
+        const categoryMapping = {
+          phone: "MOBILEPHONES",
+          smartphone: "MOBILEPHONES",
+          mobile: "MOBILEPHONES",
+          laptop: "LAPTOPS",
+          notebook: "LAPTOPS",
+          tablet: "TABLETS",
+          headphone: "HEADPHONES",
+          headphones: "HEADPHONES",
+          earphones: "HEADPHONES",
+          earbuds: "HEADPHONES",
+          smartwatch: "SMARTWATCHES",
+          watch: "SMARTWATCHES",
+          accessory: "ACCESSORIES",
+          accessories: "ACCESSORIES",
+          case: "ACCESSORIES",
+          cover: "ACCESSORIES",
+          charger: "ACCESSORIES",
+          cable: "ACCESSORIES",
+          adapter: "ACCESSORIES",
+          speaker: "SPEAKERS",
+          display: "DISPLAYS",
+          monitor: "DISPLAYS",
+          tv: "DISPLAYS",
+          camera: "CAMERAS",
+        };
+        const dbCategory = categoryMapping[catLower] || catLower.toUpperCase();
+        conditions.push(`"category" = '${dbCategory}'`);
+      }
+    },
+    brand: (value) => {
+      if (value) {
+        const brandLower = value.toLowerCase().replace(/'/g, "''");
+        conditions.push(`LOWER("brand") ILIKE '%${brandLower}%'`);
+      }
+    },
+    modelNumber: (value) => {
+      if (value) {
+        const modelNum = value.replace(/'/g, "''");
+        conditions.push(`LOWER("title") LIKE '%${modelNum}%'`);
+      }
+    },
+  };
+
+  const EXACT_MATCH_SPECS = ["variant", "storage"];
+  const FLEXIBLE_MATCH_SPECS = [
+    "color",
+    "ram",
+    "size",
+    "gender",
+    "megapixels",
+    "screen_size",
+    "refresh_rate",
+    "resolution",
+    "processor",
+    "gpu",
+    "battery",
+    "weight",
+    "material",
+    "connectivity",
+    "ports",
+    "operating_system",
+    "warranty",
+  ];
+
   conditions.push(`"stock" = 'IN_STOCK'`);
 
-  // 2. Price Range (indexed column)
-  if (filters.minPrice && filters.minPrice > 0) {
-    conditions.push(`"price" >= ${parseFloat(filters.minPrice)}`);
-  }
-  if (
-    filters.maxPrice &&
-    filters.maxPrice < Infinity &&
-    filters.maxPrice !== null
-  ) {
-    conditions.push(`"price" <= ${parseFloat(filters.maxPrice)}`);
-  }
+  Object.keys(filters).forEach((key) => {
+    const value = filters[key];
 
-  // 3. Store Name (indexed column) - MAP USER-FRIENDLY NAMES TO DATABASE VALUES
-  if (filters.storeName && filters.storeName !== "all") {
-    const storeLower = filters.storeName.toLowerCase().replace(/'/g, "''");
+    if (!value || value === null || value === undefined) return;
 
-    // Critical mapping: User says "best", Database has "BEST_KW"
-    const storeMapping = {
-      best: "BEST_KW",
-      xcite: "XCITE",
-      eureka: "EUREKA",
-      noon: "NOON",
-    };
-
-    const dbStoreName =
-      storeMapping[storeLower] ||
-      filters.storeName.toUpperCase().replace(/\./g, "_");
-    conditions.push(`"storeName" = '${dbStoreName}'`);
-    console.log(
-      `[Store Filter] User input: "${filters.storeName}" → Database value: "${dbStoreName}"`
-    );
-  }
-
-  // 4. Category (indexed column) - STRICT EXACT MATCHING to prevent cross-category contamination
-  if (filters.category) {
-    const catLower = filters.category.toLowerCase().replace(/'/g, "''");
-
-    // Map user-friendly category names to database values
-    const categoryMapping = {
-      phone: "MOBILEPHONES",
-      smartphone: "MOBILEPHONES",
-      mobile: "MOBILEPHONES",
-      laptop: "LAPTOPS",
-      notebook: "LAPTOPS",
-      tablet: "TABLETS",
-      headphone: "HEADPHONES",
-      headphones: "HEADPHONES",
-      earphones: "HEADPHONES",
-      earbuds: "HEADPHONES",
-      smartwatch: "SMARTWATCHES",
-      watch: "SMARTWATCHES",
-      accessory: "ACCESSORIES",
-      accessories: "ACCESSORIES",
-      case: "ACCESSORIES",
-      cover: "ACCESSORIES",
-      charger: "ACCESSORIES",
-      cable: "ACCESSORIES",
-      adapter: "ACCESSORIES",
-      speaker: "SPEAKERS",
-      display: "DISPLAYS",
-      monitor: "DISPLAYS",
-      tv: "DISPLAYS",
-      camera: "CAMERAS",
-    };
-
-    const dbCategory = categoryMapping[catLower] || catLower.toUpperCase();
-
-    // Use EXACT match (=) instead of LIKE to prevent fuzzy matching
-    conditions.push(`"category" = '${dbCategory}'`);
-    console.log(
-      `[Category Filter] User input: "${filters.category}" → Database value: "${dbCategory}"`
-    );
-  }
-
-  // 5. Brand (FLEXIBLE MATCH - Use ILIKE to handle variations)
-  // This prevents "Apple Inc" vs "Apple" mismatches
-  if (filters.brand) {
-    const brandLower = filters.brand.toLowerCase().replace(/'/g, "''");
-    conditions.push(`LOWER("brand") ILIKE '%${brandLower}%'`);
-    console.log(`[Brand Filter] Using flexible match for: "${brandLower}"`);
-  }
-
-  // 6. Variant (EXACT MATCH - Critical for preventing S25+ appearing in S24+ searches)
-  // The AI now converts 'Plus' to '+', so this will match exactly
-  if (filters.variant) {
-    const variantValue = filters.variant.toLowerCase().replace(/'/g, "''");
-    // Use exact match for variant to prevent fuzzy matching
-    conditions.push(`LOWER("specs"->>'variant') = '${variantValue}'`);
-  }
-
-  // 7. Storage (Strict JSON Match) - Now normalized to GB format
-  if (filters.storage) {
-    const storageLower = filters.storage.toLowerCase().replace(/'/g, "''");
-    conditions.push(`"specs"->>'storage' = '${storageLower}'`);
-  }
-
-  // 8. Color (Flexible JSON Match)
-  if (filters.color) {
-    const colorLower = filters.color.toLowerCase().replace(/'/g, "''");
-    conditions.push(`"specs"->>'color' ILIKE '%${colorLower}%'`);
-  }
-
-  // 9. RAM Filter (Flexible JSON Match)
-  if (filters.ram) {
-    const ramLower = filters.ram.toLowerCase().replace(/'/g, "''");
-    conditions.push(`"specs"->>'ram' ILIKE '%${ramLower}%'`);
-  }
-
-  // 10. Size Filter (Clothes)
-  if (filters.size) {
-    const sizeLower = filters.size.toLowerCase().replace(/'/g, "''");
-    conditions.push(`"specs"->>'size' ILIKE '${sizeLower}'`);
-  }
-
-  // 11. Gender Filter (Clothes)
-  if (filters.gender) {
-    const genderLower = filters.gender.toLowerCase().replace(/'/g, "''");
-    conditions.push(`"specs"->>'gender' ILIKE '${genderLower}'`);
-  }
-
-  // 12. LLM-Powered Model Number Extraction (No hardcoded regex needed!)
-  // The AI already extracted model numbers during tool call - we can use those
-  // This is set by the extractModelNumber() helper function before buildPushDownFilters is called
-  if (filters.modelNumber) {
-    const modelNum = filters.modelNumber.replace(/'/g, "''");
-    console.log(
-      `[Filter Builder] Enforcing model number in TITLE: "${modelNum}"`
-    );
-
-    // Simple ILIKE pattern - much more flexible than regex
-    conditions.push(`LOWER("title") LIKE '%${modelNum}%'`);
-  }
+    if (CORE_FIELDS[key]) {
+      CORE_FIELDS[key](value);
+    } else if (EXACT_MATCH_SPECS.includes(key)) {
+      const specValue = value.toString().toLowerCase().replace(/'/g, "''");
+      conditions.push(`LOWER("specs"->>'${key}') = '${specValue}'`);
+    } else if (FLEXIBLE_MATCH_SPECS.includes(key)) {
+      const specValue = value.toString().toLowerCase().replace(/'/g, "''");
+      conditions.push(`LOWER("specs"->>'${key}') ILIKE '%${specValue}%'`);
+    } else if (key !== "query") {
+      const specValue = value.toString().toLowerCase().replace(/'/g, "''");
+      conditions.push(`LOWER("specs"->>'${key}') ILIKE '%${specValue}%'`);
+    }
+  });
 
   const whereClause = conditions.length > 0 ? conditions.join(" AND ") : "1=1";
-  console.log(`[Push-Down Filter] WHERE: ${whereClause}`);
 
   return whereClause;
 }
 
-// -------------------- VECTOR SEARCH WITH PUSH-DOWN --------------------
 async function vectorSearch(
   vectorLiteral,
   filters = {},
@@ -385,12 +410,7 @@ async function vectorSearch(
     `;
 
   try {
-    const startTime = Date.now();
     const results = await prisma.$queryRawUnsafe(query);
-    const duration = Date.now() - startTime;
-    console.log(
-      `[Vector Search] Found ${results.length} products in ${duration}ms`
-    );
     return results;
   } catch (error) {
     console.error("[Vector Search] Error:", error.message);
@@ -398,7 +418,6 @@ async function vectorSearch(
   }
 }
 
-// -------------------- IMPROVED FULLTEXT SEARCH WITH MULTI-STRATEGY --------------------
 async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
   const whereClause = buildPushDownFilters(filters, searchQuery);
   const searchTerm = searchQuery.toLowerCase().trim().replace(/'/g, "''");
@@ -406,7 +425,6 @@ async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
   if (!searchTerm) return [];
 
   try {
-    // Strategy 1: Try with 0.5 threshold (lower = more permissive)
     await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.5;`);
 
     const query = `
@@ -421,16 +439,9 @@ async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
         LIMIT ${limit};
       `;
 
-    const startTime = Date.now();
     let results = await prisma.$queryRawUnsafe(query);
 
-    // Strategy 2: If no results, try word-by-word ILIKE matching
     if (results.length === 0) {
-      console.log(
-        `[Fulltext Search] No trigram matches, trying ILIKE strategy...`
-      );
-
-      // Extract key terms from search query (remove common words)
       const words = searchTerm
         .split(/\s+/)
         .filter(
@@ -456,16 +467,8 @@ async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
           `;
 
         results = await prisma.$queryRawUnsafe(fallbackQuery);
-        console.log(
-          `[Fulltext Search] ILIKE strategy found ${results.length} products`
-        );
       }
     }
-
-    const duration = Date.now() - startTime;
-    console.log(
-      `[Fulltext Search] Found ${results.length} products in ${duration}ms`
-    );
 
     return results;
   } catch (error) {
@@ -474,11 +477,9 @@ async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
   }
 }
 
-// -------------------- IMPROVED RRF - FULLTEXT-ONLY MODE --------------------
 function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
   const scores = new Map();
 
-  // Process vector results
   vectorResults.forEach((product, index) => {
     const key = product.productUrl || product.title;
     const rrfScore = 1 / (k + index + 1);
@@ -491,7 +492,6 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
     });
   });
 
-  // Process fulltext results
   fulltextResults.forEach((product, index) => {
     const key = product.productUrl || product.title;
     const rrfScore = 1 / (k + index + 1);
@@ -511,7 +511,6 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
     }
   });
 
-  // Strict: If we have fulltext matches, ONLY use those
   const fulltextMatches = Array.from(scores.values()).filter(
     (item) => item.fulltextRank !== null
   );
@@ -527,20 +526,13 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
       finalScore: item.fulltextScore * 0.95 + item.vectorScore * 0.05,
       ...item,
     }));
-    console.log(
-      `[RRF] ✅ Using ONLY fulltext matches (${fulltextMatches.length} products)`
-    );
   } else {
     finalResults = vectorOnlyMatches.map((item) => ({
       finalScore: item.vectorScore * 0.02,
       ...item,
     }));
-    console.log(
-      `[RRF] ⚠️  No fulltext matches, using vector fallback (${vectorOnlyMatches.length} products)`
-    );
   }
 
-  // Sort by final score
   finalResults.sort((a, b) => b.finalScore - a.finalScore);
 
   const fused = finalResults.map((item) => ({
@@ -551,58 +543,32 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
   return fused;
 }
 
-// -------------------- HYBRID SEARCH WITH AUTOMATIC FALLBACK --------------------
 async function hybridSearch(
   searchQuery,
   vectorLiteral,
   filters = {},
   limit = 50
 ) {
-  console.log(`\n[Hybrid Search] Query: "${searchQuery}"`);
-  console.log(`[Hybrid Search] Filters:`, JSON.stringify(filters, null, 2));
-
-  const startTime = Date.now();
-
-  // Run both searches
   const [vectorResults, fulltextResults] = await Promise.all([
     vectorSearch(vectorLiteral, filters, limit * 2, searchQuery),
     fulltextSearch(searchQuery, filters, limit * 2),
   ]);
 
-  console.log(
-    `[Hybrid Search] Initial - Vector: ${vectorResults.length}, Fulltext: ${fulltextResults.length}`
-  );
-
   if (vectorResults.length > 0 || fulltextResults.length > 0) {
     const fusedResults = reciprocalRankFusion(vectorResults, fulltextResults);
-    const duration = Date.now() - startTime;
-    console.log(
-      `[Hybrid Search] ✅ Completed in ${duration}ms with ${fusedResults.length} results`
-    );
     return fusedResults.slice(0, limit);
   }
 
-  // No results - try relaxed filters
-  console.log(`[Hybrid Search] No results. Trying relaxed filters...`);
-
-  // CRITICAL: Keep core specs in relaxed mode
-  // Hard Constraints (ALWAYS keep): category, brand, model, storage, RAM
-  // Soft Preferences (drop): variant, color
   const relaxedFilters = {
     minPrice: filters.minPrice,
     maxPrice: filters.maxPrice,
     storeName: filters.storeName,
-    category: filters.category, // ✅ PRESERVE - Cases ≠ Phones
-    brand: filters.brand, // ✅ PRESERVE - Apple ≠ Samsung
-    modelNumber: filters.modelNumber, // ✅ PRESERVE - iPhone 15 ≠ iPhone 14
-    storage: filters.storage, // ✅ PRESERVE - 512GB is a specific requirement
-    ram: filters.ram, // ✅ PRESERVE - 16GB RAM is a specific requirement
+    category: filters.category,
+    brand: filters.brand,
+    modelNumber: filters.modelNumber,
+    storage: filters.storage,
+    ram: filters.ram,
   };
-
-  console.log(
-    `[Hybrid Search] Relaxed filters (kept category/brand/model/storage/ram):`,
-    JSON.stringify(relaxedFilters, null, 2)
-  );
 
   const [relaxedVector, relaxedFulltext] = await Promise.all([
     vectorSearch(vectorLiteral, relaxedFilters, limit * 2, searchQuery),
@@ -610,25 +576,11 @@ async function hybridSearch(
   ]);
 
   const fusedResults = reciprocalRankFusion(relaxedVector, relaxedFulltext);
-  const duration = Date.now() - startTime;
-
-  if (fusedResults.length === 0) {
-    console.log(
-      `[Hybrid Search] ❌ No results even with relaxed filters (${duration}ms)`
-    );
-  } else {
-    console.log(
-      `[Hybrid Search] ✅ Completed in ${duration}ms with ${fusedResults.length} results (relaxed)`
-    );
-  }
 
   return fusedResults.slice(0, limit);
 }
 
-// -------------------- WEB SEARCH --------------------
 async function searchWebTool(query) {
-  console.log(`[Web Search] Query: "${query}"`);
-
   try {
     const { vectorLiteral } = await getQueryEmbedding(query);
 
@@ -643,7 +595,6 @@ async function searchWebTool(query) {
       return closestMatch[0].response;
     }
 
-    console.log(`[Web Search] Calling Serper API...`);
     const response = await fetch("https://google.serper.dev/search", {
       method: "POST",
       headers: {
@@ -673,7 +624,6 @@ async function searchWebTool(query) {
   }
 }
 
-// -------------------- TOOL EXECUTION WITH DYNAMIC LIMITING --------------------
 async function executeSearchDatabase(args) {
   const {
     query,
@@ -691,17 +641,8 @@ async function executeSearchDatabase(args) {
     model_number,
   } = args;
 
-  console.log(`\n[Tool: search_product_database] Query: "${query}"`);
-  console.log(
-    `[Tool: search_product_database] AI Extracted:`,
-    JSON.stringify(args, null, 2)
-  );
-
-  // CRITICAL FIX: Validate query parameter before proceeding
   if (!query || query === "undefined" || query.trim() === "") {
-    console.error(
-      `[Tool: search_product_database] ❌ Invalid query parameter: "${query}"`
-    );
+    console.error(`[Tool: search_product_database] Invalid query: "${query}"`);
     return {
       success: false,
       error: "Invalid search query. Please provide a valid search term.",
@@ -710,11 +651,7 @@ async function executeSearchDatabase(args) {
     };
   }
 
-  // Normalize storage (1TB → 1024GB)
   const normalizedStorage = storage ? normalizeStorage(storage) : null;
-  if (storage && normalizedStorage !== storage.toLowerCase()) {
-    console.log(`[Storage Normalized] "${storage}" → "${normalizedStorage}"`);
-  }
 
   const mergedFilters = {
     minPrice: min_price || 0,
@@ -722,7 +659,7 @@ async function executeSearchDatabase(args) {
     storeName: store_name || null,
     brand: brand || null,
     color: color || null,
-    storage: normalizedStorage, // Use normalized storage
+    storage: normalizedStorage,
     variant: variant || null,
     category: category || null,
     ram: ram || null,
@@ -742,21 +679,12 @@ async function executeSearchDatabase(args) {
     }
   });
 
-  console.log(
-    `[Tool: search_product_database] Final Filters:`,
-    JSON.stringify(finalFilters, null, 2)
-  );
-
   try {
     const { vectorLiteral } = await getQueryEmbedding(query);
     const results = await hybridSearch(query, vectorLiteral, finalFilters, 50);
 
     const actualCount = Math.min(results.length, 5);
     const productsToReturn = results.slice(0, actualCount);
-
-    console.log(
-      `[Tool: search_product_database] ✅ Returning ${productsToReturn.length} products (${results.length} found)\n`
-    );
 
     return {
       success: true,
@@ -807,11 +735,9 @@ async function executeSearchWeb(args) {
   };
 }
 
-// -------------------- MAIN CHAT ROUTE --------------------
 app.post("/chat", async (req, res) => {
   let { query: message, sessionId } = req.body;
 
-  // Validation
   if (!message || typeof message !== "string" || message.trim() === "") {
     return res.status(400).json({
       error: "Valid message is required",
@@ -823,7 +749,6 @@ app.post("/chat", async (req, res) => {
 
   if (!sessionId) {
     sessionId = uuidv4();
-    console.log(`\n[New Session] ${sessionId}`);
   }
 
   try {
@@ -881,12 +806,12 @@ app.post("/chat", async (req, res) => {
   User message: "iPhone 15 from xcite"
   Your tool call:
   {
-    "query": "iPhone 15 from xcite",     // ✅ REQUIRED - Full user message
-    "brand": "apple",                     // ✅ Inferred from iPhone
-    "category": "smartphone",             // ✅ CRITICAL - Inferred from iPhone
-    "model_number": "iphone 15",          // ✅ The specific model
-    "variant": "base",                    // ✅ NO variant keywords → auto-set to "base"
-    "store_name": "xcite"                 // ✅ Extracted
+    "query": "iPhone 15 from xcite",
+    "brand": "apple",
+    "category": "smartphone",
+    "model_number": "iphone 15",
+    "variant": "base",
+    "store_name": "xcite"
   }
 
   User message: "samsung s24 plus 512gb"
@@ -894,9 +819,9 @@ app.post("/chat", async (req, res) => {
   {
     "query": "samsung s24 plus 512gb",
     "brand": "samsung",
-    "category": "smartphone",             // ✅ CRITICAL - Inferred from Galaxy
-    "model_number": "galaxy s24+",        // ✅ The specific model (use + for plus)
-    "variant": "+",                       // ✅ "Plus" keyword detected → convert to "+"
+    "category": "smartphone",
+    "model_number": "galaxy s24+",
+    "variant": "+",
     "storage": "512gb"
   }
 
@@ -907,7 +832,7 @@ app.post("/chat", async (req, res) => {
     "brand": "apple",
     "category": "smartphone",
     "model_number": "iphone 15 pro max",
-    "variant": "pro_max"                  // ✅ "Pro Max" keywords detected → extract exactly
+    "variant": "pro_max"
   }
 
   User message: "iPhone 17"
@@ -917,7 +842,7 @@ app.post("/chat", async (req, res) => {
     "brand": "apple",
     "category": "smartphone",
     "model_number": "iphone 17",
-    "variant": "base"                     // ✅ NO variant keywords → auto-set to "base"
+    "variant": "base"
   }
 
   User message: "Samsung S24"
@@ -927,7 +852,7 @@ app.post("/chat", async (req, res) => {
     "brand": "samsung",
     "category": "smartphone",
     "model_number": "galaxy s24",
-    "variant": "base"                     // ✅ NO variant keywords → auto-set to "base"
+    "variant": "base"
   }
 
   User message: "macbook air m2"
@@ -935,9 +860,8 @@ app.post("/chat", async (req, res) => {
   {
     "query": "macbook air m2",
     "brand": "apple",
-    "category": "laptop",                 // ✅ CRITICAL - Inferred from MacBook
-    "model_number": "macbook air m2"      // ✅ The specific model
-    // ✅ NO variant - "Air" is part of the model name, not a variant
+    "category": "laptop",
+    "model_number": "macbook air m2"
   }
 
   User message: "thinkpad x1 carbon"
@@ -946,7 +870,7 @@ app.post("/chat", async (req, res) => {
     "query": "thinkpad x1 carbon",
     "brand": "lenovo",
     "category": "laptop",
-    "model_number": "thinkpad x1 carbon"  // ✅ Works for ANY brand/model
+    "model_number": "thinkpad x1 carbon"
   }
 
   **CRITICAL MODEL NUMBER EXTRACTION:**
@@ -1014,36 +938,36 @@ app.post("/chat", async (req, res) => {
       * "256gb phone" → ram: null, storage: "256gb"
       * "512gb storage" → ram: null, storage: "512gb"
       * "16gb ram 256gb" → ram: "16gb", storage: "256gb"
-      * "1tb laptop" → ram: null, storage: "1tb" (system auto-converts to 1024gb)
-      * "2tb storage" → ram: null, storage: "2tb" (system auto-converts to 2048gb)
+      * "1tb laptop" → ram: null, storage: "1tb"
+      * "2tb storage" → ram: null, storage: "2tb"
 
   **IMPORTANT: Storage format flexibility:**
   You can use EITHER "TB" or "GB" format - the system automatically converts:
   - "1tb" → "1024gb"
   - "2tb" → "2048gb"
-  - "512gb" → "512gb" (no conversion needed)
+  - "512gb" → "512gb"
 
   **CRITICAL VARIANT EXTRACTION RULES:**
   
   1. **Base models (NO variant keywords mentioned):**
     - If user says just the model number WITHOUT Pro/Plus/Max/Ultra/Mini keywords → SET variant: "base"
     - Examples: 
-      * "iPhone 17" → variant: "base" (NOT null)
-      * "iPhone 15" → variant: "base" (NOT null)
-      * "Samsung S24" → variant: "base" (NOT null)
-      * "Pixel 8" → variant: "base" (NOT null)
+      * "iPhone 17" → variant: "base"
+      * "iPhone 15" → variant: "base"
+      * "Samsung S24" → variant: "base"
+      * "Pixel 8" → variant: "base"
     - This ensures ONLY base models are shown, NOT Pro/Plus/Max variants
 
   2. **"Plus" MUST BE CONVERTED TO "+":**
-    - "Samsung S24 Plus" → variant: "+" (NOT "plus")
-    - "iPhone 15 Plus" → variant: "+" (NOT "plus")
+    - "Samsung S24 Plus" → variant: "+"
+    - "iPhone 15 Plus" → variant: "+"
 
   3. **Other variants - EXTRACT EXACTLY AS MENTIONED:**
-    - "Pro Max" → variant: "pro_max" (EXACT)
-    - "Pro" → variant: "pro" (EXACT - NOT "pro max")
-    - "Ultra" → variant: "ultra" (EXACT)
-    - "Mini" → variant: "mini" (EXACT)
-    - "Air" → variant: "air" (EXACT)
+    - "Pro Max" → variant: "pro_max"
+    - "Pro" → variant: "pro"
+    - "Ultra" → variant: "ultra"
+    - "Mini" → variant: "mini"
+    - "Air" → variant: "air"
 
   4. **Detection Logic:**
     - Check if query contains variant keywords: "pro", "plus", "+", "max", "ultra", "mini"
@@ -1055,10 +979,10 @@ app.post("/chat", async (req, res) => {
   - If variant IS mentioned → Extract and match exactly
   
   Examples:
-  - User: "iPhone 15" (no variant keywords) → variant: "base" → Shows ONLY base model (NOT Pro/Plus/Max)
-  - User: "iPhone 15 Pro" → variant: "pro" → Shows ONLY Pro variant (NOT Pro Max or base)
+  - User: "iPhone 15" → variant: "base" → Shows ONLY base model
+  - User: "iPhone 15 Pro" → variant: "pro" → Shows ONLY Pro variant
   - User: "iPhone 15 Plus" → variant: "+" → Shows ONLY Plus variant
-  - User: "Samsung S24" → variant: "base" → Shows ONLY base S24 (NOT Plus/Ultra)
+  - User: "Samsung S24" → variant: "base" → Shows ONLY base S24
   
   This ensures users get EXACTLY what they ask for!
 
@@ -1069,7 +993,7 @@ app.post("/chat", async (req, res) => {
 
   Example:
   User: "iPhone 15 Pro"
-  Strict search: variant="pro" → 0 results (you don't have Pro)
+  Strict search: variant="pro" → 0 results
   Relaxed search: Drops variant → Finds "iPhone 15 Pro Max"
   Your response: "I don't have the iPhone 15 Pro in stock right now, but I found the iPhone 15 Pro Max which is similar!"
 
@@ -1079,10 +1003,79 @@ app.post("/chat", async (req, res) => {
 
   **CRITICAL STORE NAME EXTRACTION:**
   Use these EXACT lowercase values:
-  - "xcite" (not "Xcite" or "XCITE")
-  - "best" (not "Best" or "BEST_KW")
-  - "eureka" (not "Eureka")
-  - "noon" (not "Noon")
+  - "xcite"
+  - "best"
+  - "eureka"
+  - "noon"
+
+  **DYNAMIC SPEC EXTRACTION (AUTOMATIC FOR ALL CATEGORIES):**
+
+  The system now supports ANY specification automatically! You don't need special instructions for new categories.
+
+  **How it works:**
+  - You extract ANY spec from the user query
+  - The system automatically adds it to the search filters
+  - No code changes needed for new product types
+
+  **Examples of Dynamic Specs:**
+
+  Cameras:
+  - "24mp Sony camera" → megapixels: "24mp"
+  - "4K video camera" → resolution: "4K"
+
+  TVs/Monitors:
+  - "27 inch monitor" → screen_size: "27"
+  - "144hz gaming monitor" → refresh_rate: "144hz"
+  - "4K TV" → resolution: "4K"
+
+  Laptops:
+  - "i7 laptop" → processor: "i7"
+  - "RTX 4060 laptop" → gpu: "RTX 4060"
+  - "15.6 inch laptop" → screen_size: "15.6"
+
+  Smartwatches:
+  - "titanium apple watch" → material: "titanium"
+  - "5G watch" → connectivity: "5G"
+
+  ANY Product:
+  - "5000mah battery" → battery: "5000mah"
+  - "aluminum build" → material: "aluminum"
+  - "USB-C port" → ports: "USB-C"
+  - "WiFi 6" → connectivity: "WiFi 6"
+
+  **Tool Call Examples with Dynamic Specs:**
+
+  User: "24mp Sony camera"
+  Tool call: {
+    query: "24mp Sony camera",
+    brand: "sony",
+    category: "camera",
+    megapixels: "24mp"
+  }
+
+  User: "144hz gaming monitor under 300 KWD"
+  Tool call: {
+    query: "144hz gaming monitor under 300 KWD",
+    category: "display",
+    refresh_rate: "144hz",
+    max_price: 300
+  }
+
+  User: "i7 laptop with RTX 4060"
+  Tool call: {
+    query: "i7 laptop with RTX 4060",
+    category: "laptop",
+    processor: "i7",
+    gpu: "RTX 4060"
+  }
+
+  User: "titanium Apple Watch"
+  Tool call: {
+    query: "titanium Apple Watch",
+    brand: "apple",
+    category: "smartwatch",
+    material: "titanium"
+  }
 
   **CRITICAL NO RESULTS HANDLING:**
 
@@ -1140,7 +1133,7 @@ app.post("/chat", async (req, res) => {
   **CRITICAL FORMATTING RULES:**
   - NEVER use Markdown formatting (no ** for bold, no * for bullets, no # for headers)
   - Write in plain text only
-  - If listing multiple items, use ACTUAL NEWLINES between each item (press Enter/Return)
+  - If listing multiple items, use ACTUAL NEWLINES between each item
   - DO NOT use asterisks (*) or any special characters for formatting
   - Keep text natural and conversational
 
@@ -1222,11 +1215,11 @@ app.post("/chat", async (req, res) => {
     category: "smartphone",
     model_number: "iphone 15 pro max",
     variant: "pro_max",
-    storage: "1tb"  // System auto-converts to 1024gb
+    storage: "1tb"
   }
   Your response: "I found iPhone 15 Pro Max models with 1TB storage. Prices range from 550 to 620 KWD. Would you like to see the available colors?"
 
-  User: "iPhone 15 Pro" (but you only have Pro Max in stock)
+  User: "iPhone 15 Pro"
   Tool call: {
     query: "iPhone 15 Pro",
     brand: "apple",
@@ -1237,7 +1230,7 @@ app.post("/chat", async (req, res) => {
   Tool returns: 0 strict results, but relaxed search finds Pro Max models
   Your response: "I don't have the iPhone 15 Pro in stock right now, but I found the iPhone 15 Pro Max which is similar! Would you like to see those options?"
 
-  User: "iPhone 14" (just the base model)
+  User: "iPhone 14"
   Tool call: {
     query: "iPhone 14",
     brand: "apple",
@@ -1245,10 +1238,10 @@ app.post("/chat", async (req, res) => {
     model_number: "iphone 14",
     variant: "base"
   }
-  Tool returns: Base iPhone 14 models only (NOT Pro or Pro Max)
+  Tool returns: Base iPhone 14 models only
   Your response: "I found iPhone 14 base models! What storage capacity would you prefer?"
 
-  User: "iPhone case" (no cases in database)
+  User: "iPhone case"
   Tool call: {
     query: "iPhone case",
     brand: "apple",
@@ -1262,27 +1255,27 @@ app.post("/chat", async (req, res) => {
   ❌ Forgetting to infer 'category' from model names
   ❌ Listing product titles, prices in your text
   ❌ Suggesting different categories when no results found
-  ❌ Claiming "I found Pro" when showing "Pro Max" (be honest about alternatives)
+  ❌ Claiming "I found Pro" when showing "Pro Max"
 
   **GUIDELINES:**
   - Keep responses concise (2-4 sentences)
   - Be conversational and helpful
   - Choose the RIGHT tool: web_search for facts/reviews/how-to, product_database for shopping
   - Always call the search tool before saying products aren't available
-  - ALWAYS extract category from model names (iPhone → smartphone, MacBook → laptop)
+  - ALWAYS extract category from model names
   - ALWAYS convert "Plus" to "+" for variant field
   - ALWAYS extract model_number to prevent cross-model contamination
   - ALWAYS use lowercase store names
   - ALWAYS include the full user message in the 'query' parameter
   - Storage can be in TB or GB format - system auto-converts TB to GB
-  - If showing alternatives (Pro Max when asked for Pro), be honest about it
+  - If showing alternatives, be honest about it
   - If no results, simply say you don't have it - don't suggest other categories
   - CRITICAL: Use PLAIN TEXT ONLY - NO Markdown, NO asterisks, NO special formatting
 
   **WEB SEARCH EXAMPLES (Use search_web tool):**
 
   User: "What is the best phone in 2024?"
-  → Call search_web (NOT product database)
+  → Call search_web
   Your response: [Summarize web results about top-rated phones]
 
   User: "iPhone 15 vs Samsung S24 comparison"
@@ -1336,10 +1329,6 @@ app.post("/chat", async (req, res) => {
     let products = [];
 
     if (responseMessage.tool_calls) {
-      console.log(
-        `\n[Agent] Processing ${responseMessage.tool_calls.length} tool call(s)...`
-      );
-
       const toolResults = [];
 
       for (const toolCall of responseMessage.tool_calls) {
@@ -1377,39 +1366,6 @@ app.post("/chat", async (req, res) => {
     await saveToMemory(sessionId, "user", message);
     await saveToMemory(sessionId, "assistant", finalResponse);
 
-    console.log(`\n========================================`);
-    console.log(`[FINAL RESPONSE DEBUG]`);
-    console.log(`========================================`);
-    console.log(`Session ID: ${sessionId}`);
-    console.log(`\n[AI Reply Text]:`);
-    console.log(finalResponse);
-    console.log(`\n[Products Count]: ${products.length}`);
-
-    if (products.length > 0) {
-      console.log(`\n[Products Data]:`);
-      products.forEach((product, index) => {
-        console.log(`\n--- Product #${index + 1} ---`);
-        console.log(`Title: ${product.title}`);
-        console.log(`Price: ${product.price} KWD`);
-        console.log(`Store: ${product.storeName}`);
-        console.log(`Category: ${product.category}`);
-        console.log(`Brand: ${product.brand || "N/A"}`);
-        console.log(`Image URL: ${product.imageUrl || "N/A"}`);
-        console.log(`Product URL: ${product.productUrl}`);
-        console.log(
-          `Description: ${product.description?.substring(0, 100)}...`
-        );
-        console.log(`Specs:`, JSON.stringify(product.specs, null, 2));
-        console.log(`RRF Score: ${product.rrfScore}`);
-      });
-    } else {
-      console.log(`\n[No Products] - Empty array being sent`);
-    }
-
-    console.log(`\n========================================`);
-    console.log(`[SENDING TO FRONTEND]`);
-    console.log(`========================================\n`);
-
     return res.json({
       reply: finalResponse,
       products: products,
@@ -1422,55 +1378,42 @@ app.post("/chat", async (req, res) => {
   }
 });
 
-// -------------------- HEALTH CHECK --------------------
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    message:
-      "Omnia AI - Production-Ready Hybrid Search v2.6 (Storage Normalization)",
+    message: "Omnia AI - Production-Ready Hybrid Search",
     features: [
-      "🔥 Push-Down Filtering at Database Level",
-      "🧠 Scalable Query Analysis",
-      "🎯 Semantic Vector Search (HNSW Index)",
-      "📝 Multi-Strategy Fulltext Search (0.5 threshold + ILIKE fallback)",
-      "🔗 JSONB Specs Filtering (GIN Index)",
-      "⚡ Fulltext-Only RRF Mode",
-      "🔄 Dynamic Result Limiting",
-      "🌐 Web Search Integration",
-      "💾 Redis Caching",
-      "📊 Optimized for 500k+ Products",
-      "✅ Exact Model Number Matching",
-      "🚀 Unlimited Brand Support",
-      "🧩 Advanced RAM/Storage Separation",
-      "🎭 EXACT Variant Matching (Plus → +)",
-      "🛡️  S25+ Bug Fixed - Strict Variant Filtering",
-      "🏪 Store Name Mapping (best → BEST_KW, xcite → XCITE)",
-      "🏷️  Flexible Brand Matching (ILIKE)",
-      "🎯 Category Inference (iPhone → smartphone, MacBook → laptop)",
-      "🚫 No Cross-Category Contamination",
-      "📱 Smart Model Number Detection (not screen sizes)",
-      "💽 Storage Normalization (1TB → 1024GB, 2TB → 2048GB)",
+      "Push-Down Filtering",
+      "Scalable Query Analysis",
+      "Semantic Vector Search",
+      "Multi-Strategy Fulltext Search",
+      "JSONB Specs Filtering",
+      "Fulltext-Only RRF Mode",
+      "Dynamic Result Limiting",
+      "Web Search Integration",
+      "Redis Caching",
+      "Exact Model Number Matching",
+      "Unlimited Brand Support",
+      "Advanced RAM/Storage Separation",
+      "EXACT Variant Matching",
+      "Store Name Mapping",
+      "Flexible Brand Matching",
+      "Category Inference",
+      "No Cross-Category Contamination",
+      "Smart Model Number Detection",
+      "Storage Normalization",
     ],
   });
 });
 
 app.listen(PORT, () => {
-  console.log(`\n🚀 Omnia AI Server Running v2.6 - PRODUCTION READY`);
+  console.log(`\n🚀 Omnia AI Server Running - PRODUCTION READY`);
   console.log(`📍 http://localhost:${PORT}`);
   console.log(`🔥 Production-Ready for 500k+ Products`);
-  console.log(`📊 Hybrid Search: Vector (HNSW) + Fulltext (GIN) + RRF`);
+  console.log(`📊 Hybrid Search: Vector + Fulltext + RRF`);
   console.log(`⚡ Push-Down Filtering: Enabled`);
   console.log(`🧠 Scalable Query Analysis: Enabled`);
-  console.log(
-    `✅ Multi-Strategy Fulltext: Enabled (0.5 threshold + ILIKE fallback)`
-  );
+  console.log(`✅ Multi-Strategy Fulltext: Enabled`);
   console.log(`🎯 Fulltext-Only Mode: Enabled`);
-  console.log(`🧩 RAM/Storage Separation: Enhanced`);
-  console.log(`🎭 EXACT Variant Matching: Plus → + (S25+ Bug Fixed)`);
-  console.log(`🛡️  Strict Variant Filter: Prevents Wrong Model Results`);
-  console.log(`🏪 Store Mapping: best → BEST_KW, xcite → XCITE`);
-  console.log(`🏷️  Brand Matching: Flexible ILIKE (Apple Inc → Apple)`);
-  console.log(`🎯 Category Inference: iPhone → smartphone, MacBook → laptop`);
-  console.log(`🚫 No Cross-Category Contamination: iPhones ≠ MacBooks`);
-  console.log(`💽 Storage Normalization: 1TB → 1024GB, 2TB → 2048GB\n`);
+  console.log(`💽 Storage Normalization: Enabled\n`);
 });
