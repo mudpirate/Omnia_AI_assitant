@@ -25,6 +25,7 @@
     BEST_KW
     NOON_KW
     EUREKA
+    HM 
   }
 
   model Product {
