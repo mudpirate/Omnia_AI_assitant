@@ -13,7 +13,7 @@ import { systemprompt } from "./systemprompt.js";
 const app = express();
 const PORT = process.env.PORT || 4000;
 const LLM_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
-const VISION_MODEL = "gpt-4o-mini"; // Using GPT-4o for vision capabilities
+const VISION_MODEL = "gpt-4o-mini";
 const EMBEDDING_MODEL =
   process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small";
 
@@ -58,14 +58,13 @@ async function getMemory(sessionId) {
   return rawHistory.map((item) => JSON.parse(item));
 }
 
-// 🔥 NEW: Image-to-Text Analysis Function
+// Image-to-Text Analysis Function
 async function analyzeProductImage(imageBuffer, mimeType) {
   console.log("\n🖼️  [IMAGE ANALYSIS] Starting vision analysis");
   console.log("   📊 Image size:", imageBuffer.length, "bytes");
   console.log("   🎨 MIME type:", mimeType);
 
   try {
-    // Convert image buffer to base64
     const base64Image = imageBuffer.toString("base64");
     const imageUrl = `data:${mimeType};base64,${base64Image}`;
 
@@ -135,14 +134,14 @@ Image of headphones → "Sony wireless headphones black"`,
               type: "image_url",
               image_url: {
                 url: imageUrl,
-                detail: "high", // Use high detail for better accuracy
+                detail: "high",
               },
             },
           ],
         },
       ],
       max_tokens: 100,
-      temperature: 0.3, // Lower temperature for more consistent results
+      temperature: 0.3,
     });
 
     const searchQuery = response.choices[0].message.content.trim();
@@ -226,7 +225,7 @@ Respond with ONLY ONE WORD: either "electronics" or "fashion". If unsure, respon
   }
 }
 
-// 🔥 LLM-POWERED GENDER NORMALIZATION
+// LLM-POWERED GENDER NORMALIZATION
 async function normalizeGender(gender) {
   if (!gender) return null;
 
@@ -289,7 +288,7 @@ Examples:
   }
 }
 
-// 🔥 LLM-POWERED TYPE NORMALIZATION
+// LLM-POWERED TYPE NORMALIZATION
 async function normalizeClothingType(type) {
   if (!type) return null;
 
@@ -700,8 +699,17 @@ async function vectorSearch(
   }
 }
 
-async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
-  console.log("\n📝 [FULLTEXT SEARCH] Starting fulltext search");
+// ============================================================================
+// ELECTRONICS FULLTEXT SEARCH
+// ============================================================================
+async function fulltextSearchElectronics(
+  searchQuery,
+  filters = {},
+  limit = 100
+) {
+  console.log(
+    "\n📝 [FULLTEXT - ELECTRONICS] Starting electronics fulltext search"
+  );
   console.log("   🔍 Search term:", searchQuery);
 
   const whereClause = await buildPushDownFilters(filters, searchQuery);
@@ -713,6 +721,7 @@ async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
   }
 
   try {
+    // TIER 1: Strict trigram matching (0.5 threshold for electronics)
     await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.5;`);
 
     const query = `
@@ -728,10 +737,11 @@ async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
       `;
 
     let results = await prisma.$queryRawUnsafe(query);
-    console.log("   📊 Primary search results:", results.length);
+    console.log("   📊 Tier 1 (trigram) results:", results.length);
 
     if (results.length === 0) {
-      console.log("   🔄 Trying fallback search...");
+      // TIER 2: Word-based LIKE search (AND - all words must match)
+      console.log("   🔄 Trying Tier 2 (word-based LIKE)...");
 
       const words = searchTerm
         .split(/\s+/)
@@ -758,19 +768,119 @@ async function fulltextSearch(searchQuery, filters = {}, limit = 100) {
           `;
 
         results = await prisma.$queryRawUnsafe(fallbackQuery);
-        console.log("   📊 Fallback results:", results.length);
+        console.log("   📊 Tier 2 results:", results.length);
       }
     }
 
     return results;
   } catch (error) {
-    console.error("   ❌ [Fulltext Search] Error:", error.message);
+    console.error("   ❌ [Fulltext Electronics] Error:", error.message);
     return [];
   }
 }
 
-function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
-  console.log("\n🔀 [RRF FUSION] Starting Reciprocal Rank Fusion");
+// ============================================================================
+// FASHION FULLTEXT SEARCH
+// ============================================================================
+async function fulltextSearchFashion(searchQuery, filters = {}, limit = 100) {
+  console.log("\n📝 [FULLTEXT - FASHION] Starting fashion fulltext search");
+  console.log("   🔍 Search term:", searchQuery);
+
+  const whereClause = await buildPushDownFilters(filters, searchQuery);
+  const searchTerm = searchQuery.toLowerCase().trim().replace(/'/g, "''");
+
+  if (!searchTerm) {
+    console.log("   ⚠️  Empty search term");
+    return [];
+  }
+
+  try {
+    // TIER 1: Looser trigram matching (0.2 threshold for fashion)
+    await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.2;`);
+
+    const query = `
+        SELECT 
+          "title", "price", "storeName", "productUrl", "category", 
+          "imageUrl", "stock", "description", "brand", "specs",
+          similarity(LOWER("title"), '${searchTerm}') as rank
+        FROM "Product"
+        WHERE LOWER("title") % '${searchTerm}'
+          AND ${whereClause}
+        ORDER BY rank DESC
+        LIMIT ${limit};
+      `;
+
+    let results = await prisma.$queryRawUnsafe(query);
+    console.log("   📊 Tier 1 (trigram) results:", results.length);
+
+    if (results.length === 0) {
+      // TIER 2: Word-based LIKE search (OR - any word matches)
+      console.log("   🔄 Fashion Tier 2: Word-based search...");
+
+      const words = searchTerm
+        .split(/\s+/)
+        .filter(
+          (word) =>
+            word.length > 2 &&
+            !["the", "and", "for", "with", "from"].includes(word)
+        );
+
+      if (words.length > 0) {
+        const likeConditions = words
+          .map((word) => `LOWER("title") LIKE '%${word}%'`)
+          .join(" OR "); // OR for fashion - any word matches
+
+        const fallbackQuery = `
+            SELECT 
+              "title", "price", "storeName", "productUrl", "category", 
+              "imageUrl", "stock", "description", "brand", "specs",
+              0.4 as rank
+            FROM "Product"
+            WHERE (${likeConditions})
+              AND ${whereClause}
+            LIMIT ${limit};
+          `;
+
+        results = await prisma.$queryRawUnsafe(fallbackQuery);
+        console.log("   📊 Tier 2 (word-based) results:", results.length);
+      }
+    }
+
+    if (results.length === 0) {
+      // TIER 3: Description search (fashion titles are often vague)
+      console.log("   🔄 Fashion Tier 3: Description search...");
+
+      const descQuery = `
+          SELECT 
+            "title", "price", "storeName", "productUrl", "category", 
+            "imageUrl", "stock", "description", "brand", "specs",
+            0.3 as rank
+          FROM "Product"
+          WHERE LOWER("description") LIKE '%${searchTerm}%'
+            AND ${whereClause}
+          LIMIT ${limit};
+        `;
+
+      results = await prisma.$queryRawUnsafe(descQuery);
+      console.log("   📊 Tier 3 (description) results:", results.length);
+    }
+
+    return results;
+  } catch (error) {
+    console.error("   ❌ [Fulltext Fashion] Error:", error.message);
+    return [];
+  }
+}
+
+// ============================================================================
+// ELECTRONICS RRF FUSION
+// ============================================================================
+function reciprocalRankFusionElectronics(
+  vectorResults,
+  fulltextResults,
+  k = 60
+) {
+  console.log("\n🔀 [RRF - ELECTRONICS] Electronics-optimized fusion");
   console.log("   📊 Vector results:", vectorResults.length);
   console.log("   📊 Fulltext results:", fulltextResults.length);
 
@@ -821,17 +931,19 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
   let finalResults;
 
   if (fulltextMatches.length > 0) {
+    // Electronics: Fulltext dominates (95/5)
     finalResults = fulltextMatches.map((item) => ({
       finalScore: item.fulltextScore * 0.95 + item.vectorScore * 0.05,
       ...item,
     }));
-    console.log("   ✅ Using fulltext-weighted scoring (95/5)");
+    console.log("   ✅ Electronics: Fulltext-weighted (95/5)");
   } else {
+    // Vector-only: Moderate weight for electronics
     finalResults = vectorOnlyMatches.map((item) => ({
-      finalScore: item.vectorScore * 0.02,
+      finalScore: item.vectorScore * 0.3,
       ...item,
     }));
-    console.log("   ✅ Using vector-only scoring (2%)");
+    console.log("   ✅ Electronics: Vector-only (30%)");
   }
 
   finalResults.sort((a, b) => b.finalScore - a.finalScore);
@@ -844,6 +956,291 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
   console.log("   📊 Total fused results:", fused.length);
 
   return fused;
+}
+
+// ============================================================================
+// FASHION RRF FUSION
+// ============================================================================
+function reciprocalRankFusionFashion(vectorResults, fulltextResults, k = 60) {
+  console.log("\n🔀 [RRF - FASHION] Fashion-optimized fusion");
+  console.log("   📊 Vector results:", vectorResults.length);
+  console.log("   📊 Fulltext results:", fulltextResults.length);
+
+  const scores = new Map();
+
+  vectorResults.forEach((product, index) => {
+    const key = product.productUrl || product.title;
+    const rrfScore = 1 / (k + index + 1);
+    scores.set(key, {
+      product,
+      vectorScore: rrfScore,
+      fulltextScore: 0,
+      vectorRank: index + 1,
+      fulltextRank: null,
+    });
+  });
+
+  fulltextResults.forEach((product, index) => {
+    const key = product.productUrl || product.title;
+    const rrfScore = 1 / (k + index + 1);
+
+    if (scores.has(key)) {
+      const existing = scores.get(key);
+      existing.fulltextScore = rrfScore;
+      existing.fulltextRank = index + 1;
+    } else {
+      scores.set(key, {
+        product,
+        vectorScore: 0,
+        fulltextScore: rrfScore,
+        vectorRank: null,
+        fulltextRank: index + 1,
+      });
+    }
+  });
+
+  const fulltextMatches = Array.from(scores.values()).filter(
+    (item) => item.fulltextRank !== null
+  );
+
+  const vectorOnlyMatches = Array.from(scores.values()).filter(
+    (item) => item.fulltextRank === null
+  );
+
+  console.log("   📊 Fulltext matches:", fulltextMatches.length);
+  console.log("   📊 Vector-only matches:", vectorOnlyMatches.length);
+
+  let finalResults;
+
+  if (fulltextMatches.length > 0) {
+    // Fashion: Vector gets MORE weight (60/40)
+    finalResults = fulltextMatches.map((item) => ({
+      finalScore: item.fulltextScore * 0.6 + item.vectorScore * 0.4,
+      ...item,
+    }));
+    console.log("   ✅ Fashion: Balanced scoring (60/40)");
+  } else {
+    // Vector-only: MUCH stronger for fashion (70%)
+    finalResults = vectorOnlyMatches.map((item) => ({
+      finalScore: item.vectorScore * 0.7,
+      ...item,
+    }));
+    console.log("   ✅ Fashion: Vector-dominant (70%)");
+  }
+
+  finalResults.sort((a, b) => b.finalScore - a.finalScore);
+
+  const fused = finalResults.map((item) => ({
+    ...item.product,
+    rrfScore: item.finalScore,
+  }));
+
+  console.log("   📊 Total fused results:", fused.length);
+
+  return fused;
+}
+
+// ============================================================================
+// ELECTRONICS HYBRID SEARCH
+// ============================================================================
+async function electronicsHybridSearch(
+  searchQuery,
+  vectorLiteral,
+  filters = {},
+  limit = 50
+) {
+  console.log("\n⚡ [ELECTRONICS SEARCH] Using electronics-optimized pipeline");
+  console.log("   🔍 Query:", searchQuery);
+  console.log("   🎛️  Filters:", JSON.stringify(filters, null, 2));
+
+  // STAGE 1: Strict search with ALL filters
+  let [vectorResults, fulltextResults] = await Promise.all([
+    vectorSearch(vectorLiteral, filters, limit * 2, searchQuery),
+    fulltextSearchElectronics(searchQuery, filters, limit * 2),
+  ]);
+
+  if (vectorResults.length > 0 || fulltextResults.length > 0) {
+    const fusedResults = reciprocalRankFusionElectronics(
+      vectorResults,
+      fulltextResults
+    );
+    const finalResults = fusedResults.slice(0, limit);
+    console.log(
+      "   ✅ Electronics Stage 1 (strict):",
+      finalResults.length,
+      "results"
+    );
+    return finalResults;
+  }
+
+  // STAGE 2: Relaxed search (drop variant, storage, color, RAM)
+  console.log("   ⚠️  Stage 1 failed. Trying Stage 2 (relaxed)...");
+
+  const relaxedFilters = {
+    category: filters.category,
+    brand: filters.brand,
+    modelNumber: filters.modelNumber || filters.model_number,
+    minPrice: filters.minPrice || filters.min_price,
+    maxPrice: filters.maxPrice || filters.max_price,
+    storeName: filters.storeName || filters.store_name,
+  };
+
+  [vectorResults, fulltextResults] = await Promise.all([
+    vectorSearch(vectorLiteral, relaxedFilters, limit * 2, searchQuery),
+    fulltextSearchElectronics(searchQuery, relaxedFilters, limit * 2),
+  ]);
+
+  const fusedResults = reciprocalRankFusionElectronics(
+    vectorResults,
+    fulltextResults
+  );
+  const finalResults = fusedResults.slice(0, limit);
+  console.log(
+    "   ✅ Electronics Stage 2 (relaxed):",
+    finalResults.length,
+    "results"
+  );
+
+  return finalResults;
+}
+
+// ============================================================================
+// FASHION HYBRID SEARCH
+// ============================================================================
+async function fashionHybridSearch(
+  searchQuery,
+  vectorLiteral,
+  filters = {},
+  limit = 50
+) {
+  console.log("\n👗 [FASHION SEARCH] Using fashion-optimized pipeline");
+  console.log("   🔍 Query:", searchQuery);
+  console.log("   🎛️  Filters:", JSON.stringify(filters, null, 2));
+
+  // STAGE 1: Try with ALL filters (gender, style, color)
+  let [vectorResults, fulltextResults] = await Promise.all([
+    vectorSearch(vectorLiteral, filters, limit * 3, searchQuery), // Fetch MORE for fashion
+    fulltextSearchFashion(searchQuery, filters, limit * 3),
+  ]);
+
+  if (vectorResults.length >= 10 || fulltextResults.length >= 10) {
+    const fusedResults = reciprocalRankFusionFashion(
+      vectorResults,
+      fulltextResults
+    );
+    const finalResults = fusedResults.slice(0, limit);
+    console.log(
+      "   ✅ Fashion Stage 1 (strict):",
+      finalResults.length,
+      "results"
+    );
+    return finalResults;
+  }
+
+  // STAGE 2: Drop color only (keep gender, style, category)
+  console.log("   🔄 Fashion Stage 2 (drop color)...");
+
+  const stage2Filters = {
+    category: filters.category,
+    brand: filters.brand,
+    gender: filters.gender,
+    style: filters.style,
+    size: filters.size,
+    minPrice: filters.minPrice || filters.min_price,
+    maxPrice: filters.maxPrice || filters.max_price,
+    storeName: filters.storeName || filters.store_name,
+  };
+
+  [vectorResults, fulltextResults] = await Promise.all([
+    vectorSearch(vectorLiteral, stage2Filters, limit * 3, searchQuery),
+    fulltextSearchFashion(searchQuery, stage2Filters, limit * 3),
+  ]);
+
+  if (vectorResults.length >= 5 || fulltextResults.length >= 5) {
+    const fusedResults = reciprocalRankFusionFashion(
+      vectorResults,
+      fulltextResults
+    );
+    const finalResults = fusedResults.slice(0, limit);
+    console.log(
+      "   ✅ Fashion Stage 2 (no color):",
+      finalResults.length,
+      "results"
+    );
+    return finalResults;
+  }
+
+  // STAGE 3: Drop style too (keep gender and category only) - "Vibe Check" mode
+  console.log("   🔄 Fashion Stage 3 (vibe check - gender + category only)...");
+
+  const stage3Filters = {
+    category: filters.category,
+    gender: filters.gender, // CRITICAL: Keep gender even in vibe mode
+    minPrice: filters.minPrice || filters.min_price,
+    maxPrice: filters.maxPrice || filters.max_price,
+  };
+
+  [vectorResults, fulltextResults] = await Promise.all([
+    vectorSearch(vectorLiteral, stage3Filters, limit * 4, searchQuery), // Fetch even MORE
+    fulltextSearchFashion(searchQuery, stage3Filters, limit * 4),
+  ]);
+
+  const fusedResults = reciprocalRankFusionFashion(
+    vectorResults,
+    fulltextResults
+  );
+  const finalResults = fusedResults.slice(0, limit);
+  console.log(
+    "   ✅ Fashion Stage 3 (vibe check):",
+    finalResults.length,
+    "results"
+  );
+
+  return finalResults;
+}
+
+// ============================================================================
+// MAIN HYBRID SEARCH ROUTER
+// ============================================================================
+async function hybridSearch(
+  searchQuery,
+  vectorLiteral,
+  filters = {},
+  limit = 50
+) {
+  console.log("\n🚀 [HYBRID SEARCH] Starting hybrid search");
+  console.log("   🔍 Query:", searchQuery);
+  console.log("   🎛️  Filters:", JSON.stringify(filters, null, 2));
+
+  // Detect category type
+  const categoryType = await getCategoryType(filters.category);
+  console.log("   📂 Category type:", categoryType);
+
+  // Route to appropriate search pipeline
+  if (categoryType === "fashion") {
+    return await fashionHybridSearch(
+      searchQuery,
+      vectorLiteral,
+      filters,
+      limit
+    );
+  } else if (categoryType === "electronics") {
+    return await electronicsHybridSearch(
+      searchQuery,
+      vectorLiteral,
+      filters,
+      limit
+    );
+  } else {
+    // Default to electronics behavior for unknown categories
+    console.log("   ⚠️  Unknown category, using electronics pipeline");
+    return await electronicsHybridSearch(
+      searchQuery,
+      vectorLiteral,
+      filters,
+      limit
+    );
+  }
 }
 
 function deduplicateProducts(products) {
@@ -873,55 +1270,6 @@ function deduplicateProducts(products) {
   console.log("   🗑️  Duplicates removed:", products.length - unique.length);
 
   return unique;
-}
-
-async function hybridSearch(
-  searchQuery,
-  vectorLiteral,
-  filters = {},
-  limit = 50
-) {
-  console.log("\n🚀 [HYBRID SEARCH] Starting hybrid search");
-  console.log("   🔍 Query:", searchQuery);
-  console.log("   🎛️  Filters:", JSON.stringify(filters, null, 2));
-
-  const [vectorResults, fulltextResults] = await Promise.all([
-    vectorSearch(vectorLiteral, filters, limit * 2, searchQuery),
-    fulltextSearch(searchQuery, filters, limit * 2),
-  ]);
-
-  if (vectorResults.length > 0 || fulltextResults.length > 0) {
-    const fusedResults = reciprocalRankFusion(vectorResults, fulltextResults);
-    const finalResults = fusedResults.slice(0, limit);
-    console.log("   ✅ Search completed:", finalResults.length, "results");
-    return finalResults;
-  }
-
-  console.log("   ⚠️  No results, trying RELAXED search...");
-
-  const relaxedFilters = {
-    minPrice: filters.minPrice || filters.min_price,
-    maxPrice: filters.maxPrice || filters.max_price,
-    storeName: filters.storeName || filters.store_name,
-    category: filters.category,
-    brand: filters.brand,
-    modelNumber: filters.modelNumber || filters.model_number,
-    storage: filters.storage,
-    ram: filters.ram,
-    gender: filters.gender,
-  };
-
-  const [relaxedVector, relaxedFulltext] = await Promise.all([
-    vectorSearch(vectorLiteral, relaxedFilters, limit * 2, searchQuery),
-    fulltextSearch(searchQuery, relaxedFilters, limit * 2),
-  ]);
-
-  const fusedResults = reciprocalRankFusion(relaxedVector, relaxedFulltext);
-  const finalResults = fusedResults.slice(0, limit);
-
-  console.log("   ✅ Relaxed search:", finalResults.length, "results");
-
-  return finalResults;
 }
 
 async function searchWebTool(query) {
@@ -1150,7 +1498,7 @@ async function executeSearchWeb(args) {
   };
 }
 
-// 🔥 NEW ENDPOINT: Image upload and analysis
+// Image upload and analysis endpoint
 app.post("/analyze-image", upload.single("image"), async (req, res) => {
   console.log("\n" + "🖼️ ".repeat(40));
   console.log("📸 NEW IMAGE ANALYSIS REQUEST");
@@ -1169,7 +1517,6 @@ app.post("/analyze-image", upload.single("image"), async (req, res) => {
     console.log("   Size:", req.file.size, "bytes");
     console.log("   MIME:", req.file.mimetype);
 
-    // Analyze the image
     const analysisResult = await analyzeProductImage(
       req.file.buffer,
       req.file.mimetype
@@ -1337,12 +1684,13 @@ app.post("/chat", async (req, res) => {
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    message: "Omnia AI - Scalable Architecture v2.1 with Vision",
-    
+    message: "Omnia AI - Dual Pipeline Architecture (Electronics + Fashion)",
   });
 });
 
 app.listen(PORT, () => {
-  console.log("\n🚀 Omnia AI Server - v2.1 with Vision Support");
-  
+  console.log("\n🚀 Omnia AI Server - Dual Pipeline Architecture");
+  console.log("   ⚡ Electronics: Precision matching (95/5 fulltext/vector)");
+  console.log("   👗 Fashion: Vibe-based search (60/40 or 70% vector-only)");
+  console.log(`   🌐 Server running on port ${PORT}`);
 });
