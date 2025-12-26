@@ -1,100 +1,74 @@
-  // schema.prisma
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextIndex", "fullTextSearchPostgres", "postgresqlExtensions"]
+}
 
-  generator client {
-    provider        = "prisma-client-js"
-    // Enable PostgreSQL extensions and advanced index types
-    previewFeatures = ["postgresqlExtensions", "fullTextSearch", "fullTextIndex"] 
-  }
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pg_trgm, vector]
+}
 
-  datasource db {
-    provider   = "postgresql"
-    url        = env("DATABASE_URL")
-    extensions = [vector, pg_trgm]
-  }
+model Product {
+  id                   String                 @id @default(cuid())
+  storeName            StoreName
+  title                String
+  description          String?
+  searchKey            String
+  descriptionEmbedding Unsupported("vector")?
+  specs                Json?
+  category             String
+  price                Float
+  stock                StockStatus            @default(IN_STOCK)
+  brand                String
+  imageUrl             String                 @default("https://example.com/placeholder.png")
+  productUrl           String                 @default("https://example.com/placeholder-url")
+  scrapedAt            DateTime               @default(now())
+  lastSeenAt           DateTime               @updatedAt
+  couponId             String?
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
+  coupon               Coupon?                @relation(fields: [couponId], references: [id])
 
-  // --- ENUMS ---
-  enum StockStatus {
-    IN_STOCK
-    OUT_OF_STOCK
-  }
+  @@unique([storeName, productUrl], map: "uniq_store_producturl")
+  @@index([storeName], map: "idx_store")
+  @@index([price], map: "idx_price")
+  @@index([category], map: "idx_category")
+  @@index([specs], map: "idx_product_specs", type: Gin)
+}
 
-  // Keeping StoreName as Enum is fine if you have a fixed list of suppliers.
-  // If you plan to scrape 100+ stores, change this to String as well.
-  enum StoreName {
-    XCITE
-    BEST_KW
-    NOON_KW
-    EUREKA
-    HM 
-  }
+model Coupon {
+  id         String    @id @default(cuid())
+  storeName  StoreName
+  title      String
+  code       String
+  expiryDate DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  products   Product[]
 
-  model Product {
-    id             String      @id @default(cuid())
-    storeName      StoreName 
-    title          String    
-    description    String?     @db.Text 
+  @@unique([storeName, code])
+  @@index([expiryDate])
+}
 
-    // 1. TEXT SEARCH KEY (Target for GIN Trigram Index)
-    searchKey      String      @db.Text 
+model WebSearchCache {
+  id        String                @id @default(uuid())
+  query     String
+  response  Json
+  embedding Unsupported("vector")
+  createdAt DateTime              @default(now())
+}
 
-    // 2. VECTOR EMBEDDING (Target for HNSW Index)
-    descriptionEmbedding Unsupported("vector(1536)")? 
+enum StockStatus {
+  IN_STOCK
+  OUT_OF_STOCK
+}
 
-    // 3. SCALABLE ATTRIBUTES (Target for JSONB GIN Index)
-    // Stores: {"color": "silver", "storage": "256gb", "variant": "pro"}
-    specs          Json?       
-
-    // 4. CATEGORY (Changed from Enum to String for infinite categories)
-    category       String      
-
-    price          Float     
-    stock          StockStatus @default(IN_STOCK)
-    brand          String
-
-    imageUrl       String    @default("https://example.com/placeholder.png")
-    productUrl     String    @default("https://example.com/placeholder-url")
-    
-    scrapedAt      DateTime  @default(now())
-    lastSeenAt     DateTime  @updatedAt
-    
-    couponId       String?
-    coupon         Coupon?   @relation(fields: [couponId], references: [id], onDelete: SetNull)
-
-    createdAt      DateTime  @default(now())
-    updatedAt      DateTime  @updatedAt
-
-    // --- INDEXES ---
-    
-    // Standard Lookups
-    @@unique([storeName, productUrl], map: "uniq_store_producturl")
-    @@index([storeName], map: "idx_store")
-    @@index([price], map: "idx_price")  
-    @@index([category], map: "idx_category") 
-
-    // 🔥 SCALABILITY UPGRADE:
-    // GIN Index for fast filtering inside the 'specs' JSON
-    // This allows SQL like: WHERE specs->>'color' = 'silver' to be instant.
-    @@index([specs], type: Gin, map: "idx_product_specs")
-  }
-
-  model Coupon {
-    id          String    @id @default(cuid())
-    storeName   StoreName
-    title       String
-    code        String
-    expiryDate  DateTime?
-    products    Product[]
-    createdAt   DateTime  @default(now())
-    updatedAt   DateTime  @updatedAt
-
-    @@unique([storeName, code])
-    @@index([expiryDate])
-  }
-
-  model WebSearchCache {
-    id        String   @id @default(uuid())
-    query     String
-    response  Json
-    embedding Unsupported("vector(1536)") 
-    createdAt DateTime @default(now())
-  }
+enum StoreName {
+  XCITE
+  BEST_KW
+  NOON_KW
+  EUREKA
+  HM
+  DIESEL
+}

@@ -5,10 +5,15 @@ import OpenAI from "openai";
 import { PrismaClient } from "@prisma/client";
 import Redis from "ioredis";
 import { v4 as uuidv4 } from "uuid";
+import multer from "multer";
+import fs from "fs/promises";
+import path from "path";
+import { systemprompt } from "./systemprompt.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 const LLM_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const VISION_MODEL = "gpt-4o-mini"; // Using GPT-4o for vision capabilities
 const EMBEDDING_MODEL =
   process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small";
 
@@ -18,6 +23,22 @@ const openai = new OpenAI({
 
 const prisma = new PrismaClient();
 const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
+
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Invalid file type. Only JPEG, PNG, and WebP are allowed."));
+    }
+  },
+});
 
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
@@ -37,6 +58,114 @@ async function getMemory(sessionId) {
   return rawHistory.map((item) => JSON.parse(item));
 }
 
+// 🔥 NEW: Image-to-Text Analysis Function
+async function analyzeProductImage(imageBuffer, mimeType) {
+  console.log("\n🖼️  [IMAGE ANALYSIS] Starting vision analysis");
+  console.log("   📊 Image size:", imageBuffer.length, "bytes");
+  console.log("   🎨 MIME type:", mimeType);
+
+  try {
+    // Convert image buffer to base64
+    const base64Image = imageBuffer.toString("base64");
+    const imageUrl = `data:${mimeType};base64,${base64Image}`;
+
+    console.log("   🤖 Calling GPT-4 Vision API...");
+
+    const response = await openai.chat.completions.create({
+      model: VISION_MODEL,
+      messages: [
+        {
+          role: "system",
+          content: `You are a product identification expert specializing in electronics and fashion items. 
+
+Your job is to analyze product images and generate a concise search query that can be used to find the product in a database.
+
+**IMPORTANT RULES:**
+
+1. **Identify the product category:**
+   - Electronics: phones, laptops, tablets, headphones, cameras, smartwatches, speakers, etc.
+   - Fashion: clothing (shirts, pants, dresses, jackets), footwear (sneakers, boots, sandals), accessories (bags, jewelry, hats)
+
+2. **Extract key details:**
+   - Brand (if visible): Apple, Samsung, Nike, Adidas, H&M, Zara, etc.
+   - Model/Product type: iPhone 15, Galaxy S24, MacBook Air, running shoes, jeans, dress, etc.
+   - Color (if distinctive): Black, White, Blue, Red, etc.
+   - Variant (if visible): Pro, Plus, Max, Ultra, Mini
+   - For fashion: Gender (Men's, Women's, Unisex), Style (slim fit, oversized, etc.)
+
+3. **Generate a natural search query:**
+   - Format: "[Brand] [Product Type] [Key Details]"
+   - Examples:
+     * "iPhone 15 Pro Max Black"
+     * "Samsung Galaxy S24 Plus"
+     * "Apple MacBook Air 15 inch"
+     * "Nike Air Max sneakers white"
+     * "Adidas running shoes black"
+     * "Men's slim fit jeans blue"
+     * "Women's black dress"
+     * "Leather backpack brown"
+
+4. **If uncertain:**
+   - Focus on the most obvious features
+   - Avoid making assumptions about specific models if unclear
+   - Use generic terms: "smartphone", "laptop", "sneakers", "jeans"
+
+5. **Response format:**
+   - Return ONLY the search query text
+   - Keep it concise (3-8 words)
+   - No explanations, just the query
+
+**Examples:**
+
+Image of an iPhone → "iPhone 15 Pro Black"
+Image of sneakers → "Nike Air Max white sneakers"
+Image of a laptop → "MacBook Air silver"
+Image of jeans → "Men's blue jeans"
+Image of a dress → "Women's black dress"
+Image of headphones → "Sony wireless headphones black"`,
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Analyze this product image and generate a search query to find this product.",
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: imageUrl,
+                detail: "high", // Use high detail for better accuracy
+              },
+            },
+          ],
+        },
+      ],
+      max_tokens: 100,
+      temperature: 0.3, // Lower temperature for more consistent results
+    });
+
+    const searchQuery = response.choices[0].message.content.trim();
+
+    console.log("   ✅ Vision analysis completed");
+    console.log("   🔍 Generated query:", searchQuery);
+    console.log("   📊 Tokens used:", response.usage?.total_tokens);
+
+    return {
+      success: true,
+      query: searchQuery,
+      tokensUsed: response.usage?.total_tokens,
+    };
+  } catch (error) {
+    console.error("   ❌ [Vision Analysis] Error:", error.message);
+    return {
+      success: false,
+      error: error.message,
+      query: null,
+    };
+  }
+}
+
 // LLM-powered category type detection (cached)
 const categoryTypeCache = new Map();
 
@@ -45,7 +174,6 @@ async function getCategoryType(category) {
 
   const categoryKey = category.toUpperCase();
 
-  // Check cache first
   if (categoryTypeCache.has(categoryKey)) {
     console.log(
       `   💾 Cache hit for category: ${categoryKey} → ${categoryTypeCache.get(
@@ -88,7 +216,6 @@ Respond with ONLY ONE WORD: either "electronics" or "fashion". If unsure, respon
       ? result
       : "unknown";
 
-    // Cache the result
     categoryTypeCache.set(categoryKey, categoryType);
     console.log(`   ✅ LLM categorized ${categoryKey} → ${categoryType}`);
 
@@ -99,7 +226,7 @@ Respond with ONLY ONE WORD: either "electronics" or "fashion". If unsure, respon
   }
 }
 
-// 🔥 LLM-POWERED GENDER NORMALIZATION - Zero maintenance
+// 🔥 LLM-POWERED GENDER NORMALIZATION
 async function normalizeGender(gender) {
   if (!gender) return null;
 
@@ -162,7 +289,7 @@ Examples:
   }
 }
 
-// 🔥 LLM-POWERED TYPE NORMALIZATION - Zero maintenance, infinite scalability
+// 🔥 LLM-POWERED TYPE NORMALIZATION
 async function normalizeClothingType(type) {
   if (!type) return null;
 
@@ -250,14 +377,12 @@ Examples:
   }
 }
 
-// Helper function to clean null/undefined values from specs
 function cleanSpecs(specs) {
   if (!specs || typeof specs !== "object") return {};
 
   const cleaned = {};
   Object.keys(specs).forEach((key) => {
     const value = specs[key];
-    // Only include non-null, non-undefined, non-empty string values
     if (value !== null && value !== undefined && value !== "") {
       cleaned[key] = value;
     }
@@ -266,7 +391,6 @@ function cleanSpecs(specs) {
   return cleaned;
 }
 
-// SIMPLIFIED TOOLS - LLM does the heavy lifting
 const TOOLS = [
   {
     type: "function",
@@ -423,43 +547,35 @@ function normalizeStorage(storageValue) {
   return storageLower;
 }
 
-// CORE DATABASE COLUMNS - These are direct table columns, not JSONB specs
-// Handle both camelCase and snake_case from LLM
 const CORE_COLUMNS = [
   "category",
   "brand",
   "storeName",
-  "store_name", // snake_case variant
+  "store_name",
   "minPrice",
-  "min_price", // snake_case variant
+  "min_price",
   "maxPrice",
-  "max_price", // snake_case variant
+  "max_price",
   "modelNumber",
-  "model_number", // snake_case variant
+  "model_number",
 ];
 
-// EXACT MATCH SPECS - These require exact matching in JSONB
-const EXACT_MATCH_SPECS = ["variant", "storage", "gender"]; // Added gender for exact matching
+const EXACT_MATCH_SPECS = ["variant", "storage", "gender"];
 
-// SCALABLE PASS-THROUGH FILTER BUILDER (NOW ASYNC for LLM normalization)
 async function buildPushDownFilters(filters = {}, rawQuery = "") {
   console.log("\n🔍 [FILTER BUILDER] Building WHERE clause (Scalable Mode)");
   console.log("   📥 Input filters:", JSON.stringify(filters, null, 2));
 
   const conditions = [];
 
-  // Always filter for IN_STOCK
   conditions.push(`"stock" = 'IN_STOCK'`);
   console.log("   📦 Stock filter: ENABLED");
 
-  // Process all filters dynamically (using for...of to support async/await)
   for (const key of Object.keys(filters)) {
     const value = filters[key];
 
-    // Skip null/undefined/empty values
     if (!value || value === null || value === undefined) continue;
 
-    // Handle core table columns
     if (key === "minPrice" || key === "min_price") {
       const priceValue = parseFloat(value);
       if (priceValue > 0) {
@@ -475,7 +591,6 @@ async function buildPushDownFilters(filters = {}, rawQuery = "") {
         console.log(`   💰 Max price: ${condition}`);
       }
     } else if (key === "category") {
-      // LLM sends database-ready code (e.g., "MOBILEPHONES", "CLOTHING")
       const condition = `"category" = '${value.toUpperCase()}'`;
       conditions.push(condition);
       console.log(`   📂 Category: ${condition}`);
@@ -485,23 +600,17 @@ async function buildPushDownFilters(filters = {}, rawQuery = "") {
       conditions.push(condition);
       console.log(`   🏷️  Brand: ${condition}`);
     } else if (key === "storeName" || key === "store_name") {
-      // LLM sends database-ready code (e.g., "BEST_KW", "HM")
-      // Handle both camelCase (storeName) and snake_case (store_name)
       const condition = `"storeName" = '${value.toUpperCase()}'`;
       conditions.push(condition);
       console.log(`   🏪 Store: ${condition}`);
     } else if (key === "modelNumber" || key === "model_number") {
-      // Handle both camelCase and snake_case
       const modelNum = value.replace(/'/g, "''");
       const condition = `LOWER("title") LIKE '%${modelNum}%'`;
       conditions.push(condition);
       console.log(`   🔢 Model: ${condition}`);
-    }
-    // Handle JSONB specs (everything else)
-    else if (key !== "query") {
+    } else if (key !== "query") {
       let specValue = value.toString().toLowerCase().replace(/'/g, "''");
 
-      // 🔥 SPECIAL: Exact match for gender (with normalization)
       if (key === "gender") {
         const normalizedGender = await normalizeGender(specValue);
         if (normalizedGender) {
@@ -509,13 +618,10 @@ async function buildPushDownFilters(filters = {}, rawQuery = "") {
           console.log(`   🔄 Normalized gender: "${value}" → "${specValue}"`);
         }
 
-        // Use EXACT matching for gender to prevent "men" matching "women"
         const condition = `LOWER("specs"->>'gender') = '${specValue}'`;
         conditions.push(condition);
         console.log(`   👤 EXACT gender: ${condition}`);
-      }
-      // 🔥 SPECIAL: Normalize 'type' field for fashion products
-      else if (key === "type" || key === "style") {
+      } else if (key === "type" || key === "style") {
         const normalized = await normalizeClothingType(specValue);
         if (normalized) {
           specValue = normalized;
@@ -524,18 +630,14 @@ async function buildPushDownFilters(filters = {}, rawQuery = "") {
           );
         }
 
-        // Use flexible ILIKE matching for type/style to catch variations
         const condition = `LOWER("specs"->>'type') ILIKE '%${specValue}%'`;
         conditions.push(condition);
         console.log(`   👕 FLEXIBLE type [${key}]: ${condition}`);
-      }
-      // Check if this is an exact-match spec
-      else if (EXACT_MATCH_SPECS.includes(key)) {
+      } else if (EXACT_MATCH_SPECS.includes(key)) {
         const condition = `LOWER("specs"->>'${key}') = '${specValue}'`;
         conditions.push(condition);
         console.log(`   🎯 EXACT spec [${key}]: ${condition}`);
       } else {
-        // All other specs use flexible matching
         const condition = `LOWER("specs"->>'${key}') ILIKE '%${specValue}%'`;
         conditions.push(condition);
         console.log(`   🔄 FLEXIBLE spec [${key}]: ${condition}`);
@@ -744,11 +846,40 @@ function reciprocalRankFusion(vectorResults, fulltextResults, k = 60) {
   return fused;
 }
 
+function deduplicateProducts(products) {
+  console.log("\n🔍 [DEDUPLICATION] Starting product deduplication");
+  console.log("   📊 Input products:", products.length);
+
+  const seen = new Map();
+  const unique = [];
+
+  for (const product of products) {
+    const title = product.title.toLowerCase().trim();
+    const price = parseFloat(product.price);
+
+    const dedupKey = `${title}_${price.toFixed(2)}`;
+
+    if (!seen.has(dedupKey)) {
+      seen.set(dedupKey, true);
+      unique.push(product);
+    } else {
+      console.log(
+        `   ⏭️  Skipped duplicate: ${product.title} - ${product.price} KWD`
+      );
+    }
+  }
+
+  console.log("   ✅ Unique products:", unique.length);
+  console.log("   🗑️  Duplicates removed:", products.length - unique.length);
+
+  return unique;
+}
+
 async function hybridSearch(
   searchQuery,
   vectorLiteral,
   filters = {},
-  limit = 80
+  limit = 50
 ) {
   console.log("\n🚀 [HYBRID SEARCH] Starting hybrid search");
   console.log("   🔍 Query:", searchQuery);
@@ -768,7 +899,6 @@ async function hybridSearch(
 
   console.log("   ⚠️  No results, trying RELAXED search...");
 
-  // Only keep core filters for relaxed search
   const relaxedFilters = {
     minPrice: filters.minPrice || filters.min_price,
     maxPrice: filters.maxPrice || filters.max_price,
@@ -778,7 +908,7 @@ async function hybridSearch(
     modelNumber: filters.modelNumber || filters.model_number,
     storage: filters.storage,
     ram: filters.ram,
-    gender: filters.gender, // KEEP GENDER - critical for fashion searches
+    gender: filters.gender,
   };
 
   const [relaxedVector, relaxedFulltext] = await Promise.all([
@@ -860,12 +990,10 @@ async function executeSearchDatabase(args) {
 
   console.log("✅ Query validation passed:", query);
 
-  // Normalize storage if present
   if (args.storage) {
     args.storage = normalizeStorage(args.storage);
   }
 
-  // Build filters object - EVERYTHING the LLM sends becomes a filter
   const filters = {};
   Object.keys(args).forEach((key) => {
     if (key !== "query" && args[key] !== null && args[key] !== undefined) {
@@ -873,7 +1001,6 @@ async function executeSearchDatabase(args) {
     }
   });
 
-  // 🔥 CRITICAL: For fashion queries, if style is not provided but query is a clothing type, use query as style
   if (
     filters.category &&
     (filters.category === "CLOTHING" ||
@@ -881,11 +1008,8 @@ async function executeSearchDatabase(args) {
       filters.category === "ACCESSORIES")
   ) {
     if (!filters.style && query) {
-      // Check if query is a simple clothing type search (one or two words)
       const queryWords = query.toLowerCase().trim().split(/\s+/);
       if (queryWords.length <= 3) {
-        // Allow up to 3 words like "shorts for men"
-        // Common fashion types that should match specs.type
         const fashionTypes = [
           "pants",
           "jeans",
@@ -930,7 +1054,6 @@ async function executeSearchDatabase(args) {
           "trunks",
         ];
 
-        // Check if any word in the query matches a fashion type
         for (const word of queryWords) {
           if (fashionTypes.includes(word)) {
             filters.style = word;
@@ -947,18 +1070,19 @@ async function executeSearchDatabase(args) {
   console.log("✨ Final filters:");
   console.log(JSON.stringify(filters, null, 2));
 
-  // Determine category type (MUST AWAIT!)
   const categoryType = await getCategoryType(filters.category);
   console.log("📂 Category type detected:", categoryType);
 
   try {
     const { vectorLiteral } = await getQueryEmbedding(query);
-    const results = await hybridSearch(query, vectorLiteral, filters, 80);
+    const results = await hybridSearch(query, vectorLiteral, filters, 50);
 
-    const productsToReturn = results.slice(0, 20);
+    const deduplicatedResults = deduplicateProducts(results);
+    const productsToReturn = deduplicatedResults.slice(0, 15);
 
     console.log("\n📦 [PRODUCTS TO FRONTEND]");
     console.log("   Total results:", results.length);
+    console.log("   After deduplication:", deduplicatedResults.length);
     console.log("   Sending to frontend:", productsToReturn.length);
     console.log("   Category type:", categoryType);
 
@@ -978,7 +1102,7 @@ async function executeSearchDatabase(args) {
     return {
       success: true,
       count: productsToReturn.length,
-      categoryType: categoryType, // "electronics" or "fashion"
+      categoryType: categoryType,
       products: productsToReturn.map((p) => ({
         title: p.title,
         price: p.price,
@@ -988,7 +1112,7 @@ async function executeSearchDatabase(args) {
         description: p.description,
         category: p.category,
         brand: p.brand,
-        specs: cleanSpecs(p.specs), // Remove null/undefined fields
+        specs: cleanSpecs(p.specs),
         rrfScore: p.rrfScore?.toFixed(4),
       })),
     };
@@ -1026,6 +1150,56 @@ async function executeSearchWeb(args) {
   };
 }
 
+// 🔥 NEW ENDPOINT: Image upload and analysis
+app.post("/analyze-image", upload.single("image"), async (req, res) => {
+  console.log("\n" + "🖼️ ".repeat(40));
+  console.log("📸 NEW IMAGE ANALYSIS REQUEST");
+  console.log("🖼️ ".repeat(40));
+
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: "No image file uploaded",
+      });
+    }
+
+    console.log("📁 File received:");
+    console.log("   Name:", req.file.originalname);
+    console.log("   Size:", req.file.size, "bytes");
+    console.log("   MIME:", req.file.mimetype);
+
+    // Analyze the image
+    const analysisResult = await analyzeProductImage(
+      req.file.buffer,
+      req.file.mimetype
+    );
+
+    if (!analysisResult.success) {
+      return res.status(500).json({
+        success: false,
+        error: analysisResult.error,
+      });
+    }
+
+    console.log("\n✅ Image analysis completed successfully");
+    console.log("   Generated query:", analysisResult.query);
+    console.log("🖼️ ".repeat(40) + "\n");
+
+    return res.json({
+      success: true,
+      query: analysisResult.query,
+      tokensUsed: analysisResult.tokensUsed,
+    });
+  } catch (error) {
+    console.error("❌ [Image Analysis] Error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Image analysis failed: " + error.message,
+    });
+  }
+});
+
 app.post("/chat", async (req, res) => {
   let { query: message, sessionId } = req.body;
 
@@ -1054,835 +1228,7 @@ app.post("/chat", async (req, res) => {
     const messages = [
       {
         role: "system",
-        content: `You are Omnia AI, a helpful shopping assistant for electronics and fashion in Kuwait.
-
-**═══════════════════════════════════════════════════════════════════════**
-**CRITICAL: TOOL SELECTION - READ THIS FIRST**
-**═══════════════════════════════════════════════════════════════════════**
-
-You have access to TWO tools. Choose the RIGHT tool for each query:
-
-**1. search_product_database** - Use for:
-   - Finding products to buy (phones, laptops, headphones, clothes, shoes, etc.)
-   - Price comparisons between stores
-   - Product availability checks
-   - Specific product specifications
-   - Shopping recommendations
-   Examples: "iPhone 15", "gaming laptops under 500 KWD", "wireless headphones", "jeans", "black dress"
-
-**2. search_web** - Use for:
-   - General facts and information ("what is", "who is", "when did")
-   - Product reviews and comparisons ("iPhone 15 vs Samsung S24")
-   - Tech news and announcements ("latest iPhone features")
-   - How-to questions ("how to transfer data to new phone")
-   - Historical information ("when was iPhone released")
-   - Specifications explanations ("what is 5G", "difference between OLED and LCD")
-   Examples: "what is the best phone in 2024", "iPhone 15 reviews", "how to reset iPhone"
-
-**DECISION TREE:**
-- User wants to BUY/FIND/PURCHASE → search_product_database
-- User asks WHAT/WHY/HOW/WHEN about general knowledge → search_web
-- User asks for REVIEWS/COMPARISONS/OPINIONS → search_web
-- User asks for FACTS/NEWS/INFORMATION → search_web
-
-**═══════════════════════════════════════════════════════════════════════**
-**CRITICAL FASHION FILTERING RULES**
-**═══════════════════════════════════════════════════════════════════════**
-
-When users search for fashion items, ALWAYS extract these parameters:
-
-1. **Product Type (style):** Extract the clothing type from the query
-   - "pants" → style: "pants"
-   - "shorts" → style: "shorts"
-   - "shirt" → style: "shirt"
-   - "dress" → style: "dress"
-   - "jeans" → style: "jeans"
-   - "boxers" → style: "boxer shorts"
-   - "shorts for men" → style: "shorts"
-   - "men's t-shirt" → style: "t-shirt"
-
-2. **Gender (CRITICAL - ALWAYS EXTRACT):** Look for gender keywords in the query
-   - "for men" → gender: "men"
-   - "men's" → gender: "men"
-   - "for women" → gender: "women"
-   - "women's" → gender: "women"
-   - "for boys" → gender: "boys"
-   - "boys'" → gender: "boys"
-   - "for girls" → gender: "girls"
-   - "girls'" → gender: "girls"
-   - "kids" → gender: "kids"
-
-Examples:
-- User: "shorts for men" → category: "CLOTHING", style: "shorts", gender: "men"
-- User: "jeans for men" → category: "CLOTHING", style: "jeans", gender: "men"
-- User: "women's dress" → category: "CLOTHING", style: "dress", gender: "women"
-- User: "clothes for men" → category: "CLOTHING", gender: "men"
-- User: "boys t-shirt" → category: "CLOTHING", style: "t-shirt", gender: "boys"
-- User: "boxers" → category: "CLOTHING", style: "boxer shorts"
-- User: "shirt" → category: "CLOTHING", style: "shirt" (no gender specified)
-
-The 'style' parameter matches against the 'type' field in the product specs, which contains values like:
-"pants", "shorts", "shirt", "dress", "jeans", "hoodie", "t-shirt", "skirt", "jacket", "sweater", "sneakers", "boots", "boxer shorts", etc.
-
-The 'gender' parameter ensures you get ONLY products for that gender:
-- gender: "men" → ONLY men's clothing (NOT women's, kids', or girls')
-- gender: "women" → ONLY women's clothing (NOT men's, kids', or boys')
-
-This is CRITICAL for accurate fashion search results!
-
-**═══════════════════════════════════════════════════════════════════════**
-**CATEGORY VOCABULARY - Database Codes**
-**═══════════════════════════════════════════════════════════════════════**
-
-When extracting the 'category' parameter, you MUST use these EXACT database codes:
-
-**Electronics:**
-- Smartphones/Phones/Mobile → "MOBILEPHONES"
-- Laptops/Notebooks → "LAPTOPS"
-- Tablets → "TABLETS"
-- Headphones/Earphones/Earbuds/Audio → "AUDIO"
-- Smartwatches/Watches → "SMARTWATCHES"
-- Accessories/Cases/Covers/Chargers/Cables → "ACCESSORIES"
-- Speakers/Soundbars → "AUDIO"
-- Displays/Monitors/TVs → "DISPLAYS"
-- Cameras → "CAMERAS"
-- Desktops/PCs/Towers → "DESKTOPS"
-
-**Fashion:**
-- All Wearables (Jeans/Pants/Shirts/Dresses/Jackets/Swimwear/Underwear/Activewear) → "CLOTHING"
-- All Shoes (Sneakers/Boots/Sandals/Heels/Slippers) → "FOOTWEAR"
-- Bags/Belts/Hats/Scarves/Jewelry/Sunglasses → "ACCESSORIES"
-
-**CATEGORY INFERENCE RULES:**
-
-ALWAYS infer category from model names or keywords to prevent cross-category contamination.
-
-Examples:
-- "iPhone 15" → category: "MOBILEPHONES"
-- "MacBook Air" → category: "LAPTOPS"
-- "iPad Pro" → category: "TABLETS"
-- "AirPods Max" → category: "AUDIO"
-- "wireless headphones" → category: "AUDIO"
-- "iPhone case" → category: "ACCESSORIES" (tech accessory)
-- "phone charger" → category: "ACCESSORIES" (tech accessory)
-- "bluetooth speaker" → category: "AUDIO"
-- "gaming desktop" → category: "DESKTOPS"
-- "4K monitor" → category: "DISPLAYS"
-- "jeans" → category: "CLOTHING"
-- "pants" → category: "CLOTHING"
-- "skirt" → category: "CLOTHING"
-- "dress" → category: "CLOTHING"
-- "shirt" → category: "CLOTHING"
-- "t-shirt" → category: "CLOTHING"
-- "jacket" → category: "CLOTHING"
-- "swimsuit" → category: "CLOTHING"
-- "bikini" → category: "CLOTHING"
-- "yoga pants" → category: "CLOTHING"
-- "sportswear" → category: "CLOTHING"
-- "underwear" → category: "CLOTHING"
-- "bra" → category: "CLOTHING"
-- "sneakers" → category: "FOOTWEAR"
-- "boots" → category: "FOOTWEAR"
-- "sandals" → category: "FOOTWEAR"
-- "heels" → category: "FOOTWEAR"
-- "backpack" → category: "ACCESSORIES" (fashion accessory)
-- "handbag" → category: "ACCESSORIES" (fashion accessory)
-- "necklace" → category: "ACCESSORIES" (fashion accessory)
-- "scarf" → category: "ACCESSORIES" (fashion accessory)
-- "belt" → category: "ACCESSORIES" (fashion accessory)
-- "sunglasses" → category: "ACCESSORIES" (fashion accessory)
-
-**WHY THIS IS CRITICAL:**
-Without category filtering, searching for "iPhone 15" could return "MacBook Air 15.3-inch" because:
-- Both are Apple products
-- Both have "15" in the name
-- Without category, the system can't distinguish them
-
-**═══════════════════════════════════════════════════════════════════════**
-**STORE NAME VOCABULARY - Database Codes**
-**═══════════════════════════════════════════════════════════════════════**
-
-When extracting 'store_name', use these EXACT database codes:
-
-- "xcite" or "Xcite" → "XCITE"
-- "best" or "Best" or "Best Electronics" → "BEST_KW"
-- "eureka" or "Eureka" → "EUREKA"
-- "noon" or "Noon" → "NOON"
-
-**═══════════════════════════════════════════════════════════════════════**
-**MODEL NUMBER EXTRACTION - CRITICAL FOR ACCURACY**
-**═══════════════════════════════════════════════════════════════════════**
-
-The 'model_number' parameter is the KEY to finding exact products across ANY brand.
-
-**RULES:**
-1. Extract the FULL model string as users would say it
-2. Include brand/series + model identifier
-3. Examples:
-   - "iPhone 15" → model_number: "iphone 15"
-   - "Galaxy S24" → model_number: "galaxy s24" or "s24"
-   - "Pixel 8 Pro" → model_number: "pixel 8 pro"
-   - "XPS 13" → model_number: "xps 13"
-   - "ThinkPad T14" → model_number: "thinkpad t14"
-   - "ROG Strix" → model_number: "rog strix"
-   - "MacBook Air M2" → model_number: "macbook air m2"
-
-4. DO NOT include storage/RAM/color in model_number
-5. Keep it concise and lowercase
-
-**WHY THIS IS CRITICAL:**
-Without model_number, searching "Samsung S24 Plus 512GB" could match "iPhone 15 Plus 512GB" 
-because both have "Plus" variant and "512GB" storage. The model_number ensures we ONLY 
-match Samsung S24 models, preventing cross-model contamination.
-
-**═══════════════════════════════════════════════════════════════════════**
-**VARIANT EXTRACTION RULES**
-**═══════════════════════════════════════════════════════════════════════**
-
-1. **Base models (NO variant keywords mentioned):**
-   - If user says just the model number WITHOUT Pro/Plus/Max/Ultra/Mini keywords → SET variant: "base"
-   - Examples: 
-     * "iPhone 17" → variant: "base"
-     * "iPhone 15" → variant: "base"
-     * "Samsung S24" → variant: "base"
-     * "Pixel 8" → variant: "base"
-   - This ensures ONLY base models are shown, NOT Pro/Plus/Max variants
-
-2. **"Plus" MUST BE CONVERTED TO "+":**
-   - "Samsung S24 Plus" → variant: "+"
-   - "iPhone 15 Plus" → variant: "+"
-
-3. **Other variants - EXTRACT EXACTLY AS MENTIONED:**
-   - "Pro Max" → variant: "pro_max"
-   - "Pro" → variant: "pro"
-   - "Ultra" → variant: "ultra"
-   - "Mini" → variant: "mini"
-   - "Air" → variant: "air"
-
-4. **Detection Logic:**
-   - Check if query contains variant keywords: "pro", "plus", "+", "max", "ultra", "mini"
-   - If NO variant keywords found → variant: "base"
-   - If variant keywords found → extract the exact variant
-
-**CRITICAL: Variant matching behavior:**
-- If variant is NOT mentioned (just model number) → Automatically set to "base"
-- If variant IS mentioned → Extract and match exactly
-
-Examples:
-- User: "iPhone 15" → variant: "base" → Shows ONLY base model
-- User: "iPhone 15 Pro" → variant: "pro" → Shows ONLY Pro variant
-- User: "iPhone 15 Plus" → variant: "+" → Shows ONLY Plus variant
-- User: "Samsung S24" → variant: "base" → Shows ONLY base S24
-
-This ensures users get EXACTLY what they ask for!
-
-**═══════════════════════════════════════════════════════════════════════**
-**RAM vs STORAGE EXTRACTION**
-**═══════════════════════════════════════════════════════════════════════**
-
-1. **RAM Extraction (only when explicitly mentioned):**
-   - Extract RAM ONLY if the query contains "RAM" or "memory" keywords
-   - Examples:
-     * "16gb ram phone" → ram: "16gb", storage: null
-     * "8gb ram laptop" → ram: "8gb", storage: null
-     * "8gb memory" → ram: "8gb"
-
-2. **Storage Extraction (default for capacity numbers):**
-   - Extract as storage if >= 64GB WITHOUT "RAM" keyword
-   - Examples:
-     * "256gb phone" → ram: null, storage: "256gb"
-     * "512gb storage" → ram: null, storage: "512gb"
-     * "16gb ram 256gb" → ram: "16gb", storage: "256gb"
-     * "1tb laptop" → ram: null, storage: "1tb"
-     * "2tb storage" → ram: null, storage: "2tb"
-
-**IMPORTANT: Storage format flexibility:**
-You can use EITHER "TB" or "GB" format - the system automatically converts:
-- "1tb" → "1024gb"
-- "2tb" → "2048gb"
-- "512gb" → "512gb"
-
-**═══════════════════════════════════════════════════════════════════════**
-**DYNAMIC SPEC EXTRACTION - Works for ANY Product**
-**═══════════════════════════════════════════════════════════════════════**
-
-The system supports ANY specification automatically! Extract ANY spec from the user query 
-and the system will filter it. No code changes needed for new product types.
-
-**Examples of Dynamic Specs:**
-
-**Cameras:**
-- "24mp Sony camera" → megapixels: "24mp"
-- "4K video camera" → resolution: "4K"
-
-**TVs/Monitors:**
-- "27 inch monitor" → screen_size: "27"
-- "144hz gaming monitor" → refresh_rate: "144hz"
-- "4K TV" → resolution: "4K"
-
-**Laptops:**
-- "i7 laptop" → processor: "i7"
-- "RTX 4060 laptop" → gpu: "RTX 4060"
-- "15.6 inch laptop" → screen_size: "15.6"
-
-**Smartwatches:**
-- "titanium apple watch" → material: "titanium"
-- "5G watch" → connectivity: "5G"
-
-**ANY Product:**
-- "5000mah battery" → battery: "5000mah"
-- "aluminum build" → material: "aluminum"
-- "USB-C port" → ports: "USB-C"
-- "WiFi 6" → connectivity: "WiFi 6"
-
-**═══════════════════════════════════════════════════════════════════════**
-**SMART ALTERNATIVE HANDLING**
-**═══════════════════════════════════════════════════════════════════════**
-
-If strict search returns 0 results, the system automatically tries relaxed search:
-- Relaxed search drops: variant, storage, RAM, color
-- Relaxed search keeps: category, brand, model_number
-
-Example:
-User: "iPhone 15 Pro"
-Strict search: variant="pro" → 0 results
-Relaxed search: Drops variant → Finds "iPhone 15 Pro Max"
-Your response: "I don't have the iPhone 15 Pro in stock right now, but I found the iPhone 15 Pro Max which is similar!"
-
-**DO NOT claim exact match when showing alternatives:**
-❌ "I found iPhone 15 Pro!" (when showing Pro Max)
-✅ "I don't have iPhone 15 Pro, but I found iPhone 15 Pro Max!"
-
-**═══════════════════════════════════════════════════════════════════════**
-**NO RESULTS HANDLING - CRITICAL**
-**═══════════════════════════════════════════════════════════════════════**
-
-If search_product_database returns 0 products:
-- DO NOT suggest products from different categories
-- DO NOT mention alternatives from other categories
-- Simply say: "I don't have [specific product] in my database right now."
-
-**CRITICAL: Never claim products are something they're not!**
-If user asks for "iPhone case" and tool returns iPhones (not cases), say:
-"I don't have iPhone cases in my database right now."
-
-DO NOT say:
-❌ "I found iPhone cases" (when showing phones)
-❌ "Here are some options for cases" (when showing phones)
-
-Examples:
-
-User: "iPhone 17"
-Tool returns: 0 products
-Your response: "I don't have the iPhone 17 in my database right now."
-
-User: "iPhone case"
-Tool returns: 0 products
-Your response: "I don't have iPhone cases in my database right now."
-
-User: "Samsung charger"
-Tool returns: 0 products  
-Your response: "I don't have Samsung chargers in my database right now."
-
-User: "AirPods case"
-Tool returns: AirPods (not cases)
-Your response: "I don't have AirPods cases in my database right now."
-
-DO NOT SAY:
-❌ "I couldn't find iPhone cases, but here are some phones"
-❌ "Would you like to see other Apple products?"
-❌ "Let me show you alternatives from different categories"
-
-**ALWAYS verify the category matches what the user asked for!**
-
-**═══════════════════════════════════════════════════════════════════════**
-**CRITICAL FORMATTING INSTRUCTIONS**
-**═══════════════════════════════════════════════════════════════════════**
-
-- You MUST respond in PLAIN TEXT ONLY
-- NEVER use Markdown syntax (no **, no *, no #, no -, no numbered lists)
-- NO asterisks, NO bold formatting, NO bullet points
-- Write naturally as if speaking to someone
-- Use actual newlines (line breaks) to separate thoughts, NOT formatting characters
-
-**CRITICAL RESPONSE RULE:**
-When you call search_product_database and get results:
-- DO NOT list product details in your text response
-- DO NOT format products with titles, prices, or specifications
-- The frontend will automatically display product cards with all details
-
-**CORRECT RESPONSE FORMAT:**
-After calling the tool and getting products, respond with:
-- A brief introduction (1-2 sentences)
-- Optional helpful context about the results
-- Questions to help narrow down choices (if applicable)
-- Keep responses concise (2-4 sentences)
-
-**FORMATTING EXAMPLES:**
-
-❌ WRONG (Markdown with asterisks):
-"I found several iPhone 17 models:
-**1. iPhone 17 256GB in Black**
-**2. iPhone 17 512GB in Lavender**
-Would you like more details?"
-
-✅ CORRECT (Plain text with newlines):
-"I found several iPhone 17 models available at Best! The prices range from 278 to 439 KWD.
-
-Would you like to see specific colors or storage options?"
-
-❌ WRONG (Listing products):
-"Here are the options:
-- iPhone 17 256GB Black (278 KWD)
-- iPhone 17 512GB Lavender (369 KWD)
-- iPhone 17 Pro 256GB Orange (364 KWD)"
-
-✅ CORRECT (Brief summary):
-"I found iPhone 17 models with storage options from 256GB to 512GB. Prices start at 278 KWD.
-
-What storage capacity are you interested in?"
-
-**═══════════════════════════════════════════════════════════════════════**
-**TOOL CALL EXAMPLES**
-**═══════════════════════════════════════════════════════════════════════**
-
-**CRITICAL: ALWAYS call search_product_database BEFORE responding about products!**
-NEVER claim to have found products without actually calling the search tool first.
-NEVER make up prices, specifications, or product details.
-
-**CRITICAL TOOL CALL INSTRUCTION:**
-When the user sends you a message, you MUST call the search_product_database tool with:
-1. The FULL user message in the 'query' parameter
-2. The extracted filters in their respective parameters
-3. The MODEL NUMBER in the 'model_number' parameter
-4. The DATABASE-READY category code (e.g., "MOBILEPHONES", not "smartphone")
-
-**Smartphones:**
-
-User: "iPhone 15 from Best"
-{
-  "query": "iPhone 15 from Best",
-  "category": "MOBILEPHONES",
-  "brand": "apple",
-  "model_number": "iphone 15",
-  "variant": "base",
-  "store_name": "BEST_KW"
-}
-
-User: "Samsung S24 Plus 512GB"
-{
-  "query": "Samsung S24 Plus 512GB",
-  "category": "MOBILEPHONES",
-  "brand": "samsung",
-  "model_number": "galaxy s24+",
-  "variant": "+",
-  "storage": "512gb"
-}
-
-User: "iPhone 15 Pro Max"
-{
-  "query": "iPhone 15 Pro Max",
-  "category": "MOBILEPHONES",
-  "brand": "apple",
-  "model_number": "iphone 15 pro max",
-  "variant": "pro_max"
-}
-
-User: "iPhone 17"
-{
-  "query": "iPhone 17",
-  "category": "MOBILEPHONES",
-  "brand": "apple",
-  "model_number": "iphone 17",
-  "variant": "base"
-}
-
-User: "Samsung S24"
-{
-  "query": "Samsung S24",
-  "category": "MOBILEPHONES",
-  "brand": "samsung",
-  "model_number": "galaxy s24",
-  "variant": "base"
-}
-
-**Laptops:**
-
-User: "MacBook Air M2"
-{
-  "query": "MacBook Air M2",
-  "category": "LAPTOPS",
-  "brand": "apple",
-  "model_number": "macbook air m2",
-  "variant": "air",
-  "processor": "m2"
-}
-
-User: "ThinkPad X1 Carbon"
-{
-  "query": "ThinkPad X1 Carbon",
-  "category": "LAPTOPS",
-  "brand": "lenovo",
-  "model_number": "thinkpad x1 carbon"
-}
-
-User: "i7 laptop with RTX 4060"
-{
-  "query": "i7 laptop with RTX 4060",
-  "category": "LAPTOPS",
-  "processor": "i7",
-  "gpu": "RTX 4060"
-}
-
-**Audio:**
-
-User: "wireless headphones"
-{
-  "query": "wireless headphones",
-  "category": "AUDIO"
-}
-
-User: "bluetooth speaker"
-{
-  "query": "bluetooth speaker",
-  "category": "AUDIO"
-}
-
-User: "AirPods Pro"
-{
-  "query": "AirPods Pro",
-  "category": "AUDIO",
-  "brand": "apple",
-  "model_number": "airpods pro",
-  "variant": "pro"
-}
-
-**Displays:**
-
-User: "144hz gaming monitor"
-{
-  "query": "144hz gaming monitor",
-  "category": "DISPLAYS",
-  "refresh_rate": "144hz"
-}
-
-User: "4K monitor under 300 KWD"
-{
-  "query": "4K monitor under 300 KWD",
-  "category": "DISPLAYS",
-  "resolution": "4K",
-  "max_price": 300
-}
-
-**Cameras:**
-
-User: "24mp Sony camera"
-{
-  "query": "24mp Sony camera",
-  "category": "CAMERAS",
-  "brand": "sony",
-  "megapixels": "24mp"
-}
-
-**Desktops:**
-
-User: "gaming desktop"
-{
-  "query": "gaming desktop",
-  "category": "DESKTOPS"
-}
-
-**Smartwatches:**
-
-User: "titanium Apple Watch"
-{
-  "query": "titanium Apple Watch",
-  "category": "SMARTWATCHES",
-  "brand": "apple",
-  "material": "titanium"
-}
-
-**Fashion:**
-
-User: "pants"
-{
-  "query": "pants",
-  "category": "CLOTHING",
-  "style": "pants"
-}
-
-User: "shorts"
-{
-  "query": "shorts",
-  "category": "CLOTHING",
-  "style": "shorts"
-}
-
-User: "shorts for men"
-{
-  "query": "shorts for men",
-  "category": "CLOTHING",
-  "style": "shorts",
-  "gender": "men"
-}
-
-User: "boxers"
-{
-  "query": "boxers",
-  "category": "CLOTHING",
-  "style": "boxer shorts"
-}
-
-User: "jeans for men"
-{
-  "query": "jeans for men",
-  "category": "CLOTHING",
-  "style": "jeans",
-  "gender": "men"
-}
-
-User: "clothes for men"
-{
-  "query": "clothes for men",
-  "category": "CLOTHING",
-  "gender": "men"
-}
-
-User: "women's dress"
-{
-  "query": "women's dress",
-  "category": "CLOTHING",
-  "style": "dress",
-  "gender": "women"
-}
-
-User: "shirt"
-{
-  "query": "shirt",
-  "category": "CLOTHING",
-  "style": "shirt"
-}
-
-User: "hoodie"
-{
-  "query": "hoodie",
-  "category": "CLOTHING",
-  "style": "hoodie"
-}
-
-User: "jeans"
-{
-  "query": "jeans",
-  "category": "CLOTHING",
-  "style": "jeans"
-}
-
-User: "black dress"
-{
-  "query": "black dress",
-  "category": "CLOTHING",
-  "color": "black",
-  "style": "dress"
-}
-
-User: "men's t-shirt"
-{
-  "query": "men's t-shirt",
-  "category": "CLOTHING",
-  "gender": "men",
-  "style": "t-shirt"
-}
-
-User: "black t shirt"
-{
-  "query": "black t shirt",
-  "category": "CLOTHING",
-  "color": "black",
-  "style": "t-shirt"
-}
-
-User: "yoga pants"
-{
-  "query": "yoga pants",
-  "category": "CLOTHING",
-  "style": "yoga pants"
-}
-
-User: "swimsuit"
-{
-  "query": "swimsuit",
-  "category": "CLOTHING",
-  "style": "swimsuit"
-}
-
-User: "H&M skirt"
-{
-  "query": "H&M skirt",
-  "category": "CLOTHING",
-  "brand": "h&m",
-  "style": "skirt"
-}
-
-User: "women's sneakers size 38"
-{
-  "query": "women's sneakers size 38",
-  "category": "FOOTWEAR",
-  "gender": "women",
-  "size": "38",
-  "style": "sneakers"
-}
-
-User: "leather boots"
-{
-  "query": "leather boots",
-  "category": "FOOTWEAR",
-  "style": "boots",
-  "material": "leather"
-}
-
-User: "backpack"
-{
-  "query": "backpack",
-  "category": "ACCESSORIES",
-  "style": "backpack"
-}
-
-User: "gold necklace"
-{
-  "query": "gold necklace",
-  "category": "ACCESSORIES",
-  "style": "necklace",
-  "material": "gold"
-}
-
-**═══════════════════════════════════════════════════════════════════════**
-**RESPONSE EXAMPLES**
-**═══════════════════════════════════════════════════════════════════════**
-
-User: "iPhone 15 from Best"
-Tool call: [as shown above]
-Your response: "I found several iPhone 15 base models at Best with different storage options and colors. Prices range from 250 to 350 KWD. What storage capacity would you prefer?"
-
-User: "Samsung S24 Plus 512GB"
-Tool call: [as shown above]
-Your response: "I found Samsung Galaxy S24+ models with 512GB storage. Prices range from 450 to 520 KWD. Would you like to see specific colors?"
-
-User: "MacBook Air 15"
-Tool call: [as shown above]
-Your response: "I found several MacBook Air 15-inch models available. What RAM and storage configuration are you looking for?"
-
-User: "iPhone 17"
-Tool call: [as shown above]
-Your response: "I found iPhone 17 base models in multiple colors and storage options. Prices start at 278 KWD. Which storage capacity interests you?"
-
-User: "wireless headphones"
-Tool call: [as shown above]
-Your response: "I found several wireless headphone options. Would you like to see specific brands or price ranges?"
-
-User: "bluetooth speaker"
-Tool call: [as shown above]
-Your response: "I found bluetooth speakers available. What's your budget?"
-
-User: "jeans for men"
-Tool call: [as shown above]
-Your response: "I found men's jeans in various styles and fits. Prices range from 6.5 to 13 KWD. What fit are you looking for - slim, regular, or loose?"
-
-User: "clothes for men"
-Tool call: [as shown above]
-Your response: "I found men's clothing including shirts, pants, shorts, and more. What type of clothing are you interested in?"
-
-User: "women's dress"
-Tool call: [as shown above]
-Your response: "I found women's dresses available. What style or size are you looking for?"
-
-User: "jeans"
-Tool call: [as shown above]
-Your response: "I found several jeans options. Would you like to see specific brands, colors, or sizes?"
-
-User: "black dress"
-Tool call: [as shown above]
-Your response: "I found black dresses available. What size are you looking for?"
-
-User: "yoga pants"
-Tool call: [as shown above]
-Your response: "I found yoga pants. What size are you interested in?"
-
-User: "swimsuit"
-Tool call: [as shown above]
-Your response: "I found swimsuits available. Would you like to see specific styles or sizes?"
-
-User: "sneakers"
-Tool call: [as shown above]
-Your response: "I found sneakers in various styles. What size do you need?"
-
-User: "backpack"
-Tool call: [as shown above]
-Your response: "I found backpacks available. What color or style are you looking for?"
-
-**═══════════════════════════════════════════════════════════════════════**
-**WEB SEARCH EXAMPLES (Use search_web tool)**
-**═══════════════════════════════════════════════════════════════════════**
-
-User: "What is the best phone in 2024?"
-→ Call search_web
-Your response: [Summarize web results about top-rated phones]
-
-User: "iPhone 15 vs Samsung S24 comparison"
-→ Call search_web
-Your response: [Summarize comparison from web]
-
-User: "What are the features of iPhone 15?"
-→ Call search_web
-Your response: [List features from web results]
-
-User: "How to transfer data to iPhone?"
-→ Call search_web
-Your response: [Provide steps from web]
-
-User: "What is 5G technology?"
-→ Call search_web
-Your response: [Explain based on web results]
-
-User: "iPhone 15 review"
-→ Call search_web
-Your response: [Summarize reviews from web]
-
-**═══════════════════════════════════════════════════════════════════════**
-**GUIDELINES - YOUR JOB**
-**═══════════════════════════════════════════════════════════════════════**
-
-1. Help users find products by calling search_product_database
-2. Extract filters from user queries: brand, color, storage, variant, price range, store, RAM, category, style, gender, AND any other specs
-3. **CRITICAL for fashion:** ALWAYS extract gender if mentioned ("for men", "men's", "for women", "women's", "boys", "girls", "kids")
-4. Provide brief, conversational responses (1-2 sentences)
-5. If no results, just say you don't have it
-6. Choose the RIGHT tool: search_web for facts/reviews/how-to, search_product_database for shopping
-7. Always call the search tool before saying products aren't available
-8. ALWAYS extract category from model names/keywords
-9. For fashion, use 3 main categories: CLOTHING, FOOTWEAR, ACCESSORIES
-10. ALWAYS convert "Plus" to "+" for variant field (electronics)
-11. ALWAYS extract model_number to prevent cross-model contamination (electronics)
-12. ALWAYS use database-ready codes (MOBILEPHONES, CLOTHING, FOOTWEAR, etc.)
-13. ALWAYS include the full user message in the 'query' parameter
-14. Storage can be in TB or GB format - system auto-converts TB to GB
-15. If showing alternatives, be honest about it
-16. If no results, simply say you don't have it - don't suggest other categories
-17. CRITICAL: Use PLAIN TEXT ONLY - NO Markdown, NO asterisks, NO special formatting
-18. CRITICAL: Send database-ready codes, not human-readable terms
-19. CRITICAL: Extract ALL relevant specs - the backend handles them dynamically
-
-**WHAT NOT TO DO:**
-❌ Calling the tool without a 'query' parameter
-❌ Forgetting to extract 'gender' from fashion queries ("for men", "women's", etc.)
-❌ Forgetting to infer 'category' from model names/keywords
-❌ Listing product titles, prices in your text
-❌ Suggesting different categories when no results found
-❌ Claiming "I found Pro" when showing "Pro Max"
-❌ Using "smartphone" instead of "MOBILEPHONES"
-❌ Using "best" instead of "BEST_KW"
-❌ Using "tops" or "bottoms" instead of "CLOTHING"
-❌ Using "shoes" instead of "FOOTWEAR"
-❌ Using Markdown or ** signs in my formatting in responses`,
+        content: systemprompt,
       },
       ...history.map((m) => ({ role: m.role, content: m.content })),
       { role: "user", content: message },
@@ -1949,19 +1295,17 @@ Your response: [Summarize reviews from web]
 
       finalResponse = finalCompletion.choices[0].message.content;
 
-      // 🔥 FIX: Remove Markdown asterisks (**) and other common markdown
       if (finalResponse) {
         finalResponse = finalResponse
-          .replace(/\*\*/g, "") // Removes bolding (**)
-          .replace(/\*/g, "") // Removes single asterisks (*)
-          .replace(/###/g, "") // Removes headers (###)
+          .replace(/\*\*/g, "")
+          .replace(/\*/g, "")
+          .replace(/###/g, "")
           .trim();
       }
 
       console.log("✅ Final response generated");
     }
 
-    // Also clean the response if no tools were called (direct response)
     if (!responseMessage.tool_calls && finalResponse) {
       finalResponse = finalResponse
         .replace(/\*\*/g, "")
@@ -1980,7 +1324,7 @@ Your response: [Summarize reviews from web]
     return res.json({
       reply: finalResponse,
       products: products,
-      categoryType: categoryType, // "electronics", "fashion", or "unknown"
+      categoryType: categoryType,
       sessionId,
       history: await getMemory(sessionId),
     });
@@ -1993,28 +1337,12 @@ Your response: [Summarize reviews from web]
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    message: "Omnia AI - Scalable Architecture v2.0",
-    features: [
-      "LLM-Powered Query Parser",
-      "Database Pass-Through Executor",
-      "Dynamic Spec Filtering",
-      "Unlimited Category Support",
-      "Zero-Maintenance Scaling",
-      "Hybrid Search (Vector + Fulltext + RRF)",
-      "Web Search Integration",
-      "Redis Caching",
-      "Storage Normalization",
-      "Category Type Detection (Electronics/Fashion)",
-      "Null Spec Cleaning for Fashion",
-    ],
+    message: "Omnia AI - Scalable Architecture v2.1 with Vision",
+    
   });
 });
 
 app.listen(PORT, () => {
-  console.log("\n🚀 Omnia AI Server - Scalable Architecture v2.0");
-  console.log(`📍 http://localhost:${PORT}`);
-  console.log(`🧠 LLM: Parser | Code: Executor`);
-  console.log(`⚡ Dynamic Spec Filtering: Enabled`);
-  console.log(`🔄 Zero-Maintenance Scaling: Enabled`);
-  console.log(`👔 Fashion/Electronics Detection: Enabled\n`);
+  console.log("\n🚀 Omnia AI Server - v2.1 with Vision Support");
+  
 });

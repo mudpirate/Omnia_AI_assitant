@@ -16,6 +16,9 @@ import {
   MapPin,
   ChevronRight,
   TrendingUp,
+  Image as ImageIcon,
+  Camera,
+  Upload,
 } from "lucide-react";
 
 // --- CUSTOM STYLES FOR ANIMATIONS ---
@@ -37,10 +40,19 @@ const customStyles = `
     50% { transform: translateY(-10px); }
     100% { transform: translateY(0px); }
   }
+  @keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
   .animate-slideUp { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
   .animate-scaleIn { animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   .animate-float { animation: float 6s ease-in-out infinite; }
+  .animate-shimmer { 
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+  }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); }
@@ -54,7 +66,16 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
+
+  // Image upload states
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
+  const [analysisStatus, setAnalysisStatus] = useState("");
+  const [showImageUpload, setShowImageUpload] = useState(false);
+
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -115,6 +136,151 @@ function App() {
     }
   };
 
+  // 🔥 NEW: Handle image selection
+  const handleImageSelect = (event) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      processImage(file);
+    }
+  };
+
+  // 🔥 NEW: Process and validate image
+  const processImage = (file) => {
+    // Validate file type
+    const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+    if (!validTypes.includes(file.type)) {
+      alert("Please upload a JPEG, PNG, or WebP image");
+      return;
+    }
+
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      alert("Image size must be less than 10MB");
+      return;
+    }
+
+    setSelectedImage(file);
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+      setShowImageUpload(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // 🔥 NEW: Handle drag and drop
+  const handleDrop = (event) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      processImage(file);
+    }
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
+
+  // 🔥 NEW: Analyze image and search for products
+  const analyzeAndSearch = async () => {
+    if (!selectedImage) return;
+
+    setIsAnalyzingImage(true);
+    setAnalysisStatus("🔍 Analyzing your image...");
+
+    try {
+      // Step 1: Send image to backend for analysis
+      const formData = new FormData();
+      formData.append("image", selectedImage);
+
+      const analysisResponse = await fetch(`${API_URL}/analyze-image`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const analysisData = await analysisResponse.json();
+
+      if (!analysisData.success) {
+        throw new Error(analysisData.error || "Image analysis failed");
+      }
+
+      const searchQuery = analysisData.query;
+      setAnalysisStatus(`✨ Found: "${searchQuery}". Searching...`);
+
+      // Add image message to chat
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "user",
+          content: ` Uploaded image: "${searchQuery}"`,
+          image: imagePreview,
+        },
+      ]);
+
+      // Step 2: Search for products using the generated query
+      setIsLoading(true);
+      const searchResponse = await fetch(`${API_URL}/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: searchQuery,
+          sessionId: sessionId || "default-session",
+        }),
+      });
+
+      const searchData = await searchResponse.json();
+
+      if (searchData.sessionId && !sessionId)
+        setSessionId(searchData.sessionId);
+
+      // Step 3: Display results
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: searchData.reply,
+          products: searchData.products || [],
+          generatedQuery: searchQuery,
+        },
+      ]);
+
+      // Reset image upload state
+      setSelectedImage(null);
+      setImagePreview(null);
+      setShowImageUpload(false);
+      setAnalysisStatus("");
+    } catch (error) {
+      console.error("Image search error:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: `❌ Failed to analyze image: ${error.message}`,
+          error: true,
+        },
+      ]);
+    } finally {
+      setIsAnalyzingImage(false);
+      setIsLoading(false);
+    }
+  };
+
+  // 🔥 NEW: Clear image selection
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    setShowImageUpload(false);
+    setAnalysisStatus("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -162,7 +328,10 @@ function App() {
 
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-h-full flex flex-col">
             {messages.length === 0 ? (
-              <WelcomeScreen onSuggestionClick={handleSend} />
+              <WelcomeScreen
+                onSuggestionClick={handleSend}
+                onImageUploadClick={() => fileInputRef.current?.click()}
+              />
             ) : (
               <div className="space-y-10 pb-40 pt-10">
                 {messages.map((message, index) => (
@@ -188,12 +357,33 @@ function App() {
           />
         )}
 
-        {/* Input Footer - Floating Glass Bar */}
+        {/* 🔥 NEW: Image Upload Modal */}
+        {showImageUpload && imagePreview && (
+          <ImageUploadModal
+            imagePreview={imagePreview}
+            isAnalyzing={isAnalyzingImage}
+            analysisStatus={analysisStatus}
+            onAnalyze={analyzeAndSearch}
+            onCancel={clearImage}
+          />
+        )}
+
+        {/* Input Footer - Floating Glass Bar with Image Upload */}
         <div className="absolute bottom-6 left-0 right-0 px-4 z-30">
           <div className="max-w-3xl mx-auto">
             <div className="glass-panel rounded-[2rem] shadow-2xl shadow-violet-100/50 p-2 relative group transition-all duration-300 hover:shadow-violet-200/50">
               <div className="relative flex items-center">
-                <div className="pl-4 pr-3 text-violet-500 animate-pulse">
+                {/* 🔥 NEW: Image Upload Button */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading || isAnalyzingImage}
+                  className="p-3 text-violet-500 hover:bg-violet-50 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Upload product image"
+                >
+                  <ImageIcon className="w-6 h-6" />
+                </button>
+
+                <div className="pl-2 pr-3 text-violet-500 animate-pulse">
                   <Sparkles className="w-6 h-6" />
                 </div>
                 <input
@@ -201,14 +391,14 @@ function App() {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Ask Omnia for fashion, gadgets, or gifts..."
+                  placeholder="Ask Omnia or upload a product image..."
                   className="flex-1 bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 text-lg font-medium h-12"
-                  disabled={isLoading}
+                  disabled={isLoading || isAnalyzingImage}
                   autoFocus
                 />
                 <button
                   onClick={() => handleSend()}
-                  disabled={isLoading || !input.trim()}
+                  disabled={isLoading || !input.trim() || isAnalyzingImage}
                   className="w-12 h-12 bg-gray-900 text-white rounded-full hover:bg-violet-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center justify-center shadow-lg"
                 >
                   {isLoading ? (
@@ -220,17 +410,127 @@ function App() {
               </div>
             </div>
             <p className="text-center text-[10px] text-slate-400 mt-3 font-medium tracking-wide">
-              POWERED BY OMNIA AI • PRICES MAY VARY
+              POWERED BY OMNIA AI • VISION-ENABLED • PRICES MAY VARY
             </p>
           </div>
         </div>
+
+        {/* 🔥 NEW: Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/jpg"
+          onChange={handleImageSelect}
+          className="hidden"
+        />
       </main>
     </div>
   );
 }
 
 // ----------------------------------------------------------------------
-// Message Bubble
+// 🔥 NEW: Image Upload Modal Component
+// ----------------------------------------------------------------------
+function ImageUploadModal({
+  imagePreview,
+  isAnalyzing,
+  analysisStatus,
+  onAnalyze,
+  onCancel,
+}) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
+      <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-2xl w-full overflow-hidden animate-slideUp">
+        {/* Header */}
+        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
+              <Camera className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-slate-900">
+                Product Image Search
+              </h3>
+              <p className="text-sm text-slate-500">
+                AI-powered product identification
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onCancel}
+            disabled={isAnalyzing}
+            className="p-2 hover:bg-slate-100 rounded-full transition-colors disabled:opacity-50"
+          >
+            <X className="w-6 h-6 text-slate-400" />
+          </button>
+        </div>
+
+        {/* Image Preview */}
+        <div className="p-8">
+          <div className="relative aspect-video w-full bg-slate-100 rounded-2xl overflow-hidden mb-6">
+            <img
+              src={imagePreview}
+              alt="Selected product"
+              className="w-full h-full object-contain"
+            />
+            {isAnalyzing && (
+              <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center">
+                <div className="text-center text-white">
+                  <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" />
+                  <p className="text-sm font-medium">{analysisStatus}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Status Message */}
+          {analysisStatus && !isAnalyzing && (
+            <div className="mb-6 p-4 bg-violet-50 text-violet-700 rounded-xl text-sm font-medium border border-violet-100 flex items-center gap-2">
+              <Sparkles className="w-4 h-4" />
+              {analysisStatus}
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
+            <button
+              onClick={onAnalyze}
+              disabled={isAnalyzing}
+              className="flex-1 bg-slate-900 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-violet-600 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Search className="w-5 h-5" />
+                  Find This Product
+                </>
+              )}
+            </button>
+            <button
+              onClick={onCancel}
+              disabled={isAnalyzing}
+              className="px-6 py-4 border-2 border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+
+          {/* Info */}
+          <p className="text-center text-xs text-slate-400 mt-4">
+            Supports JPEG, PNG, WebP • Max 10MB
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------------
+// Message Bubble (Enhanced with Image Support)
 // ----------------------------------------------------------------------
 function MessageBubble({ message, onProductClick }) {
   const isUser = message.role === "user";
@@ -238,8 +538,20 @@ function MessageBubble({ message, onProductClick }) {
   if (isUser) {
     return (
       <div className="flex justify-end animate-slideUp">
-        <div className="bg-white/80 backdrop-blur-sm border border-white text-slate-800 rounded-[2rem] rounded-tr-sm px-8 py-5 max-w-[85%] md:max-w-[70%] font-medium text-lg shadow-sm">
-          {message.content}
+        <div className="max-w-[85%] md:max-w-[70%]">
+          {/* 🔥 NEW: Show image if present */}
+          {message.image && (
+            <div className="mb-3 rounded-2xl overflow-hidden border-2 border-white shadow-lg">
+              <img
+                src={message.image}
+                alt="Uploaded"
+                className="max-w-full max-h-60 object-contain bg-slate-50"
+              />
+            </div>
+          )}
+          <div className="bg-white/80 backdrop-blur-sm border border-white text-slate-800 rounded-[2rem] rounded-tr-sm px-8 py-5 font-medium text-lg shadow-sm">
+            {message.content}
+          </div>
         </div>
       </div>
     );
@@ -252,8 +564,18 @@ function MessageBubble({ message, onProductClick }) {
       </div>
 
       <div className="flex-1 space-y-8 overflow-hidden">
+        {/* 🔥 NEW: Show generated query if from image search */}
+        {message.generatedQuery && (
+          <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-100 rounded-full px-4 py-2 text-sm">
+            <Camera className="w-4 h-4 text-violet-600" />
+            <span className="text-violet-700 font-medium">
+              Detected: <strong>{message.generatedQuery}</strong>
+            </span>
+          </div>
+        )}
+
         {/* Text Response */}
-        <div className="prose prose-lg text-slate-600 leading-relaxed max-w-none">
+        <div className="prose prose-lg text-black font-medium text-md leading-relaxed max-w-none">
           <p className="whitespace-pre-wrap">{message.content}</p>
         </div>
 
@@ -482,16 +804,24 @@ function SidebarItem({ icon, label, active }) {
 }
 
 // ----------------------------------------------------------------------
-// Welcome Screen (Hero)
+// Welcome Screen (Hero) - Enhanced with Image Upload
 // ----------------------------------------------------------------------
-function WelcomeScreen({ onSuggestionClick }) {
+function WelcomeScreen({ onSuggestionClick, onImageUploadClick }) {
   const greeting = getGreeting();
   const suggestions = [
+    {
+      icon: <Camera className="w-6 h-6 text-violet-500" />,
+      title: "Upload Image",
+      desc: "Search by product photo",
+      action: onImageUploadClick,
+      bg: "bg-violet-50 hover:bg-violet-100",
+      border: "border-violet-100",
+    },
     {
       icon: <Zap className="w-6 h-6 text-amber-500" />,
       title: "Latest Tech",
       desc: "iPhone 15, Galaxy S24...",
-      query: "Show me the latest flagship phones",
+      query: "Show me the latest flagship phones in 2025",
       bg: "bg-amber-50 hover:bg-amber-100",
       border: "border-amber-100",
     },
@@ -503,14 +833,6 @@ function WelcomeScreen({ onSuggestionClick }) {
       bg: "bg-emerald-50 hover:bg-emerald-100",
       border: "border-emerald-100",
     },
-    {
-      icon: <LayoutGrid className="w-6 h-6 text-blue-500" />,
-      title: "Home Setup",
-      desc: "Monitors, Ergonomic chairs",
-      query: "Best monitors for coding under 100 KWD",
-      bg: "bg-blue-50 hover:bg-blue-100",
-      border: "border-blue-100",
-    },
   ];
 
   return (
@@ -520,7 +842,7 @@ function WelcomeScreen({ onSuggestionClick }) {
         <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-1.5 shadow-sm mb-4 animate-slideUp">
           <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
           <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
-            AI Shopping Assistant Online
+            AI Shopping Assistant • Vision Enabled
           </span>
         </div>
 
@@ -531,8 +853,8 @@ function WelcomeScreen({ onSuggestionClick }) {
           </span>
         </h1>
         <p className="text-xl text-slate-500 max-w-2xl mx-auto font-medium">
-          I scan thousands of stores to find you the best deals, specs, and
-          styles in seconds.
+          Upload a product image or ask me anything. I'll find the best deals
+          across Kuwait's top stores.
         </p>
       </div>
 
@@ -541,7 +863,13 @@ function WelcomeScreen({ onSuggestionClick }) {
         {suggestions.map((card, idx) => (
           <button
             key={idx}
-            onClick={() => onSuggestionClick(card.query)}
+            onClick={() => {
+              if (card.action) {
+                card.action();
+              } else if (card.query) {
+                onSuggestionClick(card.query);
+              }
+            }}
             className={`relative p-8 rounded-[2rem] border transition-all duration-300 text-left group hover:-translate-y-2 hover:shadow-xl ${card.bg} ${card.border}`}
           >
             <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition-transform duration-300">
@@ -588,7 +916,7 @@ function ProductModal({ product, onClose }) {
     >
       <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-slideUp">
         {/* Left Column: Image */}
-        <div className="w-full md:w-1/2 bg-[#F8FAFC] p-8 md:p-12 relative flex items-center justify-center group">
+        <div className="w-full md:w-1/2 bg-[#F8FAFC] p-8 md:p-12 relative flex items-center justify-center group shrink-0">
           <div className="absolute top-6 left-6 flex gap-2">
             <div className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-violet-600" />
@@ -599,7 +927,7 @@ function ProductModal({ product, onClose }) {
           <img
             src={product.imageUrl}
             alt={product.title}
-            className="max-w-full max-h-[50vh] object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-105"
+            className="max-w-full max-h-[30vh] md:max-h-[60vh] object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-105"
             onError={(e) => {
               e.target.src = "https://via.placeholder.com/400?text=No+Image";
             }}
@@ -607,27 +935,27 @@ function ProductModal({ product, onClose }) {
         </div>
 
         {/* Right Column: Details */}
-        <div className="w-full md:w-1/2 flex flex-col h-full bg-white">
+        <div className="w-full md:w-1/2 flex flex-col min-h-0 bg-white overflow-hidden">
           {/* Header */}
-          <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-start">
-            <div>
+          <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-start shrink-0">
+            <div className="pr-4">
               <div className="text-violet-600 font-bold text-xs uppercase tracking-widest mb-2">
                 {product.brand}
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 leading-tight">
+              <h2 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight">
                 {product.title}
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+              className="p-2 hover:bg-slate-100 rounded-full transition-colors shrink-0"
             >
               <X className="w-6 h-6 text-slate-400" />
             </button>
           </div>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar">
+          <div className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar min-h-0">
             {/* Price Section */}
             <div className="bg-gradient-to-r from-violet-50 to-fuchsia-50 p-6 rounded-2xl border border-violet-100 flex items-center justify-between">
               <div>
@@ -681,7 +1009,7 @@ function ProductModal({ product, onClose }) {
                 <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">
                   About
                 </h3>
-                <p className="text-sm text-slate-600 leading-loose">
+                <p className="text-sm text-slate-600 leading-relaxed">
                   {product.description}
                 </p>
               </div>
@@ -689,7 +1017,7 @@ function ProductModal({ product, onClose }) {
           </div>
 
           {/* Sticky Footer Action */}
-          <div className="p-6 border-t border-slate-100 bg-white">
+          <div className="p-6 border-t border-slate-100 bg-white shrink-0">
             <a
               href={product.productUrl}
               target="_blank"

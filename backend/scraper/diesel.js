@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import { parse } from "csv-parse/sync";
-import { PrismaClient, StockStatus, StoreName } from "@prisma/client";
+import { PrismaClient, StockStatus } from "@prisma/client";
 import OpenAI from "openai";
 import fs from "fs/promises";
 
@@ -9,27 +9,100 @@ const prisma = new PrismaClient();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const CSV_URL =
-  "https://product-feeds.optimisemedia.com/feeds/49?aid=2360728&format=csv";
-const STORE_NAME_FIXED = StoreName.HM;
+  "http://export.admitad.com/en/webmaster/websites/2896510/products/export_adv_products/?user=mishaal_alotaibi2ae7a&code=mx60od1chh&feed_id=21862&format=csv";
+// NOTE: You need to add DIESEL to your StoreName enum in schema.prisma:
+// enum StoreName {
+//   XCITE
+//   BEST_KW
+//   NOON_KW
+//   EUREKA
+//   HM
+//   DIESEL  // <-- Add this
+// }
+// Then run: npx prisma generate
+
+const STORE_NAME_FIXED = "DIESEL"; // Will be StoreName.DIESEL after schema update
 const CURRENCY = "KWD";
 
 // --- OPTIMIZED CONCURRENCY & RATE LIMITING ---
-const CONCURRENT_LIMIT = 2; // 🔥 Reduced from 5 to 2 for safer rate limiting
+const CONCURRENT_LIMIT = 2;
 const LLM_MODEL = "gpt-4o-mini";
-const BATCH_DELAY_MS = 3000; // 🔥 3 second delay between batches
+const BATCH_DELAY_MS = 3000;
 
-// 🔥 CHECKPOINT & CACHE FILES
-const CHECKPOINT_FILE = "./hm_import_checkpoint.json";
-const CACHE_FILE = "./hm_import_cache.json"; // 🔥 NEW: Persistent cache
-const CHECKPOINT_SAVE_INTERVAL = 3; // Save more frequently
+// --- CHECKPOINT & CACHE FILES ---
+const CHECKPOINT_FILE = "./diesel_import_checkpoint.json";
+const CACHE_FILE = "./diesel_import_cache.json";
+const CHECKPOINT_SAVE_INTERVAL = 3;
 
-// 🔥 RATE LIMITER TRACKING
+// --- RATE LIMITER TRACKING ---
 const rateLimiter = {
   requestCount: 0,
   dailyRequestCount: 0,
   lastResetTime: Date.now(),
   consecutiveErrors: 0,
 };
+
+// -------------------------------------------------------------------
+// --- CSV FIELD MAPPING ---
+// -------------------------------------------------------------------
+
+// Actual Admitad CSV fields mapping (verified from sample)
+const FIELD_MAPPING = {
+  // Core fields (saved directly to Product table)
+  title: "name",
+  description: "description",
+  price: "price",
+  oldPrice: "oldprice",
+  imageUrl: "picture",
+  productUrl: "url",
+  category: "categoryId",
+  brand: "vendor",
+  sku: "id",
+  availability: "available",
+  currency: "currencyId",
+};
+
+// Additional fields to save in specs JSON (only essential ones)
+const SPECS_FIELDS = [
+  "param", // Contains size and gender info (size:36|gender:male)
+  "season", // Product season (aw25)
+  "material", // Material if present in CSV
+];
+
+// Map id and currencyId separately since they're essential
+const ESSENTIAL_MAPPINGS = {
+  sku: "id", // Product SKU
+  currency: "currencyId", // Currency
+};
+
+console.log(`\n${"=".repeat(70)}`);
+console.log(`🗺️  DIESEL CSV FIELD MAPPING:`);
+console.log(`${"=".repeat(70)}`);
+console.log(`CORE FIELDS (Direct to Database):`);
+console.log(`${"=".repeat(70)}`);
+Object.entries(FIELD_MAPPING).forEach(([dbField, csvField]) => {
+  console.log(`${dbField.padEnd(20)} ← ${csvField}`);
+});
+console.log(`\n${"=".repeat(70)}`);
+console.log(`SPECS FIELDS (Saved to specs JSON):`);
+console.log(`${"=".repeat(70)}`);
+console.log(`AI-EXTRACTED:`);
+console.log(`  specs.type               ← Guessed from title/description`);
+console.log(`  specs.size               ← Parsed from param field`);
+console.log(`  specs.gender             ← Parsed from param field`);
+console.log(`  specs.color              ← Extracted by AI`);
+console.log(`  specs.fit                ← Extracted by AI`);
+console.log(`  specs.wash               ← Extracted by AI (for denim)`);
+console.log(`  specs.pattern            ← Extracted by AI (if present)`);
+console.log(`\nESSENTIAL CSV FIELDS:`);
+Object.entries(ESSENTIAL_MAPPINGS).forEach(([specField, csvField]) => {
+  console.log(`  specs.${specField.padEnd(20)} ← ${csvField}`);
+});
+console.log(`\nADDITIONAL CSV FIELDS:`);
+SPECS_FIELDS.forEach((field) => {
+  console.log(`  specs.${field.padEnd(20)} ← ${field}`);
+});
+console.log(`${"=".repeat(70)}\n`);
 
 // -------------------------------------------------------------------
 // --- PERSISTENT CACHE SYSTEM ---
@@ -103,10 +176,7 @@ async function callOpenAIWithRetry(
       rateLimiter.dailyRequestCount++;
 
       const result = await fn();
-
-      // Reset error counter on success
       rateLimiter.consecutiveErrors = 0;
-
       return result;
     } catch (error) {
       const isRateLimit =
@@ -116,11 +186,8 @@ async function callOpenAIWithRetry(
 
       if (isRateLimit) {
         rateLimiter.consecutiveErrors++;
-
-        // Extract wait time from error message or calculate exponential backoff
         let waitTime = Math.pow(2, attempt) * 2000 + Math.random() * 1000;
 
-        // If we've had many consecutive errors, wait even longer
         if (rateLimiter.consecutiveErrors > 3) {
           waitTime *= 2;
         }
@@ -135,7 +202,6 @@ async function callOpenAIWithRetry(
 
         await sleep(waitTime);
 
-        // If last retry failed, throw the error
         if (attempt === maxRetries - 1) {
           console.error(`   ❌ Max retries reached for ${operationName}`);
           throw error;
@@ -144,7 +210,6 @@ async function callOpenAIWithRetry(
         continue;
       }
 
-      // Non-rate-limit error - throw immediately
       throw error;
     }
   }
@@ -169,7 +234,6 @@ async function loadCheckpoint() {
     console.log(`   🤖 API calls: ${checkpoint.apiCalls || 0}`);
     console.log(`   📅 Last saved: ${checkpoint.timestamp}\n`);
 
-    // Restore rate limiter
     if (checkpoint.apiCalls) {
       rateLimiter.dailyRequestCount = checkpoint.apiCalls;
     }
@@ -221,7 +285,6 @@ async function saveCheckpoint(checkpoint) {
       `   💾 Checkpoint saved (${checkpoint.processedCount} products, ${rateLimiter.dailyRequestCount} API calls)`
     );
 
-    // Also save cache
     await saveCache();
   } catch (error) {
     console.error(`   ⚠️ Failed to save checkpoint: ${error.message}`);
@@ -238,98 +301,126 @@ async function clearCheckpoint() {
 }
 
 // -------------------------------------------------------------------
-// --- COMBINED AI PROMPT (4 calls → 1 call!) ---
+// --- COMBINED AI PROMPT ---
 // -------------------------------------------------------------------
 
 const COMBINED_EXTRACTION_PROMPT = `
-You are a Fashion E-commerce Data Extraction AI. Analyze the product and return a SINGLE JSON object with ALL required fields.
+You are a Fashion E-commerce Data Extraction AI specializing in Diesel products. Analyze the product and return a SINGLE JSON object with ALL required fields.
 
 **OUTPUT STRUCTURE:**
 {
   "category": "CLOTHING|FOOTWEAR|ACCESSORIES",
   "core_name": "normalized title for deduplication",
   "specs": {
-    "type": "exact product type (MANDATORY)",
+    "type": "exact product type (MANDATORY - guess from title/description)",
     "size": "normalized size",
-    "gender": "men|women|kids|boys|girls|unisex|baby",
+    "gender": "men|women|kids|boys|girls|unisex",
     "color": "normalized color",
     "material": "material if present",
     "fit": "slim fit|regular fit|relaxed fit|etc",
-    "pattern": "solid|striped|floral|etc"
+    "pattern": "solid|striped|floral|etc",
+    "wash": "wash type for denim"
   }
 }
 
 **CATEGORY RULES:**
-- CLOTHING: shirts, pants, dresses, jackets, underwear, swimwear, activewear
-- FOOTWEAR: shoes, sneakers, boots, sandals, heels, slippers
-- ACCESSORIES: bags, belts, hats, scarves, sunglasses, jewelry, watches
+- CLOTHING: jeans, joggjeans, shirts, jackets, hoodies, sweaters, t-shirts, pants, shorts
+- FOOTWEAR: shoes, sneakers, boots, sandals
+- ACCESSORIES: bags, belts, wallets, watches, sunglasses, caps
+
+**TYPE DETECTION (MANDATORY - GUESS FROM TITLE/DESCRIPTION):**
+You MUST determine the product type from the title or description. Common Diesel types:
+- Denim: "jeans", "joggjeans", "denim shorts", "denim jacket"
+- Tops: "t-shirt", "shirt", "polo", "hoodie", "sweater", "sweatshirt"
+- Bottoms: "pants", "shorts", "joggers", "chinos"
+- Outerwear: "jacket", "coat", "bomber", "parka"
+- Footwear: "sneakers", "boots", "shoes"
+- Accessories: "bag", "backpack", "belt", "wallet", "watch", "cap", "beanie"
+
+Examples:
+- "Tapered 2030 D-Krooley Joggjeans" → type: "joggjeans"
+- "Only The Brave T-shirt" → type: "t-shirt"
+- "D-Strukt Slim Jeans" → type: "jeans"
+- "S-Ginn Hoodie" → type: "hoodie"
 
 **CORE_NAME RULES:**
 Remove sizes, colors, patterns, materials (unless essential to product identity).
-Keep: core type + essential descriptors (wide, slim, fitted)
+Keep: product line + core type + key descriptors (slim, tapered, relaxed)
 Examples:
-- "Wide trousers Black M" → "wide trousers"
-- "Slim Fit Jeans Blue 32" → "slim fit jeans"
-
-**SPECS.TYPE (MANDATORY):**
-- Clothing: "t-shirt", "jeans", "dress", "jacket", "sweater", "shirt", "pants", "skirt", "hoodie", "shorts", "leggings"
-- Shoes: "sneakers", "boots", "sandals", "heels", "flats", "loafers"
-- Accessories: "bag", "backpack", "belt", "hat", "scarf", "sunglasses"
-- Use hyphens: "t-shirt" NOT "t shirt"
-- Singular unless standard plural: "jeans", "pants", "shorts"
+- "Tapered 2030 D-Krooley Joggjeans Blue 32" → "tapered 2030 d-krooley joggjeans"
+- "Only The Brave T-shirt White L" → "only the brave t-shirt"
+- "D-Strukt Slim Jeans Black 30" → "d-strukt slim jeans"
 
 **SIZE NORMALIZATION:**
-- Clothing: "xs", "s", "m", "l", "xl", "xxl" (lowercase)
-- Numeric: "2", "4", "6", "8", "10", "12", "14", "16", "18"
-- EU: "32", "34", "36", "38", "40", "42", "44", "46"
-- Shoes (EU): "36", "37", "38", "39", "40", "41", "42", "43", "44", "45"
-- Kids: "2y", "4y", "6y", "8y", "10y", "12y", "14y"
+- Jeans/Pants: "28", "30", "32", "34", "36", "38", "40" (waist size)
+- Tops: "xs", "s", "m", "l", "xl", "xxl" (lowercase)
+- Shoes (EU): "39", "40", "41", "42", "43", "44", "45"
 
 **COLOR NORMALIZATION:**
-- Basic colors (lowercase): "black", "white", "blue", "red", "green", "navy"
-- Multi-word: "light blue", "dark gray", "navy blue"
-- Pattern+Color: "striped blue", "floral red"
+- Basic colors (lowercase): "black", "white", "blue", "red", "gray", "navy", "denim", "indigo"
+- Denim washes: "light blue", "medium blue", "dark blue", "black", "gray"
+- Multi-word: "light blue", "dark gray", "indigo blue"
 
 **GENDER NORMALIZATION:**
-- "men", "women", "kids", "boys", "girls", "unisex", "baby"
+- "men", "women", "kids", "boys", "girls", "unisex"
+- Look for: "male" → "men", "female" → "women"
+
+**WASH (for denim products):**
+- "light wash", "medium wash", "dark wash", "black wash", "gray wash"
+- "distressed", "clean", "vintage", "faded"
 
 **MATERIAL:**
-- "cotton", "polyester", "wool", "silk", "linen", "denim", "leather"
-- Blends: "cotton blend", "wool blend"
+- "denim", "cotton", "leather", "wool", "polyester", "stretch denim"
 
 **FIT:**
-- "slim fit", "regular fit", "relaxed fit", "oversized", "loose fit", "skinny", "straight"
+- "slim fit", "regular fit", "relaxed fit", "skinny", "straight", "tapered", "loose fit"
 
 **PATTERN:**
-- "solid", "striped", "checkered", "floral", "polka dot", "paisley", "geometric", "animal print"
+- "solid", "striped", "distressed", "washed", "faded", "ripped"
 
 **CRITICAL:**
 - ALL keys lowercase with underscores (snake_case)
 - ALL values lowercase strings
-- ALWAYS include 'type' field in specs
+- ALWAYS include 'type' field in specs - GUESS from title if needed
 - Do not hallucinate - only extract what exists
 - Return ONLY valid JSON, no explanations
 `;
 
 // -------------------------------------------------------------------
-// --- COMBINED AI FUNCTION (Replaces 4 separate functions!) ---
+// --- COMBINED AI FUNCTION ---
 // -------------------------------------------------------------------
 
 async function extractAllProductData(title, description, csvRow) {
-  // Build cache key from title
   const cacheKey = `${title.toLowerCase().substring(0, 100)}_${
-    csvRow?.CategoryName || ""
+    csvRow?.[FIELD_MAPPING.category] || ""
   }`;
 
-  // Check cache first
   if (persistentCache.categoryDetection[cacheKey]) {
     console.log(`  💾 Using cached extraction`);
     return persistentCache.categoryDetection[cacheKey];
   }
 
+  // Parse the param field (size:36|gender:male)
+  let parsedParams = {};
+  if (csvRow?.param) {
+    const params = csvRow.param.split("|");
+    params.forEach((param) => {
+      const [key, value] = param.split(":");
+      if (key && value) {
+        parsedParams[key.trim()] = value.trim();
+      }
+    });
+  }
+
   let additionalContext = "";
   if (csvRow) {
-    const relevantFields = ["Colour", "Size", "Gender", "CategoryName"];
+    // Add parsed params to context
+    if (parsedParams.size) additionalContext += `Size: ${parsedParams.size}\n`;
+    if (parsedParams.gender)
+      additionalContext += `Gender: ${parsedParams.gender}\n`;
+
+    // Add other relevant CSV fields
+    const relevantFields = ["categoryId", "material", "season"];
     for (const field of relevantFields) {
       const value = csvRow[field];
       if (value) {
@@ -347,7 +438,8 @@ ${description.substring(0, 600)}
 CSV DATA:
 ${additionalContext}
 
-Return the complete JSON object with category, core_name, and specs.
+Return the complete JSON object with category, core_name, and specs. 
+IMPORTANT: You MUST guess the product 'type' from the title or description.
 `;
 
   try {
@@ -368,16 +460,46 @@ Return the complete JSON object with category, core_name, and specs.
       "Combined extraction"
     );
 
-    // Validate and set defaults
     const extracted = {
-      category: result.category || "ACCESSORIES",
+      category: (result.category || "CLOTHING").toUpperCase(), // ✅ ALWAYS UPPERCASE
       core_name: result.core_name || title.toLowerCase(),
       specs: result.specs || { type: "item" },
     };
 
-    // Ensure type exists
+    // Ensure type exists - if not, try to guess from title
     if (!extracted.specs.type) {
-      extracted.specs.type = "item";
+      extracted.specs.type = guessTypeFromTitle(title);
+    }
+
+    // Add essential CSV fields to specs (sku, currency)
+    Object.entries(ESSENTIAL_MAPPINGS).forEach(([specField, csvField]) => {
+      const value = csvRow?.[csvField];
+      if (value && value !== "") {
+        extracted.specs[specField] = String(value).trim();
+      }
+    });
+
+    // Add additional important CSV fields to specs (param, season, material)
+    SPECS_FIELDS.forEach((field) => {
+      const value = csvRow?.[field];
+      if (value && value !== "") {
+        extracted.specs[field] = String(value).trim();
+      }
+    });
+
+    // Add parsed params to specs
+    if (parsedParams.size && !extracted.specs.size) {
+      extracted.specs.size = parsedParams.size.toLowerCase();
+    }
+    if (parsedParams.gender && !extracted.specs.gender) {
+      const genderMap = {
+        male: "men",
+        female: "women",
+        unisex: "unisex",
+      };
+      extracted.specs.gender =
+        genderMap[parsedParams.gender.toLowerCase()] ||
+        parsedParams.gender.toLowerCase();
     }
 
     // Cache the result
@@ -386,14 +508,68 @@ Return the complete JSON object with category, core_name, and specs.
     return extracted;
   } catch (error) {
     console.error(`  ⚠️ Combined extraction failed:`, error.message);
-
-    // Fallback to regex-based extraction
     return extractWithRegexFallback(title, description, csvRow);
   }
 }
 
+// Helper function to guess type from title
+function guessTypeFromTitle(title) {
+  const lower = title.toLowerCase();
+
+  // Denim products
+  if (lower.includes("joggjeans") || lower.includes("jogg jeans"))
+    return "joggjeans";
+  if (lower.includes("jeans")) return "jeans";
+  if (lower.includes("denim short")) return "denim shorts";
+  if (lower.includes("denim jacket")) return "denim jacket";
+
+  // Tops
+  if (
+    lower.includes("t-shirt") ||
+    lower.includes("tshirt") ||
+    lower.includes("tee")
+  )
+    return "t-shirt";
+  if (lower.includes("polo")) return "polo";
+  if (lower.includes("hoodie")) return "hoodie";
+  if (lower.includes("sweater") || lower.includes("sweatshirt"))
+    return "sweater";
+  if (lower.includes("shirt")) return "shirt";
+
+  // Bottoms
+  if (lower.includes("short")) return "shorts";
+  if (lower.includes("jogger")) return "joggers";
+  if (lower.includes("chino")) return "chinos";
+  if (lower.includes("pants") || lower.includes("trousers")) return "pants";
+
+  // Outerwear
+  if (lower.includes("bomber")) return "bomber jacket";
+  if (lower.includes("parka")) return "parka";
+  if (lower.includes("coat")) return "coat";
+  if (lower.includes("jacket")) return "jacket";
+
+  // Footwear
+  if (lower.includes("sneaker")) return "sneakers";
+  if (lower.includes("boot")) return "boots";
+  if (lower.includes("shoe")) return "shoes";
+  if (lower.includes("sandal")) return "sandals";
+
+  // Accessories
+  if (lower.includes("backpack")) return "backpack";
+  if (lower.includes("bag")) return "bag";
+  if (lower.includes("belt")) return "belt";
+  if (lower.includes("wallet")) return "wallet";
+  if (lower.includes("watch")) return "watch";
+  if (lower.includes("cap") || lower.includes("hat")) return "cap";
+  if (lower.includes("beanie")) return "beanie";
+  if (lower.includes("sunglasses")) return "sunglasses";
+
+  // Default
+  return "clothing item";
+}
+
 // -------------------------------------------------------------------
-// --- REGEX FALLBACK (No API calls needed!) ---
+// --- REGEX FALLBACK ---
 // -------------------------------------------------------------------
 
 function extractWithRegexFallback(title, description, csvRow) {
@@ -401,82 +577,90 @@ function extractWithRegexFallback(title, description, csvRow) {
 
   const text = `${title} ${description}`.toLowerCase();
 
-  // Category detection
   let category = "CLOTHING";
-  if (text.match(/\b(shoe|sneaker|boot|sandal|heel|flat|slipper|loafer)\b/)) {
+  if (text.match(/\b(shoe|sneaker|boot|sandal)\b/)) {
     category = "FOOTWEAR";
-  } else if (
-    text.match(
-      /\b(bag|backpack|purse|wallet|belt|hat|cap|scarf|sunglasses|jewelry|necklace|bracelet|ring|watch)\b/
-    )
-  ) {
+  } else if (text.match(/\b(bag|backpack|wallet|belt|watch|sunglasses)\b/)) {
     category = "ACCESSORIES";
   }
 
-  // Core name (remove sizes, colors)
+  // Ensure category is always uppercase
+  category = category.toUpperCase();
+
   let coreName = title
     .toLowerCase()
     .replace(/\b(xs|s|m|l|xl|xxl|xxxl)\b/gi, "")
-    .replace(/\b\d+y\b/gi, "")
-    .replace(
-      /\b(black|white|red|blue|green|yellow|pink|purple|gray|grey|beige|brown|navy)\b/gi,
-      ""
-    )
-    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\b(28|30|32|34|36|38|40|42|44)\b/gi, "")
+    .replace(/\b(black|white|red|blue|green|gray|grey|navy|denim)\b/gi, "")
+    .replace(/[^a-z0-9\s-]/g, "")
     .replace(/\s+/g, " ")
     .trim();
 
-  // Specs extraction
-  const specs = { type: "item" };
+  const specs = {};
 
-  // Size
-  const sizeMatch =
-    text.match(/\b(xs|s|m|l|xl|xxl|xxxl)\b/i) ||
-    text.match(/\b(2|4|6|8|10|12|14|16|18)\b/) ||
-    text.match(/\b(32|34|36|38|40|42|44|46)\b/);
-  if (sizeMatch) specs.size = sizeMatch[1].toLowerCase();
+  // Parse param field (size:36|gender:male)
+  let parsedParams = {};
+  if (csvRow?.param) {
+    const params = csvRow.param.split("|");
+    params.forEach((param) => {
+      const [key, value] = param.split(":");
+      if (key && value) {
+        parsedParams[key.trim()] = value.trim();
+      }
+    });
+  }
+
+  // Size from param or text
+  if (parsedParams.size) {
+    specs.size = parsedParams.size.toLowerCase();
+  } else {
+    const sizeMatch =
+      text.match(/\b(xs|s|m|l|xl|xxl|xxxl)\b/i) ||
+      text.match(/\b(28|30|32|34|36|38|40|42|44)\b/);
+    if (sizeMatch) specs.size = sizeMatch[1].toLowerCase();
+  }
 
   // Color
   const colorMatch = text.match(
-    /\b(black|white|red|blue|green|yellow|pink|purple|gray|grey|beige|brown|navy|khaki)\b/i
+    /\b(black|white|red|blue|green|gray|grey|navy|denim|indigo)\b/i
   );
   if (colorMatch) specs.color = colorMatch[1].toLowerCase();
 
-  // Gender
-  if (text.includes("men")) specs.gender = "men";
-  else if (text.includes("women")) specs.gender = "women";
-  else if (text.includes("kid")) specs.gender = "kids";
-  else if (text.includes("boy")) specs.gender = "boys";
-  else if (text.includes("girl")) specs.gender = "girls";
-
-  // Type
-  if (
-    text.includes("t-shirt") ||
-    text.includes("tshirt") ||
-    text.includes("tee")
-  )
-    specs.type = "t-shirt";
-  else if (text.includes("jeans")) specs.type = "jeans";
-  else if (text.includes("dress")) specs.type = "dress";
-  else if (text.includes("jacket")) specs.type = "jacket";
-  else if (text.includes("pants") || text.includes("trousers"))
-    specs.type = "pants";
-  else if (text.includes("shirt")) specs.type = "shirt";
-  else if (text.includes("shorts")) specs.type = "shorts";
-  else if (text.includes("skirt")) specs.type = "skirt";
-  else if (text.includes("sweater")) specs.type = "sweater";
-  else if (text.includes("hoodie")) specs.type = "hoodie";
-  else if (text.includes("sneaker")) specs.type = "sneakers";
-  else if (text.includes("boot")) specs.type = "boots";
-
-  // Use CSV data as fallback
-  if (csvRow) {
-    if (!specs.size && csvRow.Size) specs.size = csvRow.Size.toLowerCase();
-    if (!specs.color && csvRow.Colour)
-      specs.color = csvRow.Colour.toLowerCase();
-    if (!specs.gender && csvRow.Gender)
-      specs.gender = csvRow.Gender.toLowerCase();
+  // Gender from param or text
+  if (parsedParams.gender) {
+    const genderMap = {
+      male: "men",
+      female: "women",
+      unisex: "unisex",
+    };
+    specs.gender =
+      genderMap[parsedParams.gender.toLowerCase()] ||
+      parsedParams.gender.toLowerCase();
+  } else {
+    if (text.includes("men") || text.includes("male")) specs.gender = "men";
+    else if (text.includes("women") || text.includes("female"))
+      specs.gender = "women";
+    else if (text.includes("kid")) specs.gender = "kids";
   }
+
+  // Type - use the guessTypeFromTitle function
+  specs.type = guessTypeFromTitle(title);
+
+  // Add essential CSV fields to specs (sku, currency)
+  Object.entries(ESSENTIAL_MAPPINGS).forEach(([specField, csvField]) => {
+    const value = csvRow?.[csvField];
+    if (value && value !== "") {
+      specs[specField] = String(value).trim();
+    }
+  });
+
+  // Add additional important CSV fields to specs (param, season, material)
+  SPECS_FIELDS.forEach((field) => {
+    const value = csvRow?.[field];
+    if (value && value !== "") {
+      specs[field] = String(value).trim();
+    }
+  });
 
   return {
     category,
@@ -521,6 +705,18 @@ async function downloadCSV(url) {
 
     const csvText = await response.text();
     console.log(`✅ CSV downloaded successfully (${csvText.length} bytes)`);
+
+    // Show first few CSV fields for verification
+    const lines = csvText.split("\n");
+    if (lines.length > 0) {
+      console.log(`\n📋 CSV Header Fields:`);
+      const headers = lines[0].split(",");
+      headers.forEach((h, i) => {
+        console.log(`   ${i + 1}. ${h.trim()}`);
+      });
+      console.log("");
+    }
+
     return csvText;
   } catch (error) {
     console.error(`❌ Failed to download CSV: ${error.message}`);
@@ -538,9 +734,26 @@ function parseCSV(csvText) {
       trim: true,
       relax_column_count: true,
       bom: true,
+      delimiter: ";", // 🔥 Diesel CSV uses semicolon delimiter!
     });
 
     console.log(`✅ Parsed ${records.length} rows from CSV`);
+
+    // Show sample product data
+    if (records.length > 0) {
+      console.log(`\n🔍 Sample Product (first row):`);
+      const sample = records[0];
+      Object.entries(FIELD_MAPPING).forEach(([ourField, csvField]) => {
+        const value = sample[csvField];
+        if (value) {
+          const display =
+            value.length > 60 ? value.substring(0, 60) + "..." : value;
+          console.log(`   ${ourField}: ${display}`);
+        }
+      });
+      console.log("");
+    }
+
     return records;
   } catch (error) {
     console.error(`❌ Failed to parse CSV: ${error.message}`);
@@ -587,51 +800,68 @@ function generateCascadingContext(title, brand, specs, price, description) {
 }
 
 function mapCSVRowToProduct(row) {
-  let productUrl = (row.ProductURL || "").trim();
-
+  // Extract and clean URL
+  let productUrl = (row[FIELD_MAPPING.productUrl] || "").trim();
   let cleanUrl = productUrl;
-  if (productUrl) {
-    const rMatch = productUrl.match(/r=(https?:\/\/[^&]+)/);
-    if (rMatch) {
-      let destinationUrl = decodeURIComponent(rMatch[1]);
 
-      if (destinationUrl.includes("?selected=")) {
-        destinationUrl = destinationUrl.split("?selected=")[0];
+  // Handle affiliate links - extract the actual Diesel URL from ulp parameter
+  if (productUrl.includes("ulp=")) {
+    try {
+      const ulpMatch = productUrl.match(/ulp=([^&]+)/);
+      if (ulpMatch) {
+        let dieselUrl = decodeURIComponent(ulpMatch[1]);
+        // Further decode if needed
+        if (dieselUrl.includes("%")) {
+          dieselUrl = decodeURIComponent(dieselUrl);
+        }
+        cleanUrl = dieselUrl.split("?")[0]; // Remove query params
       }
-
-      cleanUrl = destinationUrl;
+    } catch (e) {
+      // If decoding fails, just use the original URL
+      cleanUrl = productUrl.split("?")[0];
     }
+  } else if (productUrl.includes("?")) {
+    cleanUrl = productUrl.split("?")[0];
   }
 
-  let imageUrl = (
-    row.ProductImageMediumURL ||
-    row.ProductImageLargeURL ||
-    row.ProductImageSmallURL ||
-    ""
-  ).trim();
+  // Extract image URL
+  let imageUrl = (row[FIELD_MAPPING.imageUrl] || "").trim();
   if (!imageUrl) {
     imageUrl = "https://via.placeholder.com/600x800?text=No+Image";
   }
 
-  const price = parseFloat((row.ProductPrice || "0").replace(/,/g, ""));
-  const wasPrice = parseFloat((row.WasPrice || "0").replace(/,/g, ""));
+  // Parse prices - handle KWD currency
+  const priceStr = (row[FIELD_MAPPING.price] || "0").trim();
+  const price = parseFloat(priceStr.replace(/[^0-9.]/g, ""));
+
+  const oldPriceStr = (row[FIELD_MAPPING.oldPrice] || "0").trim();
+  const oldPrice = oldPriceStr
+    ? parseFloat(oldPriceStr.replace(/[^0-9.]/g, ""))
+    : 0;
+
+  // Parse availability (boolean: true/false)
+  const availabilityStr = (row[FIELD_MAPPING.availability] || "true")
+    .toString()
+    .toLowerCase()
+    .trim();
+  const isAvailable =
+    availabilityStr === "true" ||
+    availabilityStr === "1" ||
+    availabilityStr === "yes";
 
   return {
-    title: (row.ProductName || "").trim() || "Untitled Product",
-    description: (row.ProductDescription || "").trim() || "",
+    title: (row[FIELD_MAPPING.title] || "").trim() || "Untitled Product",
+    description: (row[FIELD_MAPPING.description] || "").trim() || "",
     price: price,
-    originalPrice: wasPrice > price ? wasPrice : price,
+    originalPrice: oldPrice > price ? oldPrice : price,
     imageUrl: imageUrl,
     productUrl: productUrl,
     cleanUrl: cleanUrl,
-    sku: (row.ProductSKU || "").trim() || null,
-    gtin: (row.GTIN || "").trim() || null,
-    availability: (row.StockAvailability || "in stock").trim(),
-    rawColor: (row.Colour || "").trim() || null,
-    rawSize: (row.Size || "").trim() || null,
-    rawGender: (row.Gender || "").trim() || null,
-    rawCategory: (row.CategoryName || "").trim() || null,
-    brand: (row.Brand || "H&M").trim(),
+    sku: (row[FIELD_MAPPING.sku] || "").trim() || null,
+    availability: isAvailable ? "in stock" : "out of stock",
+    rawCategory: (row[FIELD_MAPPING.category] || "").trim() || null,
+    brand: (row[FIELD_MAPPING.brand] || "DIESEL").trim(),
+    currency: (row[FIELD_MAPPING.currency] || CURRENCY).trim(),
   };
 }
 
@@ -643,7 +873,9 @@ function determineStockStatus(availabilityText) {
   if (
     text.includes("out of stock") ||
     text === "out_of_stock" ||
-    text === "oos"
+    text === "oos" ||
+    text === "0" ||
+    text === "false"
   ) {
     return StockStatus.OUT_OF_STOCK;
   }
@@ -655,10 +887,8 @@ function determineStockStatus(availabilityText) {
 // --- MAIN IMPORTER LOGIC ---
 // -------------------------------------------------------------------
 
-async function importHMProducts() {
-  // Load cache first
+async function importDieselProducts() {
   await loadCache();
-
   const checkpoint = await loadCheckpoint();
 
   let createdCount = checkpoint.stats.created;
@@ -672,7 +902,7 @@ async function importHMProducts() {
     console.log(`🏪 Import Configuration:`);
     console.log(`   Store: ${STORE_NAME_FIXED}`);
     console.log(`   Currency: ${CURRENCY}`);
-    console.log(`   Concurrent Limit: ${CONCURRENT_LIMIT} (optimized)`);
+    console.log(`   Concurrent Limit: ${CONCURRENT_LIMIT}`);
     console.log(`   Batch Delay: ${BATCH_DELAY_MS}ms`);
     console.log(`   API Calls Used: ${rateLimiter.dailyRequestCount}`);
     console.log(
@@ -720,7 +950,7 @@ async function importHMProducts() {
           `  🤖 API calls: ${rateLimiter.dailyRequestCount} | Errors: ${rateLimiter.consecutiveErrors}`
         );
 
-        // Check database first (no AI needed)
+        // Check if already processed
         const existingInDB = await prisma.product.findFirst({
           where: {
             storeName: STORE_NAME_FIXED,
@@ -735,7 +965,6 @@ async function importHMProducts() {
             title: true,
             price: true,
             productUrl: true,
-            createdAt: true,
           },
         });
 
@@ -757,7 +986,7 @@ async function importHMProducts() {
           return;
         }
 
-        // Validate image (no AI needed)
+        // Validate image
         if (
           productData.imageUrl &&
           !productData.imageUrl.includes("placeholder")
@@ -782,8 +1011,8 @@ async function importHMProducts() {
 
         console.log(`  💰 NEW PRODUCT: Starting AI processing...`);
 
-        // 🔥 ONE AI CALL instead of 4!
-        console.log(`  🤖 AI: Combined extraction (1 call)...`);
+        // Combined AI extraction
+        console.log(`  🤖 AI: Combined extraction...`);
         const extracted = await extractAllProductData(
           productData.title,
           productData.description,
@@ -838,7 +1067,7 @@ async function importHMProducts() {
             productUrl: productData.productUrl,
             scrapedAt: new Date(),
           },
-          select: { id: true, title: true, productUrl: true },
+          select: { id: true, title: true },
         });
 
         createdCount++;
@@ -903,7 +1132,7 @@ async function importHMProducts() {
   }
 
   console.log(`\n${"=".repeat(60)}`);
-  console.log(`🎉 H&M IMPORT COMPLETE`);
+  console.log(`🎉 DIESEL IMPORT COMPLETE`);
   console.log(`${"=".repeat(60)}`);
   console.log(`✅ Created: ${createdCount}`);
   console.log(`🔄 Updated: ${updatedCount}`);
@@ -927,7 +1156,7 @@ async function importHMProducts() {
 // --- EXECUTE ---
 // -------------------------------------------------------------------
 
-importHMProducts()
+importDieselProducts()
   .then(() => {
     console.log("✅ Script completed successfully");
     process.exit(0);
