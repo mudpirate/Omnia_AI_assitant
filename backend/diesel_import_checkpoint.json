@@ -491,7 +491,25 @@
     "https://kw.diesel.com/kw_en/t-adjust-marey-white-aw25.html#209=5559&192=5552",
     "https://kw.diesel.com/kw_en/skm-ray-threepack-white-red-aw25.html#209=5755&192=5506",
     "https://kw.diesel.com/kw_en/t-adjust-marey-white-aw25.html#209=5570&192=5505",
-    "https://kw.diesel.com/kw_en/t-boxt-bleach-grey-aw25.html#209=5568&192=5531"
+    "https://kw.diesel.com/kw_en/t-boxt-bleach-grey-aw25.html#209=5568&192=5531",
+    "https://kw.diesel.com/kw_en/t-boxt-t6-white-aw25.html#209=5570&192=5506",
+    "https://kw.diesel.com/kw_en/t-boxt-r30-black-aw25.html#209=5559&192=5531",
+    "https://kw.diesel.com/kw_en/t-boxt-t6-white-aw25.html#209=5570&192=5551",
+    "https://kw.diesel.com/kw_en/t-bunny-tail-white-aw25.html#209=5570&192=5552",
+    "https://kw.diesel.com/kw_en/t-adjust-doval-pj-black-aw24.html#209=5570&192=5552",
+    "https://kw.diesel.com/kw_en/t-adjust-doval-pj-black-aw24.html#209=5570&192=5505",
+    "https://kw.diesel.com/kw_en/rio-41-d-core-black-white-ss25.html#209=5659&192=5551",
+    "https://kw.diesel.com/kw_en/p-beeck-black-ss25.html#209=5559&192=5536",
+    "https://kw.diesel.com/kw_en/k-larence-b-light-grey-aw25.html#209=5568&192=5506",
+    "https://kw.diesel.com/kw_en/damien-d-box-red-aw25.html#209=5569&192=5505",
+    "https://kw.diesel.com/kw_en/p-crew-grey-aw25.html#209=5568&192=5504",
+    "https://kw.diesel.com/kw_en/k-lorenzo-ss-grey-aw25.html#209=5568&192=5506",
+    "https://kw.diesel.com/kw_en/p-crow-bleach-grey-white-aw25.html#209=5707&192=5553",
+    "https://kw.diesel.com/kw_en/rio-41-utlt-green-aw25.html#209=5647&192=5505",
+    "https://kw.diesel.com/kw_en/skm-gost-threepack-white-grey-aw25.html#209=5716&192=5506",
+    "https://kw.diesel.com/kw_en/s-baxt-t1-pink-aw25.html#209=5644&192=5504",
+    "https://kw.diesel.com/kw_en/skm-ray-threepack-white-red-aw25.html#209=5982&192=5505",
+    "https://kw.diesel.com/kw_en/skm-ray-threepack-white-red-aw25.html#209=5659&192=5505"
   ],
   "processedProductKeys": [
     "diesel_tapered 2030 d-krooley joggjeans_clothing",
@@ -557,18 +575,27 @@
     "diesel_faded sweatshirt with devore phoenix logo_clothing",
     "diesel_t-shirt with cut-out oval d_clothing",
     "diesel_maxi logo socks_accessories",
-    "diesel_bleached oval d t-shirt_clothing"
+    "diesel_bleached oval d t-shirt_clothing",
+    "diesel_t-shirt with red oval d_clothing",
+    "diesel_t-shirt with small logo_clothing",
+    "diesel_t-shirt with wrap ties_clothing",
+    "diesel_t-shirt with oval d patch_clothing",
+    "diesel_cargo pants_clothing",
+    "diesel_boxer briefs faded logo print_clothing",
+    "diesel_reverse-print polo jumper_clothing",
+    "diesel_cracked-effect sweatshirt_clothing",
+    "diesel_socks with logo cuffs_accessories"
   ],
-  "processedCount": 759,
-  "lastProcessedIndex": 491,
+  "processedCount": 777,
+  "lastProcessedIndex": 508,
   "stats": {
-    "created": 64,
+    "created": 73,
     "updated": 0,
-    "skipped": 617,
-    "duplicates": 78,
+    "skipped": 623,
+    "duplicates": 81,
     "errors": 0,
     "invalidImages": 0
   },
-  "apiCalls": 142,
-  "timestamp": "2025-12-26T13:08:14.831Z"
+  "apiCalls": 163,
+  "timestamp": "2025-12-26T13:09:19.564Z"
 }

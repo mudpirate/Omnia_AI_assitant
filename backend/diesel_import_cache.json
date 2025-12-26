@@ -1152,6 +1152,186 @@
         "param": "size:3XL|gender:male",
         "season": "aw25"
       }
+    },
+    "t-shirt with red oval d_Sale KSA/Non Sale Simples KSA": {
+      "category": "CLOTHING",
+      "core_name": "t-shirt with red oval d",
+      "specs": {
+        "type": "t-shirt",
+        "size": "m",
+        "gender": "men",
+        "color": "red",
+        "material": "organic cotton",
+        "fit": "relaxed fit",
+        "pattern": "solid",
+        "wash": "",
+        "sku": "8051209161483",
+        "currency": "KWD",
+        "param": "size:M|gender:male",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with small logo_Sale KSA/Non Sale Simples KSA": {
+      "category": "CLOTHING",
+      "core_name": "t-shirt with small logo",
+      "specs": {
+        "type": "t-shirt",
+        "size": "3xl",
+        "gender": "men",
+        "color": "not specified",
+        "material": "organic cotton",
+        "fit": "boxy",
+        "pattern": "solid",
+        "wash": "not specified",
+        "sku": "8055055595775",
+        "currency": "KWD",
+        "param": "size:3XL|gender:male",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with wrap ties_Sale KSA/Non Sale Simples KSA": {
+      "category": "CLOTHING",
+      "core_name": "t-shirt with wrap ties",
+      "specs": {
+        "type": "t-shirt",
+        "size": "xs",
+        "gender": "women",
+        "color": "white",
+        "material": "organic cotton",
+        "fit": "close fit",
+        "pattern": "solid",
+        "wash": "",
+        "sku": "8051209164668",
+        "currency": "KWD",
+        "param": "size:XS|gender:female",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with oval d patch_Sale/Non Sale Simples UAE": {
+      "category": "CLOTHING",
+      "core_name": "t-shirt with oval d patch",
+      "specs": {
+        "type": "t-shirt",
+        "size": "l",
+        "gender": "men",
+        "color": "not specified",
+        "material": "organic cotton",
+        "fit": "regular fit",
+        "pattern": "solid",
+        "wash": "not specified",
+        "sku": "8058992968329",
+        "currency": "KWD",
+        "param": "size:L|gender:male",
+        "season": "aw24"
+      }
+    },
+    "cargo pants in cotton twill_Sale/Non Sale Simples UAE": {
+      "category": "CLOTHING",
+      "core_name": "cargo pants",
+      "specs": {
+        "type": "pants",
+        "size": "44",
+        "gender": "men",
+        "color": "",
+        "material": "cotton",
+        "fit": "",
+        "pattern": "",
+        "wash": "",
+        "sku": "8055055879752",
+        "currency": "KWD",
+        "param": "size:44|gender:male",
+        "season": "ss25"
+      }
+    },
+    "boxer briefs with faded logo print_Sale KSA/Non Sale Simples KSA": {
+      "category": "CLOTHING",
+      "core_name": "boxer briefs faded logo print",
+      "specs": {
+        "type": "boxer briefs",
+        "size": "l",
+        "gender": "men",
+        "color": "not specified",
+        "material": "stretch cotton",
+        "fit": "not specified",
+        "pattern": "faded",
+        "wash": "not specified",
+        "sku": "8051209336201",
+        "currency": "KWD",
+        "param": "size:L|gender:male",
+        "season": "aw25"
+      }
+    },
+    "reverse-print short-sleeve polo jumper_Sale KSA/Non Sale Simples KSA": {
+      "category": "CLOTHING",
+      "core_name": "reverse-print polo jumper",
+      "specs": {
+        "type": "polo",
+        "size": "m",
+        "gender": "men",
+        "color": "irregular",
+        "material": "organic cotton",
+        "fit": "relaxed fit",
+        "pattern": "solid",
+        "wash": "",
+        "sku": "8051209265679",
+        "currency": "KWD",
+        "param": "size:M|gender:male",
+        "season": "aw25"
+      }
+    },
+    "mid-length swim shorts in camo ripstop_Sale KSA/Non Sale Simples KSA": {
+      "category": "CLOTHING",
+      "core_name": "mid-length swim shorts",
+      "specs": {
+        "type": "swim shorts",
+        "size": "l",
+        "gender": "men",
+        "color": "camo",
+        "material": "ripstop",
+        "fit": "regular fit",
+        "pattern": "camo",
+        "wash": "",
+        "sku": "8051209232909",
+        "currency": "KWD",
+        "param": "size:L|gender:male",
+        "season": "aw25"
+      }
+    },
+    "cracked-effect sweatshirt with micro logo_Sale KSA/Non Sale Simples KSA": {
+      "category": "CLOTHING",
+      "core_name": "cracked-effect sweatshirt",
+      "specs": {
+        "type": "sweatshirt",
+        "size": "s",
+        "gender": "men",
+        "color": "tonal",
+        "material": "organic cotton",
+        "fit": "relaxed fit",
+        "pattern": "distressed",
+        "wash": "",
+        "sku": "8051209123108",
+        "currency": "KWD",
+        "param": "size:S|gender:male",
+        "season": "aw25"
+      }
+    },
+    "3-pack of socks with logo cuffs_Sale KSA/Non Sale Simples KSA": {
+      "category": "ACCESSORIES",
+      "core_name": "socks with logo cuffs",
+      "specs": {
+        "type": "socks",
+        "size": "l",
+        "gender": "men",
+        "color": "",
+        "material": "organic cotton",
+        "fit": "",
+        "pattern": "",
+        "wash": "",
+        "sku": "8055055775146",
+        "currency": "KWD",
+        "param": "size:L|gender:male",
+        "season": "aw25"
+      }
     }
   }
 }
