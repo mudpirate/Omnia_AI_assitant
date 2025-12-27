@@ -12,50 +12,134 @@ import {
   LayoutGrid,
   X,
   Package,
-  Tag,
   MapPin,
   ChevronRight,
   TrendingUp,
-  Image as ImageIcon,
   Camera,
-  Upload,
+  ArrowUpRight,
+  Scan,
+  CircleDot,
 } from "lucide-react";
 
-// --- CUSTOM STYLES FOR ANIMATIONS ---
+// ═══════════════════════════════════════════════════════════════════════════
+// NEO-BRUTALIST LUXURY THEME
+// Warm sand/cream base, electric coral accents, deep charcoal, chunky borders
+// ═══════════════════════════════════════════════════════════════════════════
+
 const customStyles = `
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
+  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
+  :root {
+    --cream: #FAF7F2;
+    --sand: #F0EBE3;
+    --charcoal: #1A1A1A;
+    --coral: #FF6B4A;
+    --coral-light: #FF8A70;
+    --sage: #8B9A7D;
+    --navy: #2C3E50;
+  }
+
+  * {
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .font-display {
+    font-family: 'Instrument Serif', serif;
+  }
+
+  @keyframes float-slow {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(1deg); }
+  }
+
+  @keyframes grain {
+    0%, 100% { transform: translate(0, 0); }
+    10% { transform: translate(-5%, -10%); }
+    20% { transform: translate(-15%, 5%); }
+    30% { transform: translate(7%, -25%); }
+    40% { transform: translate(-5%, 25%); }
+    50% { transform: translate(-15%, 10%); }
+    60% { transform: translate(15%, 0%); }
+    70% { transform: translate(0%, 15%); }
+    80% { transform: translate(3%, 35%); }
+    90% { transform: translate(-10%, 10%); }
+  }
+
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(40px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  @keyframes fadeIn {
+
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
   }
-  @keyframes scaleIn {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
+
+  @keyframes bounce-subtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
   }
-  @keyframes float {
-    0% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-    100% { transform: translateY(0px); }
+
+  .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
+  .animate-slide-up { animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-scale-in { animation: scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+  .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
+
+  .grain-overlay::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    left: -50%;
+    right: -50%;
+    bottom: -50%;
+    width: 200%;
+    height: 200%;
+    background: transparent url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E") repeat;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 1000;
+    animation: grain 8s steps(10) infinite;
   }
-  @keyframes shimmer {
-    0% { background-position: -1000px 0; }
-    100% { background-position: 1000px 0; }
+
+  .brutal-border {
+    border: 3px solid var(--charcoal);
+    box-shadow: 6px 6px 0 var(--charcoal);
+    transition: all 0.2s ease;
   }
-  .animate-slideUp { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .animate-fadeIn { animation: fadeIn 0.4s ease-out forwards; }
-  .animate-scaleIn { animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .animate-float { animation: float 6s ease-in-out infinite; }
-  .animate-shimmer { 
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.8), transparent);
-    background-size: 1000px 100%;
-    animation: shimmer 2s infinite;
+
+  .brutal-border:hover {
+    box-shadow: 8px 8px 0 var(--charcoal);
+    transform: translate(-2px, -2px);
   }
+
+  .brutal-border-coral {
+    border: 3px solid var(--coral);
+    box-shadow: 6px 6px 0 var(--coral);
+  }
+
+  .brutal-border-coral:hover {
+    box-shadow: 8px 8px 0 var(--coral);
+    transform: translate(-2px, -2px);
+  }
+
+  .text-stroke {
+    -webkit-text-stroke: 1.5px var(--charcoal);
+    color: transparent;
+  }
+
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-  .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.5); }
+
+  .stagger-1 { animation-delay: 0.1s; }
+  .stagger-2 { animation-delay: 0.2s; }
+  .stagger-3 { animation-delay: 0.3s; }
+  .stagger-4 { animation-delay: 0.4s; }
 `;
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -66,8 +150,6 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [selectedProduct, setSelectedProduct] = useState(null);
-
-  // Image upload states
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
@@ -90,8 +172,6 @@ function App() {
 
     const userMessage = text.trim();
     setInput("");
-
-    // Add user message immediately
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
     setIsLoading(true);
 
@@ -99,17 +179,13 @@ function App() {
       const response = await fetch(`${API_URL}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: userMessage,
-          sessionId: sessionId,
-        }),
+        body: JSON.stringify({ query: userMessage, sessionId }),
       });
 
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-
       if (data.sessionId && !sessionId) setSessionId(data.sessionId);
 
       setMessages((prev) => [
@@ -121,13 +197,12 @@ function App() {
         },
       ]);
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("Error:", error);
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content:
-            "❌ Sorry, I encountered an error. Please check your connection and try again.",
+          content: "Connection lost. Please try again.",
           error: true,
         },
       ]);
@@ -136,33 +211,23 @@ function App() {
     }
   };
 
-  // 🔥 NEW: Handle image selection
   const handleImageSelect = (event) => {
     const file = event.target.files?.[0];
-    if (file) {
-      processImage(file);
-    }
+    if (file) processImage(file);
   };
 
-  // 🔥 NEW: Process and validate image
   const processImage = (file) => {
-    // Validate file type
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
     if (!validTypes.includes(file.type)) {
       alert("Please upload a JPEG, PNG, or WebP image");
       return;
     }
-
-    // Validate file size (10MB max)
-    const maxSize = 10 * 1024 * 1024;
-    if (file.size > maxSize) {
+    if (file.size > 10 * 1024 * 1024) {
       alert("Image size must be less than 10MB");
       return;
     }
 
     setSelectedImage(file);
-
-    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setImagePreview(reader.result);
@@ -171,28 +236,12 @@ function App() {
     reader.readAsDataURL(file);
   };
 
-  // 🔥 NEW: Handle drag and drop
-  const handleDrop = (event) => {
-    event.preventDefault();
-    const file = event.dataTransfer.files?.[0];
-    if (file) {
-      processImage(file);
-    }
-  };
-
-  const handleDragOver = (event) => {
-    event.preventDefault();
-  };
-
-  // 🔥 NEW: Analyze image and search for products
   const analyzeAndSearch = async () => {
     if (!selectedImage) return;
-
     setIsAnalyzingImage(true);
-    setAnalysisStatus("🔍 Analyzing your image...");
+    setAnalysisStatus("Scanning your image...");
 
     try {
-      // Step 1: Send image to backend for analysis
       const formData = new FormData();
       formData.append("image", selectedImage);
 
@@ -202,43 +251,35 @@ function App() {
       });
 
       const analysisData = await analysisResponse.json();
-
-      if (!analysisData.success) {
-        throw new Error(analysisData.error || "Image analysis failed");
-      }
+      if (!analysisData.success)
+        throw new Error(analysisData.error || "Analysis failed");
 
       const searchQuery = analysisData.query;
-      setAnalysisStatus(`✨ Found: "${searchQuery}". Searching...`);
+      setAnalysisStatus(`Found: "${searchQuery}"`);
 
-      // Add image message to chat
       setMessages((prev) => [
         ...prev,
         {
           role: "user",
-          content: ` Uploaded image: "${searchQuery}"`,
+          content: `📷 Image search: "${searchQuery}"`,
           image: imagePreview,
         },
       ]);
 
-      // Step 2: Search for products using the generated query
       setIsLoading(true);
       const searchResponse = await fetch(`${API_URL}/chat`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           query: searchQuery,
-          sessionId: sessionId || "default-session",
+          sessionId: sessionId || "default",
         }),
       });
 
       const searchData = await searchResponse.json();
-
       if (searchData.sessionId && !sessionId)
         setSessionId(searchData.sessionId);
 
-      // Step 3: Display results
       setMessages((prev) => [
         ...prev,
         {
@@ -249,18 +290,14 @@ function App() {
         },
       ]);
 
-      // Reset image upload state
-      setSelectedImage(null);
-      setImagePreview(null);
-      setShowImageUpload(false);
-      setAnalysisStatus("");
+      clearImage();
     } catch (error) {
       console.error("Image search error:", error);
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: `❌ Failed to analyze image: ${error.message}`,
+          content: `Failed to analyze image: ${error.message}`,
           error: true,
         },
       ]);
@@ -270,15 +307,12 @@ function App() {
     }
   };
 
-  // 🔥 NEW: Clear image selection
   const clearImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
     setShowImageUpload(false);
     setAnalysisStatus("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleKeyPress = (e) => {
@@ -289,59 +323,49 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] font-sans text-slate-800 overflow-hidden selection:bg-violet-200 selection:text-violet-900">
+    <div className="flex h-screen bg-[#FAF7F2] overflow-hidden grain-overlay">
       <style>{customStyles}</style>
 
-      {/* Sidebar - Modern & Minimal */}
+      {/* Sidebar */}
       <Sidebar />
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <main className="flex-1 flex flex-col relative h-full">
-        {/* Header - Transparent & Floating */}
-        <header className="absolute top-0 right-0 p-6 z-20 flex justify-end items-center pointer-events-none">
-          <div className="pointer-events-auto flex items-center gap-3 bg-white/80 backdrop-blur-md px-4 py-2 rounded-full shadow-sm border border-white/50">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-bold text-slate-800">Guest User</p>
-              <p className="text-[10px] text-slate-500">Shopping Session</p>
+        {/* Decorative Elements */}
+        <div className="absolute top-20 right-20 w-32 h-32 border-[3px] border-[#FF6B4A]/30 rounded-full animate-float-slow pointer-events-none" />
+        <div className="absolute bottom-40 left-[30%] w-20 h-20 bg-[#8B9A7D]/10 rotate-45 pointer-events-none" />
+
+        {/* Header */}
+        <header className="absolute top-6 right-6 z-20">
+          <div className="brutal-border bg-white px-4 py-2 flex items-center gap-3">
+            <div className="w-8 h-8 bg-[#FF6B4A] flex items-center justify-center">
+              <span className="text-white text-xs font-bold">G</span>
             </div>
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-violet-500 to-fuchsia-500 p-[2px]">
-              <div className="w-full h-full rounded-full bg-white overflow-hidden">
-                <img
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
-                  alt="User"
-                />
-              </div>
+            <div className="hidden sm:block">
+              <p className="text-xs font-bold text-[#1A1A1A]">Guest</p>
+              <p className="text-[10px] text-[#1A1A1A]/60">Kuwait</p>
             </div>
           </div>
         </header>
 
-        {/* Chat / Content Area */}
+        {/* Chat Area */}
         <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth relative z-10">
-          {/* Background Ambient Gradients */}
-          <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-            <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-violet-200/30 rounded-full blur-[120px] animate-float" />
-            <div
-              className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-fuchsia-200/30 rounded-full blur-[120px] animate-float"
-              style={{ animationDelay: "2s" }}
-            />
-          </div>
-
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 min-h-full flex flex-col">
+          <div className="max-w-5xl mx-auto px-6 lg:px-12 py-12 min-h-full flex flex-col">
             {messages.length === 0 ? (
               <WelcomeScreen
                 onSuggestionClick={handleSend}
                 onImageUploadClick={() => fileInputRef.current?.click()}
               />
             ) : (
-              <div className="space-y-10 pb-40 pt-10">
+              <div className="space-y-12 pb-48 pt-16">
                 {messages.map((message, index) => (
                   <MessageBubble
                     key={index}
                     message={message}
                     onProductClick={setSelectedProduct}
+                    index={index}
                   />
                 ))}
-
                 {isLoading && <LoadingIndicator />}
                 <div ref={messagesEndRef} />
               </div>
@@ -349,7 +373,7 @@ function App() {
           </div>
         </div>
 
-        {/* Product Detail Modal */}
+        {/* Product Modal */}
         {selectedProduct && (
           <ProductModal
             product={selectedProduct}
@@ -357,7 +381,7 @@ function App() {
           />
         )}
 
-        {/* 🔥 NEW: Image Upload Modal */}
+        {/* Image Upload Modal */}
         {showImageUpload && imagePreview && (
           <ImageUploadModal
             imagePreview={imagePreview}
@@ -368,54 +392,53 @@ function App() {
           />
         )}
 
-        {/* Input Footer - Floating Glass Bar with Image Upload */}
-        <div className="absolute bottom-6 left-0 right-0 px-4 z-30">
+        {/* Input Bar */}
+        <div className="absolute bottom-8 left-0 right-0 px-6 z-30">
           <div className="max-w-3xl mx-auto">
-            <div className="glass-panel rounded-[2rem] shadow-2xl shadow-violet-100/50 p-2 relative group transition-all duration-300 hover:shadow-violet-200/50">
-              <div className="relative flex items-center">
-                {/* 🔥 NEW: Image Upload Button */}
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading || isAnalyzingImage}
-                  className="p-3 text-violet-500 hover:bg-violet-50 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Upload product image"
-                >
-                  <ImageIcon className="w-6 h-6" />
-                </button>
+            <div className="brutal-border bg-white p-2 flex items-center gap-2">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading || isAnalyzingImage}
+                className="w-12 h-12 bg-[#F0EBE3] hover:bg-[#FF6B4A] hover:text-white flex items-center justify-center transition-colors disabled:opacity-50"
+                title="Upload image"
+              >
+                <Camera className="w-5 h-5" />
+              </button>
 
-                <div className="pl-2 pr-3 text-violet-500 animate-pulse">
-                  <Sparkles className="w-6 h-6" />
-                </div>
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Ask Omnia or upload a product image..."
-                  className="flex-1 bg-transparent border-none outline-none text-slate-800 placeholder-slate-400 text-lg font-medium h-12"
-                  disabled={isLoading || isAnalyzingImage}
-                  autoFocus
-                />
-                <button
-                  onClick={() => handleSend()}
-                  disabled={isLoading || !input.trim() || isAnalyzingImage}
-                  className="w-12 h-12 bg-gray-900 text-white rounded-full hover:bg-violet-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 flex items-center justify-center shadow-lg"
-                >
-                  {isLoading ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Send className="w-5 h-5 ml-0.5" />
-                  )}
-                </button>
-              </div>
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="What are you looking for?"
+                className="flex-1 bg-transparent border-none outline-none text-[#1A1A1A] placeholder-[#1A1A1A]/40 text-lg font-medium h-12 px-2"
+                disabled={isLoading || isAnalyzingImage}
+                autoFocus
+              />
+
+              <button
+                onClick={() => handleSend()}
+                disabled={isLoading || !input.trim() || isAnalyzingImage}
+                className="w-12 h-12 bg-[#1A1A1A] text-white hover:bg-[#FF6B4A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5" />
+                )}
+              </button>
             </div>
-            <p className="text-center text-[10px] text-slate-400 mt-3 font-medium tracking-wide">
-              POWERED BY OMNIA AI • VISION-ENABLED • PRICES MAY VARY
-            </p>
+
+            <div className="flex items-center justify-center gap-4 mt-4 text-[10px] font-bold tracking-widest text-[#1A1A1A]/40 uppercase">
+              <span>Omnia AI</span>
+              <CircleDot className="w-2 h-2" />
+              <span>Kuwait</span>
+              <CircleDot className="w-2 h-2" />
+              <span>Multi-Store</span>
+            </div>
           </div>
         </div>
 
-        {/* 🔥 NEW: Hidden file input */}
         <input
           ref={fileInputRef}
           type="file"
@@ -428,326 +451,24 @@ function App() {
   );
 }
 
-// ----------------------------------------------------------------------
-// 🔥 NEW: Image Upload Modal Component
-// ----------------------------------------------------------------------
-function ImageUploadModal({
-  imagePreview,
-  isAnalyzing,
-  analysisStatus,
-  onAnalyze,
-  onCancel,
-}) {
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
-      <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-2xl w-full overflow-hidden animate-slideUp">
-        {/* Header */}
-        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center">
-              <Camera className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-slate-900">
-                Product Image Search
-              </h3>
-              <p className="text-sm text-slate-500">
-                AI-powered product identification
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={onCancel}
-            disabled={isAnalyzing}
-            className="p-2 hover:bg-slate-100 rounded-full transition-colors disabled:opacity-50"
-          >
-            <X className="w-6 h-6 text-slate-400" />
-          </button>
-        </div>
+// ═══════════════════════════════════════════════════════════════════════════
+// SIDEBAR
+// ═══════════════════════════════════════════════════════════════════════════
 
-        {/* Image Preview */}
-        <div className="p-8">
-          <div className="relative aspect-video w-full bg-slate-100 rounded-2xl overflow-hidden mb-6">
-            <img
-              src={imagePreview}
-              alt="Selected product"
-              className="w-full h-full object-contain"
-            />
-            {isAnalyzing && (
-              <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center">
-                <div className="text-center text-white">
-                  <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" />
-                  <p className="text-sm font-medium">{analysisStatus}</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Status Message */}
-          {analysisStatus && !isAnalyzing && (
-            <div className="mb-6 p-4 bg-violet-50 text-violet-700 rounded-xl text-sm font-medium border border-violet-100 flex items-center gap-2">
-              <Sparkles className="w-4 h-4" />
-              {analysisStatus}
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex gap-3">
-            <button
-              onClick={onAnalyze}
-              disabled={isAnalyzing}
-              className="flex-1 bg-slate-900 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-violet-600 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isAnalyzing ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Search className="w-5 h-5" />
-                  Find This Product
-                </>
-              )}
-            </button>
-            <button
-              onClick={onCancel}
-              disabled={isAnalyzing}
-              className="px-6 py-4 border-2 border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-colors disabled:opacity-50"
-            >
-              Cancel
-            </button>
-          </div>
-
-          {/* Info */}
-          <p className="text-center text-xs text-slate-400 mt-4">
-            Supports JPEG, PNG, WebP • Max 10MB
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ----------------------------------------------------------------------
-// Message Bubble (Enhanced with Image Support)
-// ----------------------------------------------------------------------
-function MessageBubble({ message, onProductClick }) {
-  const isUser = message.role === "user";
-
-  if (isUser) {
-    return (
-      <div className="flex justify-end animate-slideUp">
-        <div className="max-w-[85%] md:max-w-[70%]">
-          {/* 🔥 NEW: Show image if present */}
-          {message.image && (
-            <div className="mb-3 rounded-2xl overflow-hidden border-2 border-white shadow-lg">
-              <img
-                src={message.image}
-                alt="Uploaded"
-                className="max-w-full max-h-60 object-contain bg-slate-50"
-              />
-            </div>
-          )}
-          <div className="bg-white/80 backdrop-blur-sm border border-white text-slate-800 rounded-[2rem] rounded-tr-sm px-8 py-5 font-medium text-lg shadow-sm">
-            {message.content}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex gap-5 animate-slideUp items-start">
-      <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-violet-200 text-white mt-1">
-        <Sparkles className="w-5 h-5" />
-      </div>
-
-      <div className="flex-1 space-y-8 overflow-hidden">
-        {/* 🔥 NEW: Show generated query if from image search */}
-        {message.generatedQuery && (
-          <div className="inline-flex items-center gap-2 bg-violet-50 border border-violet-100 rounded-full px-4 py-2 text-sm">
-            <Camera className="w-4 h-4 text-violet-600" />
-            <span className="text-violet-700 font-medium">
-              Detected: <strong>{message.generatedQuery}</strong>
-            </span>
-          </div>
-        )}
-
-        {/* Text Response */}
-        <div className="prose prose-lg text-black font-medium text-md leading-relaxed max-w-none">
-          <p className="whitespace-pre-wrap">{message.content}</p>
-        </div>
-
-        {/* Product Grid - DYNAMIC RENDERING */}
-        {message.products && message.products.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {message.products.map((product, idx) => {
-              const type = getCategoryType(product.category);
-              if (type === "fashion") {
-                return (
-                  <FashionCard
-                    key={idx}
-                    product={product}
-                    index={idx}
-                    onClick={() => onProductClick(product)}
-                  />
-                );
-              }
-              return (
-                <ElectronicsCard
-                  key={idx}
-                  product={product}
-                  index={idx}
-                  onClick={() => onProductClick(product)}
-                />
-              );
-            })}
-          </div>
-        )}
-
-        {/* Error State */}
-        {message.error && (
-          <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium border border-red-100 flex items-center gap-2">
-            <span>⚠️</span> {message.content}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ----------------------------------------------------------------------
-// 1. ELECTRONICS CARD (Modern Tech Look)
-// ----------------------------------------------------------------------
-function ElectronicsCard({ product, index, onClick }) {
-  const specs = product.specs ? Object.entries(product.specs).slice(0, 2) : [];
-
-  return (
-    <button
-      onClick={onClick}
-      className="group relative bg-white rounded-3xl p-4 shadow-[0_2px_20px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgb(124,58,237,0.15)] transition-all duration-300 flex flex-col h-full animate-scaleIn text-left w-full border border-slate-100 hover:border-violet-100 hover:-translate-y-1"
-      style={{ animationDelay: `${index * 100}ms` }}
-    >
-      <div className="relative aspect-[4/3] bg-slate-50 rounded-2xl overflow-hidden mb-4 group-hover:bg-white transition-colors">
-        <img
-          src={product.imageUrl}
-          alt={product.title}
-          className="w-full h-full object-contain mix-blend-multiply p-6 group-hover:scale-110 transition-transform duration-500 ease-out"
-          onError={(e) => (e.target.style.display = "none")}
-        />
-        <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider text-slate-600 border border-slate-100">
-          {formatStoreName(product.storeName)}
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-md uppercase tracking-wider">
-            {product.brand}
-          </span>
-        </div>
-
-        <h3 className="font-bold text-slate-800 text-sm leading-snug line-clamp-2 mb-3 group-hover:text-violet-700 transition-colors">
-          {product.title}
-        </h3>
-
-        {/* Mini Specs */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {specs.map(([key, val], i) => (
-            <span
-              key={i}
-              className="text-[10px] text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-100"
-            >
-              {val}
-            </span>
-          ))}
-        </div>
-
-        <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50">
-          <div>
-            <span className="block text-[10px] text-slate-400 font-medium uppercase">
-              Best Price
-            </span>
-            <div className="flex items-baseline gap-1">
-              <span className="text-lg font-black text-slate-900">
-                {parseFloat(product.price).toFixed(3)}
-              </span>
-              <span className="text-xs font-bold text-slate-400">KWD</span>
-            </div>
-          </div>
-          <div className="w-9 h-9 rounded-full bg-slate-900 text-white flex items-center justify-center group-hover:bg-violet-600 transition-colors shadow-lg shadow-slate-200 group-hover:shadow-violet-200">
-            <ChevronRight className="w-5 h-5" />
-          </div>
-        </div>
-      </div>
-    </button>
-  );
-}
-
-// ----------------------------------------------------------------------
-// 2. FASHION CARD (Editorial Look)
-// ----------------------------------------------------------------------
-function FashionCard({ product, index, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className="group relative bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-slate-200 transition-all duration-500 flex flex-col h-full animate-scaleIn text-left w-full border border-slate-100"
-      style={{ animationDelay: `${index * 100}ms` }}
-    >
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100">
-        <img
-          src={product.imageUrl}
-          alt={product.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          onError={(e) => (e.target.style.display = "none")}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-60 group-hover:opacity-80 transition-opacity" />
-
-        <div className="absolute bottom-0 left-0 p-4 w-full text-white">
-          <div className="text-[10px] font-bold opacity-80 uppercase tracking-widest mb-1">
-            {product.brand}
-          </div>
-          <div className="flex justify-between items-end">
-            <div className="text-xl font-bold">
-              {parseFloat(product.price).toFixed(3)}{" "}
-              <span className="text-xs font-normal opacity-80">KWD</span>
-            </div>
-            <div className="bg-white/20 backdrop-blur-md p-2 rounded-full hover:bg-white hover:text-black transition-all">
-              <ExternalLink className="w-4 h-4" />
-            </div>
-          </div>
-        </div>
-
-        <div className="absolute top-3 right-3 bg-black/50 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-white uppercase tracking-wider">
-          {formatStoreName(product.storeName)}
-        </div>
-      </div>
-
-      <div className="p-4">
-        <h3 className="font-medium text-slate-800 text-sm leading-snug line-clamp-2 group-hover:text-violet-600 transition-colors">
-          {product.title}
-        </h3>
-      </div>
-    </button>
-  );
-}
-
-// ----------------------------------------------------------------------
-// Sidebar
-// ----------------------------------------------------------------------
 function Sidebar() {
   return (
-    <aside className="w-20 md:w-72 bg-white border-r border-slate-100 flex flex-col justify-between py-8 px-4 hidden md:flex z-40 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+    <aside className="w-20 lg:w-72 bg-[#1A1A1A] flex flex-col justify-between py-8 px-4 hidden md:flex z-40">
       <div>
         {/* Logo */}
-        <div className="flex items-center gap-4 px-2 mb-12">
-          <div className="w-10 h-10 bg-gradient-to-tr from-violet-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-violet-200">
-            <ShoppingBag className="w-5 h-5 text-white" />
+        <div className="flex items-center gap-4 px-2 mb-16">
+          <div className="w-12 h-12 bg-[#FF6B4A] flex items-center justify-center">
+            <ShoppingBag className="w-6 h-6 text-white" />
           </div>
-          <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 hidden md:block tracking-tight">
-            Omnia
-          </span>
+          <div className="hidden lg:block">
+            <span className="font-display text-3xl text-white italic">
+              Omnia
+            </span>
+          </div>
         </div>
 
         <nav className="space-y-2">
@@ -765,19 +486,21 @@ function Sidebar() {
             label="Trending"
           />
           <SidebarItem icon={<History className="w-5 h-5" />} label="History" />
-          <SidebarItem icon={<Star className="w-5 h-5" />} label="Favorites" />
+          <SidebarItem icon={<Star className="w-5 h-5" />} label="Saved" />
         </nav>
       </div>
 
-      <div className="hidden md:block">
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 text-white relative overflow-hidden group cursor-pointer shadow-xl">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500 opacity-20 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700 blur-2xl"></div>
-          <h4 className="font-bold text-base mb-1 relative z-10">Omnia Pro</h4>
-          <p className="text-xs text-slate-300 leading-tight mb-4 relative z-10">
-            Unlock advanced price tracking & unlimited history.
+      <div className="hidden lg:block">
+        <div className="border-2 border-[#FF6B4A] p-5 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-16 h-16 bg-[#FF6B4A] -mr-8 -mt-8 rotate-45" />
+          <h4 className="font-display text-xl text-white italic mb-2">
+            Go Pro
+          </h4>
+          <p className="text-xs text-white/60 leading-relaxed mb-4">
+            Price alerts, unlimited history, exclusive deals.
           </p>
-          <button className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs font-bold backdrop-blur-sm transition-colors relative z-10 border border-white/10">
-            Upgrade Now
+          <button className="w-full py-2 bg-[#FF6B4A] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#FF8A70] transition-colors">
+            Upgrade
           </button>
         </div>
       </div>
@@ -788,103 +511,98 @@ function Sidebar() {
 function SidebarItem({ icon, label, active }) {
   return (
     <button
-      className={`w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-all duration-200 group relative overflow-hidden ${
+      className={`w-full flex items-center gap-4 px-4 py-3 transition-all group ${
         active
-          ? "bg-violet-50 text-violet-700 font-bold"
-          : "text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium"
+          ? "bg-[#FF6B4A] text-white"
+          : "text-white/50 hover:text-white hover:bg-white/5"
       }`}
     >
-      <span className="relative z-10">{icon}</span>
-      <span className="relative z-10 hidden md:block text-sm">{label}</span>
-      {active && (
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-violet-600 rounded-r-full" />
-      )}
+      <span>{icon}</span>
+      <span className="hidden lg:block text-sm font-medium uppercase tracking-wider">
+        {label}
+      </span>
     </button>
   );
 }
 
-// ----------------------------------------------------------------------
-// Welcome Screen (Hero) - Enhanced with Image Upload
-// ----------------------------------------------------------------------
+// ═══════════════════════════════════════════════════════════════════════════
+// WELCOME SCREEN
+// ═══════════════════════════════════════════════════════════════════════════
+
 function WelcomeScreen({ onSuggestionClick, onImageUploadClick }) {
   const greeting = getGreeting();
+
   const suggestions = [
     {
-      icon: <Camera className="w-6 h-6 text-violet-500" />,
-      title: "Upload Image",
-      desc: "Search by product photo",
+      icon: <Scan className="w-7 h-7" />,
+      title: "Visual Search",
+      desc: "Upload a photo to find it",
       action: onImageUploadClick,
-      bg: "bg-violet-50 hover:bg-violet-100",
-      border: "border-violet-100",
+      accent: true,
     },
     {
-      icon: <Zap className="w-6 h-6 text-amber-500" />,
+      icon: <Zap className="w-7 h-7" />,
       title: "Latest Tech",
-      desc: "iPhone 15, Galaxy S24...",
-      query: "Show me the latest flagship phones in 2025",
-      bg: "bg-amber-50 hover:bg-amber-100",
-      border: "border-amber-100",
+      desc: "Phones, laptops, gadgets",
+      query: "Show me the latest flagship phones",
     },
     {
-      icon: <Package className="w-6 h-6 text-emerald-500" />,
-      title: "Fashion Drops",
-      desc: "Summer essentials, Sneakers",
-      query: "Trending clothes for men under 40 KWD",
-      bg: "bg-emerald-50 hover:bg-emerald-100",
-      border: "border-emerald-100",
+      icon: <Package className="w-7 h-7" />,
+      title: "Fashion",
+      desc: "Clothes, shoes, accessories",
+      query: "Trending fashion items under 40 KWD",
     },
   ];
 
   return (
-    <div className="flex flex-col items-center justify-center h-full animate-fadeIn max-w-4xl mx-auto pb-20">
-      {/* Hero Text */}
-      <div className="text-center space-y-6 mb-16 relative">
-        <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-4 py-1.5 shadow-sm mb-4 animate-slideUp">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-          <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
-            AI Shopping Assistant • Vision Enabled
-          </span>
+    <div className="flex flex-col items-center justify-center h-full animate-fade-in max-w-4xl mx-auto pb-24">
+      {/* Badge */}
+      <div className="brutal-border bg-white px-4 py-2 mb-10 animate-slide-up">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#1A1A1A]">
+          <span className="w-2 h-2 bg-[#8B9A7D] animate-pulse" />
+          AI Shopping Assistant
         </div>
+      </div>
 
-        <h1 className="text-6xl md:text-7xl font-black tracking-tight text-slate-900 leading-[1.1]">
-          {greeting}, <br />
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-600 via-fuchsia-600 to-indigo-600 animate-gradient-x">
-            What are we buying?
-          </span>
+      {/* Hero */}
+      <div className="text-center space-y-6 mb-16">
+        <h1 className="font-display text-6xl md:text-8xl text-[#1A1A1A] leading-[0.9] animate-slide-up stagger-1">
+          {greeting},<br />
+          <span className="text-stroke">what shall</span>
+          <br />
+          <span className="italic">we find?</span>
         </h1>
-        <p className="text-xl text-slate-500 max-w-2xl mx-auto font-medium">
-          Upload a product image or ask me anything. I'll find the best deals
-          across Kuwait's top stores.
+        <p className="text-lg text-[#1A1A1A]/60 max-w-md mx-auto font-medium animate-slide-up stagger-2">
+          Search across Kuwait's top stores. Upload an image or ask away.
         </p>
       </div>
 
-      {/* Suggestion Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full">
+      {/* Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
         {suggestions.map((card, idx) => (
           <button
             key={idx}
             onClick={() => {
-              if (card.action) {
-                card.action();
-              } else if (card.query) {
-                onSuggestionClick(card.query);
-              }
+              if (card.action) card.action();
+              else if (card.query) onSuggestionClick(card.query);
             }}
-            className={`relative p-8 rounded-[2rem] border transition-all duration-300 text-left group hover:-translate-y-2 hover:shadow-xl ${card.bg} ${card.border}`}
+            className={`${
+              card.accent ? "brutal-border-coral" : "brutal-border"
+            } bg-white p-8 text-left group animate-slide-up`}
+            style={{ animationDelay: `${(idx + 3) * 0.1}s` }}
           >
-            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition-transform duration-300">
+            <div
+              className={`w-14 h-14 ${
+                card.accent ? "bg-[#FF6B4A] text-white" : "bg-[#F0EBE3]"
+              } flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
+            >
               {card.icon}
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">
+            <h3 className="text-xl font-bold text-[#1A1A1A] mb-2">
               {card.title}
             </h3>
-            <p className="text-sm text-slate-600 font-medium leading-relaxed">
-              {card.desc}
-            </p>
-
-            <div className="absolute top-8 right-8 opacity-0 group-hover:opacity-100 transition-opacity -translate-x-2 group-hover:translate-x-0">
-              <ChevronRight className="w-5 h-5 text-slate-400" />
-            </div>
+            <p className="text-sm text-[#1A1A1A]/60 font-medium">{card.desc}</p>
+            <ArrowUpRight className="w-5 h-5 text-[#1A1A1A]/30 mt-4 group-hover:text-[#FF6B4A] group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
           </button>
         ))}
       </div>
@@ -892,9 +610,294 @@ function WelcomeScreen({ onSuggestionClick, onImageUploadClick }) {
   );
 }
 
-// ----------------------------------------------------------------------
-// Detailed Product Modal
-// ----------------------------------------------------------------------
+// ═══════════════════════════════════════════════════════════════════════════
+// MESSAGE BUBBLE
+// ═══════════════════════════════════════════════════════════════════════════
+
+function MessageBubble({ message, onProductClick, index }) {
+  const isUser = message.role === "user";
+
+  if (isUser) {
+    return (
+      <div className="flex justify-end animate-slide-up">
+        <div className="max-w-[80%]">
+          {message.image && (
+            <div className="mb-3 brutal-border overflow-hidden">
+              <img
+                src={message.image}
+                alt="Uploaded"
+                className="max-w-full max-h-48 object-contain bg-[#F0EBE3]"
+              />
+            </div>
+          )}
+          <div className="brutal-border bg-[#1A1A1A] text-white px-6 py-4">
+            <p className="font-medium">{message.content}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex gap-6 animate-slide-up items-start">
+      <div className="w-12 h-12 bg-[#FF6B4A] flex items-center justify-center flex-shrink-0 text-white">
+        <Sparkles className="w-5 h-5" />
+      </div>
+
+      <div className="flex-1 space-y-8 overflow-hidden">
+        {message.generatedQuery && (
+          <div className="brutal-border inline-flex items-center gap-2 bg-[#8B9A7D]/10 px-4 py-2 text-sm">
+            <Camera className="w-4 h-4 text-[#8B9A7D]" />
+            <span className="text-[#1A1A1A] font-medium">
+              Detected: <strong>{message.generatedQuery}</strong>
+            </span>
+          </div>
+        )}
+
+        <div className="text-lg text-[#1A1A1A] font-medium leading-relaxed">
+          <p className="whitespace-pre-wrap">{message.content}</p>
+        </div>
+
+        {message.products && message.products.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {message.products.map((product, idx) => {
+              const type = getCategoryType(product.category);
+              return type === "fashion" ? (
+                <FashionCard
+                  key={idx}
+                  product={product}
+                  index={idx}
+                  onClick={() => onProductClick(product)}
+                />
+              ) : (
+                <ElectronicsCard
+                  key={idx}
+                  product={product}
+                  index={idx}
+                  onClick={() => onProductClick(product)}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {message.error && (
+          <div className="brutal-border-coral bg-[#FF6B4A]/5 px-4 py-3 text-sm font-medium text-[#FF6B4A]">
+            ⚠️ {message.content}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PRODUCT CARDS
+// ═══════════════════════════════════════════════════════════════════════════
+
+function ElectronicsCard({ product, index, onClick }) {
+  const specs = product.specs ? Object.entries(product.specs).slice(0, 2) : [];
+
+  return (
+    <button
+      onClick={onClick}
+      className="brutal-border bg-white p-0 text-left w-full group animate-scale-in"
+      style={{ animationDelay: `${index * 80}ms` }}
+    >
+      {/* Image */}
+      <div className="relative aspect-square bg-[#F0EBE3] overflow-hidden">
+        <img
+          src={product.imageUrl}
+          alt={product.title}
+          className="w-full h-full object-contain p-6 mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
+          onError={(e) => (e.target.style.display = "none")}
+        />
+        <div className="absolute top-3 left-3 bg-[#1A1A1A] text-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider">
+          {formatStoreName(product.storeName)}
+        </div>
+      </div>
+
+      {/* Info */}
+      <div className="p-4 border-t-[3px] border-[#1A1A1A]">
+        <div className="text-[10px] font-bold text-[#FF6B4A] uppercase tracking-wider mb-2">
+          {product.brand}
+        </div>
+        <h3 className="font-bold text-[#1A1A1A] text-sm leading-tight line-clamp-2 mb-3 group-hover:text-[#FF6B4A] transition-colors">
+          {product.title}
+        </h3>
+
+        {specs.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {specs.map(([key, val], i) => (
+              <span
+                key={i}
+                className="text-[10px] bg-[#F0EBE3] px-2 py-1 font-medium text-[#1A1A1A]/70"
+              >
+                {val}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="flex items-center justify-between pt-3 border-t border-[#1A1A1A]/10">
+          <div>
+            <span className="text-2xl font-bold text-[#1A1A1A]">
+              {parseFloat(product.price).toFixed(3)}
+            </span>
+            <span className="text-xs font-medium text-[#1A1A1A]/50 ml-1">
+              KWD
+            </span>
+          </div>
+          <div className="w-8 h-8 bg-[#1A1A1A] text-white flex items-center justify-center group-hover:bg-[#FF6B4A] transition-colors">
+            <ChevronRight className="w-4 h-4" />
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function FashionCard({ product, index, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="brutal-border bg-white p-0 text-left w-full group animate-scale-in overflow-hidden"
+      style={{ animationDelay: `${index * 80}ms` }}
+    >
+      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#F0EBE3]">
+        <img
+          src={product.imageUrl}
+          alt={product.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          onError={(e) => (e.target.style.display = "none")}
+        />
+
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] via-transparent to-transparent opacity-80" />
+
+        {/* Store Badge */}
+        <div className="absolute top-3 right-3 bg-white text-[#1A1A1A] px-2 py-1 text-[10px] font-bold uppercase tracking-wider">
+          {formatStoreName(product.storeName)}
+        </div>
+
+        {/* Bottom Info */}
+        <div className="absolute bottom-0 left-0 p-4 w-full text-white">
+          <div className="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">
+            {product.brand}
+          </div>
+          <h3 className="font-bold text-sm line-clamp-2 mb-3">
+            {product.title}
+          </h3>
+          <div className="flex justify-between items-end">
+            <div className="text-2xl font-bold">
+              {parseFloat(product.price).toFixed(3)}
+              <span className="text-xs font-normal opacity-70 ml-1">KWD</span>
+            </div>
+            <div className="w-8 h-8 bg-white/20 backdrop-blur flex items-center justify-center group-hover:bg-[#FF6B4A] transition-colors">
+              <ExternalLink className="w-4 h-4" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════════════════════════════════
+
+function ImageUploadModal({
+  imagePreview,
+  isAnalyzing,
+  analysisStatus,
+  onAnalyze,
+  onCancel,
+}) {
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#1A1A1A]/80 backdrop-blur-sm animate-fade-in">
+      <div className="brutal-border bg-white max-w-xl w-full overflow-hidden animate-scale-in">
+        {/* Header */}
+        <div className="px-6 py-4 border-b-[3px] border-[#1A1A1A] flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#FF6B4A] flex items-center justify-center">
+              <Scan className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-[#1A1A1A]">
+                Visual Search
+              </h3>
+              <p className="text-xs text-[#1A1A1A]/60">
+                AI-powered product detection
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onCancel}
+            disabled={isAnalyzing}
+            className="p-2 hover:bg-[#F0EBE3] transition-colors disabled:opacity-50"
+          >
+            <X className="w-5 h-5 text-[#1A1A1A]" />
+          </button>
+        </div>
+
+        {/* Image */}
+        <div className="p-6">
+          <div className="relative aspect-video w-full bg-[#F0EBE3] overflow-hidden border-2 border-dashed border-[#1A1A1A]/20 mb-6">
+            <img
+              src={imagePreview}
+              alt="Selected"
+              className="w-full h-full object-contain"
+            />
+            {isAnalyzing && (
+              <div className="absolute inset-0 bg-[#1A1A1A]/70 flex items-center justify-center">
+                <div className="text-center text-white">
+                  <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3" />
+                  <p className="text-sm font-medium">{analysisStatus}</p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {analysisStatus && !isAnalyzing && (
+            <div className="mb-6 p-3 bg-[#8B9A7D]/10 border-2 border-[#8B9A7D] text-sm font-medium text-[#1A1A1A] flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[#8B9A7D]" />
+              {analysisStatus}
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <button
+              onClick={onAnalyze}
+              disabled={isAnalyzing}
+              className="flex-1 bg-[#1A1A1A] text-white py-4 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#FF6B4A] transition-colors disabled:opacity-50"
+            >
+              {isAnalyzing ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Search className="w-4 h-4" />
+                  Find Product
+                </>
+              )}
+            </button>
+            <button
+              onClick={onCancel}
+              disabled={isAnalyzing}
+              className="px-6 py-4 border-[3px] border-[#1A1A1A] text-[#1A1A1A] font-bold text-sm uppercase tracking-wider hover:bg-[#F0EBE3] transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ProductModal({ product, onClose }) {
   useEffect(() => {
     document.body.style.overflow = "hidden";
@@ -911,88 +914,82 @@ function ProductModal({ product, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#1A1A1A]/80 backdrop-blur-sm animate-fade-in"
       onClick={handleBackdropClick}
     >
-      <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-slideUp">
-        {/* Left Column: Image */}
-        <div className="w-full md:w-1/2 bg-[#F8FAFC] p-8 md:p-12 relative flex items-center justify-center group shrink-0">
-          <div className="absolute top-6 left-6 flex gap-2">
-            <div className="bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-violet-600" />
-              {formatStoreName(product.storeName)}
-            </div>
+      <div className="brutal-border bg-white max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-scale-in">
+        {/* Image Side */}
+        <div className="w-full md:w-1/2 bg-[#F0EBE3] p-8 flex items-center justify-center relative shrink-0">
+          <div className="absolute top-4 left-4 bg-[#1A1A1A] text-white px-3 py-1 text-[10px] font-bold uppercase tracking-wider flex items-center gap-2">
+            <MapPin className="w-3 h-3" />
+            {formatStoreName(product.storeName)}
           </div>
-
           <img
             src={product.imageUrl}
             alt={product.title}
-            className="max-w-full max-h-[30vh] md:max-h-[60vh] object-contain mix-blend-multiply transition-transform duration-500 group-hover:scale-105"
+            className="max-w-full max-h-[40vh] md:max-h-[60vh] object-contain mix-blend-multiply"
             onError={(e) => {
               e.target.src = "https://via.placeholder.com/400?text=No+Image";
             }}
           />
         </div>
 
-        {/* Right Column: Details */}
-        <div className="w-full md:w-1/2 flex flex-col min-h-0 bg-white overflow-hidden">
+        {/* Details Side */}
+        <div className="w-full md:w-1/2 flex flex-col min-h-0 border-l-[3px] border-[#1A1A1A]">
           {/* Header */}
-          <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-start shrink-0">
+          <div className="px-6 py-5 border-b-[3px] border-[#1A1A1A] flex justify-between items-start shrink-0">
             <div className="pr-4">
-              <div className="text-violet-600 font-bold text-xs uppercase tracking-widest mb-2">
+              <div className="text-[#FF6B4A] font-bold text-xs uppercase tracking-widest mb-2">
                 {product.brand}
               </div>
-              <h2 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight">
+              <h2 className="text-xl font-bold text-[#1A1A1A] leading-tight">
                 {product.title}
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-slate-100 rounded-full transition-colors shrink-0"
+              className="p-2 hover:bg-[#F0EBE3] transition-colors shrink-0"
             >
-              <X className="w-6 h-6 text-slate-400" />
+              <X className="w-5 h-5 text-[#1A1A1A]" />
             </button>
           </div>
 
           {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar min-h-0">
-            {/* Price Section */}
-            <div className="bg-gradient-to-r from-violet-50 to-fuchsia-50 p-6 rounded-2xl border border-violet-100 flex items-center justify-between">
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar min-h-0">
+            {/* Price */}
+            <div className="bg-[#1A1A1A] text-white p-5 flex items-center justify-between">
               <div>
-                <p className="text-xs text-slate-500 font-bold uppercase mb-1">
-                  Current Price
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">
+                  Price
                 </p>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-slate-900">
+                  <span className="text-4xl font-bold">
                     {parseFloat(product.price).toFixed(3)}
                   </span>
-                  <span className="text-sm font-bold text-slate-500">KWD</span>
+                  <span className="text-sm opacity-60">KWD</span>
                 </div>
               </div>
-              <div className="text-right hidden sm:block">
-                <p className="text-xs text-green-600 font-bold bg-green-100 px-2 py-1 rounded-md inline-block">
+              <div className="text-right">
+                <span className="bg-[#8B9A7D] text-white text-[10px] font-bold uppercase px-2 py-1">
                   In Stock
-                </p>
+                </span>
               </div>
             </div>
 
-            {/* Specs Grid */}
+            {/* Specs */}
             {specs.length > 0 && (
               <div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-amber-500" /> Key Specs
+                <h3 className="text-xs font-bold text-[#1A1A1A] uppercase tracking-widest mb-4 flex items-center gap-2">
+                  <Zap className="w-4 h-4 text-[#FF6B4A]" /> Specifications
                 </h3>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-2">
                   {specs.map(([key, value], idx) => (
-                    <div
-                      key={idx}
-                      className="p-3 bg-slate-50 rounded-xl border border-slate-100"
-                    >
-                      <div className="text-[10px] font-bold text-slate-400 uppercase mb-1">
+                    <div key={idx} className="p-3 bg-[#F0EBE3]">
+                      <div className="text-[10px] font-bold text-[#1A1A1A]/50 uppercase tracking-wider mb-1">
                         {formatSpecKey(key)}
                       </div>
                       <div
-                        className="text-sm font-bold text-slate-800 line-clamp-1"
+                        className="text-sm font-bold text-[#1A1A1A] line-clamp-1"
                         title={formatSpecValue(value)}
                       >
                         {formatSpecValue(value)}
@@ -1003,29 +1000,28 @@ function ProductModal({ product, onClose }) {
               </div>
             )}
 
-            {/* Description */}
             {product.description && (
               <div>
-                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">
+                <h3 className="text-xs font-bold text-[#1A1A1A] uppercase tracking-widest mb-3">
                   About
                 </h3>
-                <p className="text-sm text-slate-600 leading-relaxed">
+                <p className="text-sm text-[#1A1A1A]/70 leading-relaxed">
                   {product.description}
                 </p>
               </div>
             )}
           </div>
 
-          {/* Sticky Footer Action */}
-          <div className="p-6 border-t border-slate-100 bg-white shrink-0">
+          {/* Footer */}
+          <div className="p-6 border-t-[3px] border-[#1A1A1A] shrink-0">
             <a
               href={product.productUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-violet-600 transition-colors shadow-lg shadow-slate-200"
+              className="w-full bg-[#FF6B4A] text-white py-4 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#FF8A70] transition-colors"
             >
               Buy Now
-              <ExternalLink className="w-5 h-5" />
+              <ExternalLink className="w-4 h-4" />
             </a>
           </div>
         </div>
@@ -1034,26 +1030,22 @@ function ProductModal({ product, onClose }) {
   );
 }
 
-// ----------------------------------------------------------------------
-// Loading & Helpers
-// ----------------------------------------------------------------------
+// ═══════════════════════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════════════════════
+
 function LoadingIndicator() {
   return (
     <div className="flex items-center gap-4 pl-2">
-      <div className="w-8 h-8 rounded-full bg-slate-100 animate-pulse" />
-      <div className="flex gap-1">
-        <span
-          className="w-2 h-2 bg-slate-300 rounded-full animate-bounce"
-          style={{ animationDelay: "0ms" }}
-        ></span>
-        <span
-          className="w-2 h-2 bg-slate-300 rounded-full animate-bounce"
-          style={{ animationDelay: "150ms" }}
-        ></span>
-        <span
-          className="w-2 h-2 bg-slate-300 rounded-full animate-bounce"
-          style={{ animationDelay: "300ms" }}
-        ></span>
+      <div className="w-12 h-12 bg-[#F0EBE3] animate-pulse" />
+      <div className="flex gap-2">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="w-3 h-3 bg-[#1A1A1A]/20 animate-bounce-subtle"
+            style={{ animationDelay: `${i * 150}ms` }}
+          />
+        ))}
       </div>
     </div>
   );
@@ -1061,9 +1053,9 @@ function LoadingIndicator() {
 
 const getGreeting = () => {
   const hour = new Date().getHours();
-  if (hour < 12) return "Good Morning";
-  if (hour < 18) return "Good Afternoon";
-  return "Good Evening";
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 };
 
 function getCategoryType(category) {
@@ -1085,9 +1077,9 @@ function getCategoryType(category) {
     "men",
     "women",
   ];
-  if (fashionKeywords.some((keyword) => cat.includes(keyword)))
-    return "fashion";
-  return "electronics";
+  return fashionKeywords.some((kw) => cat.includes(kw))
+    ? "fashion"
+    : "electronics";
 }
 
 function formatStoreName(storeName) {
