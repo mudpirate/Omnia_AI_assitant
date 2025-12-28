@@ -717,12 +717,17 @@ async function fulltextSearchFashion(searchQuery, filters = {}, limit = 100) {
 // ============================================================================
 // ELECTRONICS RRF FUSION
 // ============================================================================
+// ============================================================================
+// ELECTRONICS RRF FUSION (Dynamic Weighting)
+// ============================================================================
 function reciprocalRankFusionElectronics(
   vectorResults,
   fulltextResults,
   k = 60
 ) {
-  console.log("\n🔀 [RRF - ELECTRONICS] Electronics-optimized fusion");
+  console.log(
+    "\n🔀 [RRF - ELECTRONICS] Electronics-optimized fusion (Dynamic Weighting)"
+  );
   console.log("   📊 Vector results:", vectorResults.length);
   console.log("   📊 Fulltext results:", fulltextResults.length);
 
@@ -770,24 +775,55 @@ function reciprocalRankFusionElectronics(
   console.log("   📊 Fulltext matches:", fulltextMatches.length);
   console.log("   📊 Vector-only matches:", vectorOnlyMatches.length);
 
-  let finalResults;
+  // ═══════════════════════════════════════════════════════════════
+  // AUTOMATIC DYNAMIC WEIGHTING
+  // ═══════════════════════════════════════════════════════════════
+  const fulltextRatio =
+    fulltextResults.length / Math.max(vectorResults.length, 1);
 
-  if (fulltextMatches.length > 0) {
-    // Electronics: Fulltext dominates (95/5)
-    finalResults = fulltextMatches.map((item) => ({
-      finalScore: item.fulltextScore * 0.95 + item.vectorScore * 0.05,
-      ...item,
-    }));
-    console.log("   ✅ Electronics: Fulltext-weighted (95/5)");
+  let fulltextWeight, vectorWeight, modeName;
+
+  if (fulltextResults.length === 0) {
+    fulltextWeight = 0;
+    vectorWeight = 0.7;
+    modeName = "Vector-only (no fulltext matches)";
+  } else if (fulltextRatio < 0.05) {
+    // <5% fulltext - likely synonym issue (headphones vs headset)
+    fulltextWeight = 0.4;
+    vectorWeight = 0.6;
+    modeName = `Vector-preferred (${(fulltextRatio * 100).toFixed(1)}%)`;
+  } else if (fulltextRatio < 0.2) {
+    // 5-20% fulltext - balanced
+    fulltextWeight = 0.6;
+    vectorWeight = 0.4;
+    modeName = `Balanced (${(fulltextRatio * 100).toFixed(1)}%)`;
   } else {
-    // Vector-only: Moderate weight for electronics
-    finalResults = vectorOnlyMatches.map((item) => ({
-      finalScore: item.vectorScore * 0.3,
-      ...item,
-    }));
-    console.log("   ✅ Electronics: Vector-only (30%)");
+    // >20% fulltext - trust fulltext
+    fulltextWeight = 0.95;
+    vectorWeight = 0.05;
+    modeName = `Fulltext-preferred (${(fulltextRatio * 100).toFixed(1)}%)`;
   }
 
+  console.log(`   🎯 Mode: ${modeName}`);
+  console.log(
+    `   ⚖️  Weights: Fulltext ${(fulltextWeight * 100).toFixed(0)}% / Vector ${(
+      vectorWeight * 100
+    ).toFixed(0)}%`
+  );
+
+  // Score and combine ALL results (both fulltext and vector-only)
+  const scoredFulltext = fulltextMatches.map((item) => ({
+    finalScore:
+      item.fulltextScore * fulltextWeight + item.vectorScore * vectorWeight,
+    ...item,
+  }));
+
+  const scoredVectorOnly = vectorOnlyMatches.map((item) => ({
+    finalScore: item.vectorScore * vectorWeight,
+    ...item,
+  }));
+
+  const finalResults = [...scoredFulltext, ...scoredVectorOnly];
   finalResults.sort((a, b) => b.finalScore - a.finalScore);
 
   const fused = finalResults.map((item) => ({
@@ -799,7 +835,6 @@ function reciprocalRankFusionElectronics(
 
   return fused;
 }
-
 // ============================================================================
 // FASHION RRF FUSION
 // ============================================================================
