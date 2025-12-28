@@ -5,7 +5,6 @@ import {
   ShoppingBag,
   ExternalLink,
   Search,
-  Sparkles,
   Zap,
   Star,
   History,
@@ -16,130 +15,106 @@ import {
   ChevronRight,
   TrendingUp,
   Camera,
-  ArrowUpRight,
   Scan,
-  CircleDot,
+  Circle,
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════
-// NEO-BRUTALIST LUXURY THEME
-// Warm sand/cream base, electric coral accents, deep charcoal, chunky borders
+// JAPANESE MINIMAL THEME
+// Zen simplicity, generous whitespace, quiet elegance, subtle warmth
 // ═══════════════════════════════════════════════════════════════════════════
 
 const customStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Noto+Sans+JP:wght@300;400;500&display=swap');
 
   :root {
-    --cream: #FAF7F2;
-    --sand: #F0EBE3;
-    --charcoal: #1A1A1A;
-    --coral: #FF6B4A;
-    --coral-light: #FF8A70;
-    --sage: #8B9A7D;
-    --navy: #2C3E50;
+    --washi: #FDFBF7;
+    --sumi: #2C2C2C;
+    --sumi-light: #4A4A4A;
+    --kinari: #F5F1E8;
+    --cha: #8B7355;
+    --aka: #C73E3A;
+    --matcha: #7D8471;
+    --usuzumi: #9E9E9E;
   }
 
   * {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 300;
   }
 
   .font-display {
-    font-family: 'Instrument Serif', serif;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
   }
 
-  @keyframes float-slow {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-20px) rotate(1deg); }
+  @keyframes breath {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
   }
 
-  @keyframes grain {
-    0%, 100% { transform: translate(0, 0); }
-    10% { transform: translate(-5%, -10%); }
-    20% { transform: translate(-15%, 5%); }
-    30% { transform: translate(7%, -25%); }
-    40% { transform: translate(-5%, 25%); }
-    50% { transform: translate(-15%, 10%); }
-    60% { transform: translate(15%, 0%); }
-    70% { transform: translate(0%, 15%); }
-    80% { transform: translate(3%, 35%); }
-    90% { transform: translate(-10%, 10%); }
-  }
-
-  @keyframes slide-up {
-    from { opacity: 0; transform: translateY(40px); }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(30px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
-  @keyframes scale-in {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
-  }
-
-  @keyframes fade-in {
+  @keyframes fade {
     from { opacity: 0; }
     to { opacity: 1; }
   }
 
-  @keyframes bounce-subtle {
+  @keyframes float-gentle {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
+    50% { transform: translateY(-8px); }
   }
 
-  .animate-float-slow { animation: float-slow 8s ease-in-out infinite; }
-  .animate-slide-up { animation: slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .animate-scale-in { animation: scale-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-  .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
-  .animate-bounce-subtle { animation: bounce-subtle 2s ease-in-out infinite; }
+  .animate-breath { animation: breath 4s ease-in-out infinite; }
+  .animate-rise { animation: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+  .animate-fade { animation: fade 0.6s ease-out forwards; }
+  .animate-float-gentle { animation: float-gentle 6s ease-in-out infinite; }
 
-  .grain-overlay::before {
-    content: '';
-    position: fixed;
-    top: -50%;
-    left: -50%;
-    right: -50%;
-    bottom: -50%;
-    width: 200%;
-    height: 200%;
-    background: transparent url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E") repeat;
-    opacity: 0.03;
-    pointer-events: none;
-    z-index: 1000;
-    animation: grain 8s steps(10) infinite;
-  }
+  .delay-1 { animation-delay: 0.1s; opacity: 0; }
+  .delay-2 { animation-delay: 0.2s; opacity: 0; }
+  .delay-3 { animation-delay: 0.3s; opacity: 0; }
 
-  .brutal-border {
-    border: 3px solid var(--charcoal);
-    box-shadow: 6px 6px 0 var(--charcoal);
-    transition: all 0.2s ease;
-  }
-
-  .brutal-border:hover {
-    box-shadow: 8px 8px 0 var(--charcoal);
-    transform: translate(-2px, -2px);
-  }
-
-  .brutal-border-coral {
-    border: 3px solid var(--coral);
-    box-shadow: 6px 6px 0 var(--coral);
-  }
-
-  .brutal-border-coral:hover {
-    box-shadow: 8px 8px 0 var(--coral);
-    transform: translate(-2px, -2px);
-  }
-
-  .text-stroke {
-    -webkit-text-stroke: 1.5px var(--charcoal);
-    color: transparent;
+  .ink-wash {
+    background: radial-gradient(ellipse at 30% 0%, rgba(44, 44, 44, 0.02) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 100%, rgba(139, 115, 85, 0.03) 0%, transparent 50%);
   }
 
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-  .stagger-1 { animation-delay: 0.1s; }
-  .stagger-2 { animation-delay: 0.2s; }
-  .stagger-3 { animation-delay: 0.3s; }
-  .stagger-4 { animation-delay: 0.4s; }
+  .hover-line {
+    position: relative;
+  }
+  .hover-line::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 1px;
+    background: var(--sumi);
+    transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .hover-line:hover::after {
+    width: 100%;
+  }
+
+  .card-lift {
+    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease;
+  }
+  .card-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px -20px rgba(44, 44, 44, 0.15);
+  }
+
+  .enso {
+    border: 1px solid var(--usuzumi);
+    border-radius: 50%;
+    opacity: 0.2;
+  }
 `;
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -159,17 +134,12 @@ function App() {
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
   const handleSend = async (text = input) => {
     if (!text.trim() || isLoading) return;
-
     const userMessage = text.trim();
     setInput("");
     setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
@@ -181,13 +151,10 @@ function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: userMessage, sessionId }),
       });
-
       if (!response.ok)
         throw new Error(`HTTP error! status: ${response.status}`);
-
       const data = await response.json();
       if (data.sessionId && !sessionId) setSessionId(data.sessionId);
-
       setMessages((prev) => [
         ...prev,
         {
@@ -197,7 +164,6 @@ function App() {
         },
       ]);
     } catch (error) {
-      console.error("Error:", error);
       setMessages((prev) => [
         ...prev,
         {
@@ -218,15 +184,10 @@ function App() {
 
   const processImage = (file) => {
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-    if (!validTypes.includes(file.type)) {
-      alert("Please upload a JPEG, PNG, or WebP image");
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      alert("Image size must be less than 10MB");
-      return;
-    }
-
+    if (!validTypes.includes(file.type))
+      return alert("Please upload a JPEG, PNG, or WebP image");
+    if (file.size > 10 * 1024 * 1024)
+      return alert("Image size must be less than 10MB");
     setSelectedImage(file);
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -239,29 +200,26 @@ function App() {
   const analyzeAndSearch = async () => {
     if (!selectedImage) return;
     setIsAnalyzingImage(true);
-    setAnalysisStatus("Scanning your image...");
+    setAnalysisStatus("Analyzing image...");
 
     try {
       const formData = new FormData();
       formData.append("image", selectedImage);
-
       const analysisResponse = await fetch(`${API_URL}/analyze-image`, {
         method: "POST",
         body: formData,
       });
-
       const analysisData = await analysisResponse.json();
       if (!analysisData.success)
         throw new Error(analysisData.error || "Analysis failed");
 
       const searchQuery = analysisData.query;
-      setAnalysisStatus(`Found: "${searchQuery}"`);
-
+      setAnalysisStatus(`Searching for "${searchQuery}"`);
       setMessages((prev) => [
         ...prev,
         {
           role: "user",
-          content: `📷 Image search: "${searchQuery}"`,
+          content: `Image search: "${searchQuery}"`,
           image: imagePreview,
         },
       ]);
@@ -275,11 +233,9 @@ function App() {
           sessionId: sessionId || "default",
         }),
       });
-
       const searchData = await searchResponse.json();
       if (searchData.sessionId && !sessionId)
         setSessionId(searchData.sessionId);
-
       setMessages((prev) => [
         ...prev,
         {
@@ -289,15 +245,13 @@ function App() {
           generatedQuery: searchQuery,
         },
       ]);
-
       clearImage();
     } catch (error) {
-      console.error("Image search error:", error);
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: `Failed to analyze image: ${error.message}`,
+          content: `Image analysis failed: ${error.message}`,
           error: true,
         },
       ]);
@@ -323,47 +277,38 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen bg-[#FAF7F2] overflow-hidden grain-overlay">
+    <div className="flex h-screen bg-[#FDFBF7] overflow-hidden">
       <style>{customStyles}</style>
-
-      {/* Sidebar */}
       <Sidebar />
+      <main className="flex-1 flex flex-col relative h-full ink-wash">
+        <div className="absolute top-32 right-24 w-40 h-40 enso animate-float-gentle pointer-events-none" />
+        <div className="absolute bottom-60 left-[20%] w-2 h-2 rounded-full bg-[#C73E3A]/30 pointer-events-none" />
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col relative h-full">
-        {/* Decorative Elements */}
-        <div className="absolute top-20 right-20 w-32 h-32 border-[3px] border-[#FF6B4A]/30 rounded-full animate-float-slow pointer-events-none" />
-        <div className="absolute bottom-40 left-[30%] w-20 h-20 bg-[#8B9A7D]/10 rotate-45 pointer-events-none" />
-
-        {/* Header */}
-        <header className="absolute top-6 right-6 z-20">
-          <div className="brutal-border bg-white px-4 py-2 flex items-center gap-3">
-            <div className="w-8 h-8 bg-[#FF6B4A] flex items-center justify-center">
-              <span className="text-white text-xs font-bold">G</span>
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-xs font-bold text-[#1A1A1A]">Guest</p>
-              <p className="text-[10px] text-[#1A1A1A]/60">Kuwait</p>
+        <header className="absolute top-8 right-8 z-20">
+          <div className="flex items-center gap-4">
+            <p className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase">
+              Guest
+            </p>
+            <div className="w-8 h-8 rounded-full bg-[#F5F1E8] flex items-center justify-center">
+              <span className="text-[10px] text-[#8B7355]">G</span>
             </div>
           </div>
         </header>
 
-        {/* Chat Area */}
         <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth relative z-10">
-          <div className="max-w-5xl mx-auto px-6 lg:px-12 py-12 min-h-full flex flex-col">
+          <div className="max-w-4xl mx-auto px-8 lg:px-16 py-16 min-h-full flex flex-col">
             {messages.length === 0 ? (
               <WelcomeScreen
                 onSuggestionClick={handleSend}
                 onImageUploadClick={() => fileInputRef.current?.click()}
               />
             ) : (
-              <div className="space-y-12 pb-48 pt-16">
+              <div className="space-y-16 pb-48 pt-20">
                 {messages.map((message, index) => (
                   <MessageBubble
                     key={index}
                     message={message}
                     onProductClick={setSelectedProduct}
-                    index={index}
                   />
                 ))}
                 {isLoading && <LoadingIndicator />}
@@ -373,15 +318,12 @@ function App() {
           </div>
         </div>
 
-        {/* Product Modal */}
         {selectedProduct && (
           <ProductModal
             product={selectedProduct}
             onClose={() => setSelectedProduct(null)}
           />
         )}
-
-        {/* Image Upload Modal */}
         {showImageUpload && imagePreview && (
           <ImageUploadModal
             imagePreview={imagePreview}
@@ -392,49 +334,42 @@ function App() {
           />
         )}
 
-        {/* Input Bar */}
-        <div className="absolute bottom-8 left-0 right-0 px-6 z-30">
-          <div className="max-w-3xl mx-auto">
-            <div className="brutal-border bg-white p-2 flex items-center gap-2">
+        <div className="absolute bottom-10 left-0 right-0 px-8 z-30">
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-white/80 backdrop-blur-sm border-b border-[#2C2C2C]/10 flex items-center gap-4 px-2 py-3">
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading || isAnalyzingImage}
-                className="w-12 h-12 bg-[#F0EBE3] hover:bg-[#FF6B4A] hover:text-white flex items-center justify-center transition-colors disabled:opacity-50"
-                title="Upload image"
+                className="p-3 text-[#9E9E9E] hover:text-[#8B7355] transition-colors duration-300 disabled:opacity-30"
               >
-                <Camera className="w-5 h-5" />
+                <Camera className="w-5 h-5" strokeWidth={1.5} />
               </button>
-
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="What are you looking for?"
-                className="flex-1 bg-transparent border-none outline-none text-[#1A1A1A] placeholder-[#1A1A1A]/40 text-lg font-medium h-12 px-2"
+                placeholder="What are you looking for..."
+                className="flex-1 bg-transparent border-none outline-none text-[#2C2C2C] placeholder-[#9E9E9E] text-base tracking-wide h-10"
                 disabled={isLoading || isAnalyzingImage}
                 autoFocus
               />
-
               <button
                 onClick={() => handleSend()}
                 disabled={isLoading || !input.trim() || isAnalyzingImage}
-                className="w-12 h-12 bg-[#1A1A1A] text-white hover:bg-[#FF6B4A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                className="p-3 text-[#2C2C2C] hover:text-[#C73E3A] disabled:opacity-30 transition-colors duration-300"
               >
                 {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <Loader2 className="w-5 h-5 animate-spin" strokeWidth={1.5} />
                 ) : (
-                  <Send className="w-5 h-5" />
+                  <Send className="w-5 h-5" strokeWidth={1.5} />
                 )}
               </button>
             </div>
-
-            <div className="flex items-center justify-center gap-4 mt-4 text-[10px] font-bold tracking-widest text-[#1A1A1A]/40 uppercase">
-              <span>Omnia AI</span>
-              <CircleDot className="w-2 h-2" />
+            <div className="flex items-center justify-center gap-6 mt-6 text-[10px] tracking-[0.3em] text-[#9E9E9E] uppercase">
+              <span>Omnia</span>
+              <span className="w-1 h-1 rounded-full bg-[#9E9E9E]/30" />
               <span>Kuwait</span>
-              <CircleDot className="w-2 h-2" />
-              <span>Multi-Store</span>
             </div>
           </div>
         </div>
@@ -451,158 +386,140 @@ function App() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SIDEBAR
-// ═══════════════════════════════════════════════════════════════════════════
-
 function Sidebar() {
   return (
-    <aside className="w-20 lg:w-72 bg-[#1A1A1A] flex flex-col justify-between py-8 px-4 hidden md:flex z-40">
+    <aside className="w-20 lg:w-64 bg-[#F5F1E8] flex flex-col justify-between py-12 px-4 lg:px-8 hidden md:flex z-40 border-r border-[#2C2C2C]/5">
       <div>
-        {/* Logo */}
-        <div className="flex items-center gap-4 px-2 mb-16">
-          <div className="w-12 h-12 bg-[#FF6B4A] flex items-center justify-center">
-            <ShoppingBag className="w-6 h-6 text-white" />
+        <div className="flex items-center gap-4 mb-20">
+          <div className="w-10 h-10 rounded-full border border-[#2C2C2C]/20 flex items-center justify-center">
+            <ShoppingBag className="w-4 h-4 text-[#2C2C2C]" strokeWidth={1.5} />
           </div>
-          <div className="hidden lg:block">
-            <span className="font-display text-3xl text-white italic">
-              Omnia
-            </span>
-          </div>
+          <span className="hidden lg:block font-display text-2xl text-[#2C2C2C] tracking-wide">
+            Omnia
+          </span>
         </div>
-
-        <nav className="space-y-2">
+        <nav className="space-y-1">
           <SidebarItem
-            icon={<Search className="w-5 h-5" />}
+            icon={<Search className="w-4 h-4" strokeWidth={1.5} />}
             label="Discover"
+            sublabel="Search products"
             active
           />
           <SidebarItem
-            icon={<LayoutGrid className="w-5 h-5" />}
+            icon={<LayoutGrid className="w-4 h-4" strokeWidth={1.5} />}
             label="Categories"
+            sublabel="Browse all"
           />
           <SidebarItem
-            icon={<TrendingUp className="w-5 h-5" />}
+            icon={<TrendingUp className="w-4 h-4" strokeWidth={1.5} />}
             label="Trending"
+            sublabel="Popular now"
           />
-          <SidebarItem icon={<History className="w-5 h-5" />} label="History" />
-          <SidebarItem icon={<Star className="w-5 h-5" />} label="Saved" />
+          <SidebarItem
+            icon={<History className="w-4 h-4" strokeWidth={1.5} />}
+            label="History"
+            sublabel="Past searches"
+          />
+          <SidebarItem
+            icon={<Star className="w-4 h-4" strokeWidth={1.5} />}
+            label="Saved"
+            sublabel="Your favorites"
+          />
         </nav>
       </div>
-
-      <div className="hidden lg:block">
-        <div className="border-2 border-[#FF6B4A] p-5 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-16 h-16 bg-[#FF6B4A] -mr-8 -mt-8 rotate-45" />
-          <h4 className="font-display text-xl text-white italic mb-2">
-            Go Pro
-          </h4>
-          <p className="text-xs text-white/60 leading-relaxed mb-4">
-            Price alerts, unlimited history, exclusive deals.
-          </p>
-          <button className="w-full py-2 bg-[#FF6B4A] text-white text-xs font-bold uppercase tracking-wider hover:bg-[#FF8A70] transition-colors">
-            Upgrade
-          </button>
-        </div>
+      <div className="hidden lg:block border-t border-[#2C2C2C]/10 pt-8">
+        <p className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase mb-3">
+          Pro
+        </p>
+        <p className="text-xs text-[#4A4A4A] leading-relaxed mb-4">
+          Unlock price tracking and unlimited history
+        </p>
+        <button className="text-xs text-[#8B7355] hover-line">Upgrade →</button>
       </div>
     </aside>
   );
 }
 
-function SidebarItem({ icon, label, active }) {
+function SidebarItem({ icon, label, sublabel, active }) {
   return (
     <button
-      className={`w-full flex items-center gap-4 px-4 py-3 transition-all group ${
-        active
-          ? "bg-[#FF6B4A] text-white"
-          : "text-white/50 hover:text-white hover:bg-white/5"
+      className={`w-full flex items-center gap-4 px-4 py-3 transition-all duration-300 ${
+        active ? "text-[#2C2C2C]" : "text-[#9E9E9E] hover:text-[#4A4A4A]"
       }`}
     >
-      <span>{icon}</span>
-      <span className="hidden lg:block text-sm font-medium uppercase tracking-wider">
-        {label}
-      </span>
+      {icon}
+      <div className="hidden lg:block text-left">
+        <span className="block text-sm">{label}</span>
+        <span className="block text-[10px] tracking-wider text-[#9E9E9E]">
+          {sublabel}
+        </span>
+      </div>
+      {active && <div className="ml-auto w-1 h-1 rounded-full bg-[#C73E3A]" />}
     </button>
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// WELCOME SCREEN
-// ═══════════════════════════════════════════════════════════════════════════
-
 function WelcomeScreen({ onSuggestionClick, onImageUploadClick }) {
-  const greeting = getGreeting();
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   const suggestions = [
     {
-      icon: <Scan className="w-7 h-7" />,
+      icon: <Scan className="w-5 h-5" strokeWidth={1.5} />,
       title: "Visual Search",
-      desc: "Upload a photo to find it",
+      subtitle: "Image Recognition",
+      desc: "Find products from photos",
       action: onImageUploadClick,
-      accent: true,
     },
     {
-      icon: <Zap className="w-7 h-7" />,
-      title: "Latest Tech",
-      desc: "Phones, laptops, gadgets",
+      icon: <Zap className="w-5 h-5" strokeWidth={1.5} />,
+      title: "Technology",
+      subtitle: "Electronics",
+      desc: "Latest devices & gadgets",
       query: "Show me the latest flagship phones",
     },
     {
-      icon: <Package className="w-7 h-7" />,
+      icon: <Package className="w-5 h-5" strokeWidth={1.5} />,
       title: "Fashion",
+      subtitle: "Style",
       desc: "Clothes, shoes, accessories",
       query: "Trending fashion items under 40 KWD",
     },
   ];
 
   return (
-    <div className="flex flex-col items-center justify-center h-full animate-fade-in max-w-4xl mx-auto pb-24">
-      {/* Badge */}
-      <div className="brutal-border bg-white px-4 py-2 mb-10 animate-slide-up">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#1A1A1A]">
-          <span className="w-2 h-2 bg-[#8B9A7D] animate-pulse" />
-          AI Shopping Assistant
-        </div>
-      </div>
-
-      {/* Hero */}
-      <div className="text-center space-y-6 mb-16">
-        <h1 className="font-display text-6xl md:text-8xl text-[#1A1A1A] leading-[0.9] animate-slide-up stagger-1">
-          {greeting},<br />
-          <span className="text-stroke">what shall</span>
-          <br />
-          <span className="italic">we find?</span>
+    <div className="flex flex-col items-center justify-center h-full animate-fade max-w-3xl mx-auto pb-32">
+      <div className="w-24 h-24 enso mb-12 animate-breath" />
+      <div className="text-center space-y-6 mb-20">
+        <p className="text-[10px] tracking-[0.4em] text-[#9E9E9E] uppercase animate-rise delay-1">
+          {greeting}
+        </p>
+        <h1 className="font-display text-5xl md:text-7xl text-[#2C2C2C] leading-[1.1] tracking-wide animate-rise delay-2">
+          What are you looking for?
         </h1>
-        <p className="text-lg text-[#1A1A1A]/60 max-w-md mx-auto font-medium animate-slide-up stagger-2">
-          Search across Kuwait's top stores. Upload an image or ask away.
+        <p className="text-lg text-[#9E9E9E] max-w-md mx-auto tracking-wide animate-rise delay-3">
+          Search across Kuwait's top stores
         </p>
       </div>
-
-      {/* Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
         {suggestions.map((card, idx) => (
           <button
             key={idx}
-            onClick={() => {
-              if (card.action) card.action();
-              else if (card.query) onSuggestionClick(card.query);
-            }}
-            className={`${
-              card.accent ? "brutal-border-coral" : "brutal-border"
-            } bg-white p-8 text-left group animate-slide-up`}
-            style={{ animationDelay: `${(idx + 3) * 0.1}s` }}
+            onClick={() =>
+              card.action ? card.action() : onSuggestionClick(card.query)
+            }
+            className="group text-left p-8 bg-white/50 hover:bg-white border border-[#2C2C2C]/5 hover:border-[#2C2C2C]/10 transition-all duration-500 card-lift animate-rise"
+            style={{ animationDelay: `${(idx + 4) * 0.1}s`, opacity: 0 }}
           >
-            <div
-              className={`w-14 h-14 ${
-                card.accent ? "bg-[#FF6B4A] text-white" : "bg-[#F0EBE3]"
-              } flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}
-            >
+            <div className="w-12 h-12 rounded-full border border-[#2C2C2C]/10 flex items-center justify-center mb-6 text-[#8B7355] group-hover:border-[#C73E3A]/30 group-hover:text-[#C73E3A] transition-all duration-300">
               {card.icon}
             </div>
-            <h3 className="text-xl font-bold text-[#1A1A1A] mb-2">
-              {card.title}
-            </h3>
-            <p className="text-sm text-[#1A1A1A]/60 font-medium">{card.desc}</p>
-            <ArrowUpRight className="w-5 h-5 text-[#1A1A1A]/30 mt-4 group-hover:text-[#FF6B4A] group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
+            <h3 className="text-base text-[#2C2C2C] mb-1">{card.title}</h3>
+            <p className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase mb-3">
+              {card.subtitle}
+            </p>
+            <p className="text-sm text-[#9E9E9E]">{card.desc}</p>
           </button>
         ))}
       </div>
@@ -610,28 +527,24 @@ function WelcomeScreen({ onSuggestionClick, onImageUploadClick }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// MESSAGE BUBBLE
-// ═══════════════════════════════════════════════════════════════════════════
-
-function MessageBubble({ message, onProductClick, index }) {
+function MessageBubble({ message, onProductClick }) {
   const isUser = message.role === "user";
 
   if (isUser) {
     return (
-      <div className="flex justify-end animate-slide-up">
-        <div className="max-w-[80%]">
+      <div className="flex justify-end animate-rise">
+        <div className="max-w-[75%]">
           {message.image && (
-            <div className="mb-3 brutal-border overflow-hidden">
+            <div className="mb-4 overflow-hidden border border-[#2C2C2C]/10">
               <img
                 src={message.image}
                 alt="Uploaded"
-                className="max-w-full max-h-48 object-contain bg-[#F0EBE3]"
+                className="max-w-full max-h-48 object-contain bg-[#F5F1E8]"
               />
             </div>
           )}
-          <div className="brutal-border bg-[#1A1A1A] text-white px-6 py-4">
-            <p className="font-medium">{message.content}</p>
+          <div className="bg-[#2C2C2C] text-white/90 px-6 py-4">
+            <p className="text-sm tracking-wide">{message.content}</p>
           </div>
         </div>
       </div>
@@ -639,51 +552,38 @@ function MessageBubble({ message, onProductClick, index }) {
   }
 
   return (
-    <div className="flex gap-6 animate-slide-up items-start">
-      <div className="w-12 h-12 bg-[#FF6B4A] flex items-center justify-center flex-shrink-0 text-white">
-        <Sparkles className="w-5 h-5" />
+    <div className="flex gap-8 animate-rise items-start">
+      <div className="w-8 h-8 rounded-full border border-[#C73E3A]/30 flex items-center justify-center flex-shrink-0 text-[#C73E3A]">
+        <Circle className="w-3 h-3" fill="currentColor" strokeWidth={0} />
       </div>
-
-      <div className="flex-1 space-y-8 overflow-hidden">
+      <div className="flex-1 space-y-10 overflow-hidden">
         {message.generatedQuery && (
-          <div className="brutal-border inline-flex items-center gap-2 bg-[#8B9A7D]/10 px-4 py-2 text-sm">
-            <Camera className="w-4 h-4 text-[#8B9A7D]" />
-            <span className="text-[#1A1A1A] font-medium">
-              Detected: <strong>{message.generatedQuery}</strong>
+          <div className="inline-flex items-center gap-3 text-sm text-[#9E9E9E]">
+            <Camera className="w-4 h-4" strokeWidth={1.5} />
+            <span>
+              Detected:{" "}
+              <span className="text-[#2C2C2C]">{message.generatedQuery}</span>
             </span>
           </div>
         )}
-
-        <div className="text-lg text-[#1A1A1A] font-medium leading-relaxed">
+        <div className="text-base text-[#4A4A4A] leading-relaxed tracking-wide">
           <p className="whitespace-pre-wrap">{message.content}</p>
         </div>
-
-        {message.products && message.products.length > 0 && (
+        {message.products?.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {message.products.map((product, idx) => {
-              const type = getCategoryType(product.category);
-              return type === "fashion" ? (
-                <FashionCard
-                  key={idx}
-                  product={product}
-                  index={idx}
-                  onClick={() => onProductClick(product)}
-                />
-              ) : (
-                <ElectronicsCard
-                  key={idx}
-                  product={product}
-                  index={idx}
-                  onClick={() => onProductClick(product)}
-                />
-              );
-            })}
+            {message.products.map((product, idx) => (
+              <ProductCard
+                key={idx}
+                product={product}
+                index={idx}
+                onClick={() => onProductClick(product)}
+              />
+            ))}
           </div>
         )}
-
         {message.error && (
-          <div className="brutal-border-coral bg-[#FF6B4A]/5 px-4 py-3 text-sm font-medium text-[#FF6B4A]">
-            ⚠️ {message.content}
+          <div className="text-sm text-[#C73E3A]/80 border-l-2 border-[#C73E3A]/30 pl-4">
+            {message.content}
           </div>
         )}
       </div>
@@ -691,121 +591,105 @@ function MessageBubble({ message, onProductClick, index }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PRODUCT CARDS
-// ═══════════════════════════════════════════════════════════════════════════
-
-function ElectronicsCard({ product, index, onClick }) {
+function ProductCard({ product, index, onClick }) {
   const specs = product.specs ? Object.entries(product.specs).slice(0, 2) : [];
+  const isFashion = getCategoryType(product.category) === "fashion";
+
+  if (isFashion) {
+    return (
+      <button
+        onClick={onClick}
+        className="group bg-white border border-[#2C2C2C]/5 text-left w-full card-lift animate-rise overflow-hidden"
+        style={{ animationDelay: `${index * 60}ms`, opacity: 0 }}
+      >
+        <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#F5F1E8]">
+          <img
+            src={product.imageUrl}
+            alt={product.title}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            onError={(e) => (e.target.style.display = "none")}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#2C2C2C]/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+          <div className="absolute top-4 right-4 text-[10px] tracking-[0.15em] text-[#9E9E9E] uppercase bg-white/90 px-2 py-1">
+            {formatStoreName(product.storeName)}
+          </div>
+          <div className="absolute bottom-0 left-0 p-5 w-full text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+            <div className="font-display text-2xl">
+              {parseFloat(product.price).toFixed(3)}
+              <span className="text-xs opacity-70 ml-2">KWD</span>
+            </div>
+          </div>
+        </div>
+        <div className="p-5">
+          <div className="text-[10px] tracking-[0.2em] text-[#8B7355] uppercase mb-2">
+            {product.brand}
+          </div>
+          <h3 className="text-sm text-[#2C2C2C] line-clamp-2 group-hover:text-[#C73E3A] transition-colors duration-300">
+            {product.title}
+          </h3>
+          <div className="mt-3 font-display text-lg text-[#2C2C2C]">
+            {parseFloat(product.price).toFixed(3)}{" "}
+            <span className="text-[10px] text-[#9E9E9E]">KWD</span>
+          </div>
+        </div>
+      </button>
+    );
+  }
 
   return (
     <button
       onClick={onClick}
-      className="brutal-border bg-white p-0 text-left w-full group animate-scale-in"
-      style={{ animationDelay: `${index * 80}ms` }}
+      className="group bg-white border border-[#2C2C2C]/5 text-left w-full card-lift animate-rise"
+      style={{ animationDelay: `${index * 60}ms`, opacity: 0 }}
     >
-      {/* Image */}
-      <div className="relative aspect-square bg-[#F0EBE3] overflow-hidden">
+      <div className="relative aspect-square bg-[#F5F1E8] overflow-hidden">
         <img
           src={product.imageUrl}
           alt={product.title}
-          className="w-full h-full object-contain p-6 mix-blend-multiply group-hover:scale-110 transition-transform duration-500"
+          className="w-full h-full object-contain p-8 mix-blend-multiply group-hover:scale-105 transition-transform duration-700"
           onError={(e) => (e.target.style.display = "none")}
         />
-        <div className="absolute top-3 left-3 bg-[#1A1A1A] text-white px-2 py-1 text-[10px] font-bold uppercase tracking-wider">
+        <div className="absolute top-4 left-4 text-[10px] tracking-[0.15em] text-[#9E9E9E] uppercase">
           {formatStoreName(product.storeName)}
         </div>
       </div>
-
-      {/* Info */}
-      <div className="p-4 border-t-[3px] border-[#1A1A1A]">
-        <div className="text-[10px] font-bold text-[#FF6B4A] uppercase tracking-wider mb-2">
+      <div className="p-5 border-t border-[#2C2C2C]/5">
+        <div className="text-[10px] tracking-[0.2em] text-[#8B7355] uppercase mb-2">
           {product.brand}
         </div>
-        <h3 className="font-bold text-[#1A1A1A] text-sm leading-tight line-clamp-2 mb-3 group-hover:text-[#FF6B4A] transition-colors">
+        <h3 className="text-sm text-[#2C2C2C] leading-snug line-clamp-2 mb-4 group-hover:text-[#C73E3A] transition-colors duration-300">
           {product.title}
         </h3>
-
         {specs.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
-            {specs.map(([key, val], i) => (
+            {specs.map(([k, v], i) => (
               <span
                 key={i}
-                className="text-[10px] bg-[#F0EBE3] px-2 py-1 font-medium text-[#1A1A1A]/70"
+                className="text-[10px] text-[#9E9E9E] border border-[#2C2C2C]/10 px-2 py-1"
               >
-                {val}
+                {v}
               </span>
             ))}
           </div>
         )}
-
-        <div className="flex items-center justify-between pt-3 border-t border-[#1A1A1A]/10">
+        <div className="flex items-end justify-between pt-4 border-t border-[#2C2C2C]/5">
           <div>
-            <span className="text-2xl font-bold text-[#1A1A1A]">
+            <span className="font-display text-2xl text-[#2C2C2C]">
               {parseFloat(product.price).toFixed(3)}
             </span>
-            <span className="text-xs font-medium text-[#1A1A1A]/50 ml-1">
+            <span className="text-[10px] text-[#9E9E9E] ml-2 tracking-wider">
               KWD
             </span>
           </div>
-          <div className="w-8 h-8 bg-[#1A1A1A] text-white flex items-center justify-center group-hover:bg-[#FF6B4A] transition-colors">
-            <ChevronRight className="w-4 h-4" />
-          </div>
+          <ChevronRight
+            className="w-4 h-4 text-[#9E9E9E] group-hover:text-[#C73E3A] group-hover:translate-x-1 transition-all duration-300"
+            strokeWidth={1.5}
+          />
         </div>
       </div>
     </button>
   );
 }
-
-function FashionCard({ product, index, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className="brutal-border bg-white p-0 text-left w-full group animate-scale-in overflow-hidden"
-      style={{ animationDelay: `${index * 80}ms` }}
-    >
-      <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#F0EBE3]">
-        <img
-          src={product.imageUrl}
-          alt={product.title}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          onError={(e) => (e.target.style.display = "none")}
-        />
-
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1A1A1A] via-transparent to-transparent opacity-80" />
-
-        {/* Store Badge */}
-        <div className="absolute top-3 right-3 bg-white text-[#1A1A1A] px-2 py-1 text-[10px] font-bold uppercase tracking-wider">
-          {formatStoreName(product.storeName)}
-        </div>
-
-        {/* Bottom Info */}
-        <div className="absolute bottom-0 left-0 p-4 w-full text-white">
-          <div className="text-[10px] font-bold opacity-70 uppercase tracking-widest mb-1">
-            {product.brand}
-          </div>
-          <h3 className="font-bold text-sm line-clamp-2 mb-3">
-            {product.title}
-          </h3>
-          <div className="flex justify-between items-end">
-            <div className="text-2xl font-bold">
-              {parseFloat(product.price).toFixed(3)}
-              <span className="text-xs font-normal opacity-70 ml-1">KWD</span>
-            </div>
-            <div className="w-8 h-8 bg-white/20 backdrop-blur flex items-center justify-center group-hover:bg-[#FF6B4A] transition-colors">
-              <ExternalLink className="w-4 h-4" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </button>
-  );
-}
-
-// ═══════════════════════════════════════════════════════════════════════════
-// MODALS
-// ═══════════════════════════════════════════════════════════════════════════
 
 function ImageUploadModal({
   imagePreview,
@@ -815,71 +699,61 @@ function ImageUploadModal({
   onCancel,
 }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#1A1A1A]/80 backdrop-blur-sm animate-fade-in">
-      <div className="brutal-border bg-white max-w-xl w-full overflow-hidden animate-scale-in">
-        {/* Header */}
-        <div className="px-6 py-4 border-b-[3px] border-[#1A1A1A] flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-[#FF6B4A] flex items-center justify-center">
-              <Scan className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-[#1A1A1A]">
-                Visual Search
-              </h3>
-              <p className="text-xs text-[#1A1A1A]/60">
-                AI-powered product detection
-              </p>
-            </div>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-8 bg-[#FDFBF7]/95 backdrop-blur-sm animate-fade">
+      <div className="bg-white border border-[#2C2C2C]/10 max-w-lg w-full overflow-hidden animate-rise shadow-2xl shadow-[#2C2C2C]/5">
+        <div className="px-8 py-6 border-b border-[#2C2C2C]/5 flex justify-between items-center">
+          <div>
+            <h3 className="text-base text-[#2C2C2C] mb-1">Visual Search</h3>
+            <p className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase">
+              AI-powered recognition
+            </p>
           </div>
           <button
             onClick={onCancel}
             disabled={isAnalyzing}
-            className="p-2 hover:bg-[#F0EBE3] transition-colors disabled:opacity-50"
+            className="p-2 text-[#9E9E9E] hover:text-[#2C2C2C] transition-colors disabled:opacity-30"
           >
-            <X className="w-5 h-5 text-[#1A1A1A]" />
+            <X className="w-5 h-5" strokeWidth={1.5} />
           </button>
         </div>
-
-        {/* Image */}
-        <div className="p-6">
-          <div className="relative aspect-video w-full bg-[#F0EBE3] overflow-hidden border-2 border-dashed border-[#1A1A1A]/20 mb-6">
+        <div className="p-8">
+          <div className="relative aspect-video w-full bg-[#F5F1E8] overflow-hidden mb-8">
             <img
               src={imagePreview}
               alt="Selected"
               className="w-full h-full object-contain"
             />
             {isAnalyzing && (
-              <div className="absolute inset-0 bg-[#1A1A1A]/70 flex items-center justify-center">
-                <div className="text-center text-white">
-                  <Loader2 className="w-10 h-10 animate-spin mx-auto mb-3" />
-                  <p className="text-sm font-medium">{analysisStatus}</p>
+              <div className="absolute inset-0 bg-[#FDFBF7]/90 flex items-center justify-center">
+                <div className="text-center">
+                  <Loader2
+                    className="w-8 h-8 animate-spin mx-auto mb-4 text-[#8B7355]"
+                    strokeWidth={1.5}
+                  />
+                  <p className="text-sm text-[#4A4A4A]">{analysisStatus}</p>
                 </div>
               </div>
             )}
           </div>
-
           {analysisStatus && !isAnalyzing && (
-            <div className="mb-6 p-3 bg-[#8B9A7D]/10 border-2 border-[#8B9A7D] text-sm font-medium text-[#1A1A1A] flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#8B9A7D]" />
+            <div className="mb-8 text-sm text-[#4A4A4A] text-center">
               {analysisStatus}
             </div>
           )}
-
-          <div className="flex gap-3">
+          <div className="flex gap-4">
             <button
               onClick={onAnalyze}
               disabled={isAnalyzing}
-              className="flex-1 bg-[#1A1A1A] text-white py-4 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#FF6B4A] transition-colors disabled:opacity-50"
+              className="flex-1 bg-[#2C2C2C] text-white py-4 text-sm tracking-wider flex items-center justify-center gap-3 hover:bg-[#4A4A4A] transition-colors disabled:opacity-30"
             >
               {isAnalyzing ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
                   Analyzing...
                 </>
               ) : (
                 <>
-                  <Search className="w-4 h-4" />
+                  <Search className="w-4 h-4" strokeWidth={1.5} />
                   Find Product
                 </>
               )}
@@ -887,7 +761,7 @@ function ImageUploadModal({
             <button
               onClick={onCancel}
               disabled={isAnalyzing}
-              className="px-6 py-4 border-[3px] border-[#1A1A1A] text-[#1A1A1A] font-bold text-sm uppercase tracking-wider hover:bg-[#F0EBE3] transition-colors disabled:opacity-50"
+              className="px-8 py-4 border border-[#2C2C2C]/20 text-[#4A4A4A] text-sm tracking-wider hover:border-[#2C2C2C]/40 transition-colors disabled:opacity-30"
             >
               Cancel
             </button>
@@ -905,123 +779,102 @@ function ProductModal({ product, onClose }) {
       document.body.style.overflow = "unset";
     };
   }, []);
-
-  const handleBackdropClick = (e) => {
-    if (e.target === e.currentTarget) onClose();
-  };
-
   const specs = product.specs ? Object.entries(product.specs) : [];
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[#1A1A1A]/80 backdrop-blur-sm animate-fade-in"
-      onClick={handleBackdropClick}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-8 bg-[#FDFBF7]/95 backdrop-blur-sm animate-fade"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="brutal-border bg-white max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row animate-scale-in">
-        {/* Image Side */}
-        <div className="w-full md:w-1/2 bg-[#F0EBE3] p-8 flex items-center justify-center relative shrink-0">
-          <div className="absolute top-4 left-4 bg-[#1A1A1A] text-white px-3 py-1 text-[10px] font-bold uppercase tracking-wider flex items-center gap-2">
-            <MapPin className="w-3 h-3" />
+      <div className="bg-white border border-[#2C2C2C]/10 max-w-4xl w-full max-h-[85vh] overflow-hidden flex flex-col md:flex-row animate-rise shadow-2xl shadow-[#2C2C2C]/5">
+        <div className="w-full md:w-1/2 bg-[#F5F1E8] p-12 flex items-center justify-center relative shrink-0">
+          <div className="absolute top-6 left-6 text-[10px] tracking-[0.15em] text-[#9E9E9E] uppercase flex items-center gap-2">
+            <MapPin className="w-3 h-3" strokeWidth={1.5} />
             {formatStoreName(product.storeName)}
           </div>
           <img
             src={product.imageUrl}
             alt={product.title}
-            className="max-w-full max-h-[40vh] md:max-h-[60vh] object-contain mix-blend-multiply"
+            className="max-w-full max-h-[50vh] object-contain mix-blend-multiply"
             onError={(e) => {
               e.target.src = "https://via.placeholder.com/400?text=No+Image";
             }}
           />
         </div>
-
-        {/* Details Side */}
-        <div className="w-full md:w-1/2 flex flex-col min-h-0 border-l-[3px] border-[#1A1A1A]">
-          {/* Header */}
-          <div className="px-6 py-5 border-b-[3px] border-[#1A1A1A] flex justify-between items-start shrink-0">
+        <div className="w-full md:w-1/2 flex flex-col min-h-0 border-l border-[#2C2C2C]/5">
+          <div className="px-8 py-6 border-b border-[#2C2C2C]/5 flex justify-between items-start shrink-0">
             <div className="pr-4">
-              <div className="text-[#FF6B4A] font-bold text-xs uppercase tracking-widest mb-2">
+              <div className="text-[10px] tracking-[0.2em] text-[#8B7355] uppercase mb-2">
                 {product.brand}
               </div>
-              <h2 className="text-xl font-bold text-[#1A1A1A] leading-tight">
+              <h2 className="text-lg text-[#2C2C2C] leading-snug">
                 {product.title}
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-[#F0EBE3] transition-colors shrink-0"
+              className="p-2 text-[#9E9E9E] hover:text-[#2C2C2C] transition-colors shrink-0"
             >
-              <X className="w-5 h-5 text-[#1A1A1A]" />
+              <X className="w-5 h-5" strokeWidth={1.5} />
             </button>
           </div>
-
-          {/* Scrollable Content */}
-          <div className="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar min-h-0">
-            {/* Price */}
-            <div className="bg-[#1A1A1A] text-white p-5 flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">
-                  Price
-                </p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold">
-                    {parseFloat(product.price).toFixed(3)}
-                  </span>
-                  <span className="text-sm opacity-60">KWD</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <span className="bg-[#8B9A7D] text-white text-[10px] font-bold uppercase px-2 py-1">
-                  In Stock
+          <div className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar min-h-0">
+            <div className="pb-8 border-b border-[#2C2C2C]/5">
+              <p className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase mb-2">
+                Price
+              </p>
+              <div className="flex items-baseline gap-2">
+                <span className="font-display text-4xl text-[#2C2C2C]">
+                  {parseFloat(product.price).toFixed(3)}
                 </span>
+                <span className="text-sm text-[#9E9E9E]">KWD</span>
               </div>
+              <span className="inline-block mt-3 text-[10px] tracking-[0.15em] text-[#7D8471] uppercase border border-[#7D8471]/30 px-2 py-1">
+                In Stock
+              </span>
             </div>
-
-            {/* Specs */}
             {specs.length > 0 && (
               <div>
-                <h3 className="text-xs font-bold text-[#1A1A1A] uppercase tracking-widest mb-4 flex items-center gap-2">
-                  <Zap className="w-4 h-4 text-[#FF6B4A]" /> Specifications
+                <h3 className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase mb-4">
+                  Specifications
                 </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {specs.map(([key, value], idx) => (
-                    <div key={idx} className="p-3 bg-[#F0EBE3]">
-                      <div className="text-[10px] font-bold text-[#1A1A1A]/50 uppercase tracking-wider mb-1">
-                        {formatSpecKey(key)}
-                      </div>
-                      <div
-                        className="text-sm font-bold text-[#1A1A1A] line-clamp-1"
-                        title={formatSpecValue(value)}
-                      >
-                        {formatSpecValue(value)}
-                      </div>
+                <div className="space-y-3">
+                  {specs.map(([k, v], i) => (
+                    <div
+                      key={i}
+                      className="flex justify-between items-baseline py-2 border-b border-[#2C2C2C]/5"
+                    >
+                      <span className="text-xs text-[#9E9E9E]">
+                        {formatSpecKey(k)}
+                      </span>
+                      <span className="text-sm text-[#2C2C2C]">
+                        {formatSpecValue(v)}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-
             {product.description && (
               <div>
-                <h3 className="text-xs font-bold text-[#1A1A1A] uppercase tracking-widest mb-3">
-                  About
+                <h3 className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase mb-3">
+                  Details
                 </h3>
-                <p className="text-sm text-[#1A1A1A]/70 leading-relaxed">
+                <p className="text-sm text-[#4A4A4A] leading-relaxed">
                   {product.description}
                 </p>
               </div>
             )}
           </div>
-
-          {/* Footer */}
-          <div className="p-6 border-t-[3px] border-[#1A1A1A] shrink-0">
+          <div className="p-8 border-t border-[#2C2C2C]/5 shrink-0">
             <a
               href={product.productUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full bg-[#FF6B4A] text-white py-4 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-[#FF8A70] transition-colors"
+              className="w-full bg-[#2C2C2C] text-white py-4 text-sm tracking-wider flex items-center justify-center gap-3 hover:bg-[#C73E3A] transition-colors duration-300"
             >
               Buy Now
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
             </a>
           </div>
         </div>
@@ -1030,20 +883,18 @@ function ProductModal({ product, onClose }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// UTILITIES
-// ═══════════════════════════════════════════════════════════════════════════
-
 function LoadingIndicator() {
   return (
-    <div className="flex items-center gap-4 pl-2">
-      <div className="w-12 h-12 bg-[#F0EBE3] animate-pulse" />
-      <div className="flex gap-2">
+    <div className="flex items-center gap-6 pl-2">
+      <div className="w-8 h-8 rounded-full border border-[#C73E3A]/30 flex items-center justify-center">
+        <div className="w-2 h-2 rounded-full bg-[#C73E3A]/50 animate-breath" />
+      </div>
+      <div className="flex gap-3">
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className="w-3 h-3 bg-[#1A1A1A]/20 animate-bounce-subtle"
-            style={{ animationDelay: `${i * 150}ms` }}
+            className="w-1.5 h-1.5 rounded-full bg-[#9E9E9E]/40 animate-breath"
+            style={{ animationDelay: `${i * 300}ms` }}
           />
         ))}
       </div>
@@ -1051,17 +902,10 @@ function LoadingIndicator() {
   );
 }
 
-const getGreeting = () => {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
-};
-
 function getCategoryType(category) {
   if (!category) return "electronics";
   const cat = category.toLowerCase();
-  const fashionKeywords = [
+  return [
     "clothing",
     "fashion",
     "apparel",
@@ -1076,35 +920,35 @@ function getCategoryType(category) {
     "wear",
     "men",
     "women",
-  ];
-  return fashionKeywords.some((kw) => cat.includes(kw))
+  ].some((k) => cat.includes(k))
     ? "fashion"
     : "electronics";
 }
 
 function formatStoreName(storeName) {
-  const storeMap = {
-    XCITE: "Xcite",
-    BEST: "Best Al-Yousifi",
-    BEST_KW: "Best",
-    NOON: "Noon",
-    EUREKA: "Eureka",
-  };
-  return storeMap[storeName] || storeName.replace(/_/g, " ");
+  return (
+    {
+      XCITE: "Xcite",
+      BEST: "Best Al-Yousifi",
+      BEST_KW: "Best",
+      NOON: "Noon",
+      EUREKA: "Eureka",
+    }[storeName] || storeName.replace(/_/g, " ")
+  );
 }
 
 function formatSpecKey(key) {
   return key
     .replace(/_/g, " ")
     .split(" ")
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 }
 
 function formatSpecValue(value) {
-  if (typeof value === "string")
-    return value.charAt(0).toUpperCase() + value.slice(1);
-  return value;
+  return typeof value === "string"
+    ? value.charAt(0).toUpperCase() + value.slice(1)
+    : value;
 }
 
 export default App;

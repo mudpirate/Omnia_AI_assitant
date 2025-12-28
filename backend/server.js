@@ -226,155 +226,8 @@ Respond with ONLY ONE WORD: either "electronics" or "fashion". If unsure, respon
 }
 
 // LLM-POWERED GENDER NORMALIZATION
-async function normalizeGender(gender) {
-  if (!gender) return null;
-
-  const cacheKey = `gender_norm_${gender.toLowerCase()}`;
-
-  if (!global.genderNormalizationCache) {
-    global.genderNormalizationCache = new Map();
-  }
-
-  if (global.genderNormalizationCache.has(cacheKey)) {
-    return global.genderNormalizationCache.get(cacheKey);
-  }
-
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content: `You are a gender normalizer for fashion products. Your job is to standardize gender values.
-
-Normalize to these standard values:
-- "men" for male/man/mens/men's/masculine
-- "women" for female/woman/womens/women's/feminine
-- "boys" for boy/boys'/boy's
-- "girls" for girl/girls'/girl's
-- "kids" for kid/kids'/children/child
-- "unisex" for unisex/neutral
-- "baby" for baby/infant/newborn
-
-Return ONLY a JSON object with a "normalized" field.
-
-Examples:
-{"normalized": "men"}
-{"normalized": "women"}
-{"normalized": "boys"}
-{"normalized": "kids"}`,
-        },
-        {
-          role: "user",
-          content: `Normalize this gender value: "${gender}"`,
-        },
-      ],
-      temperature: 0,
-    });
-
-    const result = JSON.parse(completion.choices[0].message.content);
-    const normalized = result.normalized || gender.toLowerCase();
-
-    global.genderNormalizationCache.set(cacheKey, normalized);
-
-    console.log(
-      `   🤖 Gender normalized by LLM: "${gender}" → "${normalized}"`
-    );
-    return normalized;
-  } catch (error) {
-    console.error(`⚠️ LLM gender normalization failed:`, error.message);
-    return gender.toLowerCase();
-  }
-}
 
 // LLM-POWERED TYPE NORMALIZATION
-async function normalizeClothingType(type) {
-  if (!type) return null;
-
-  const normalizedLower = type.toLowerCase().trim();
-  const cacheKey = `type_norm_${normalizedLower}`;
-
-  if (!global.typeNormalizationCache) {
-    global.typeNormalizationCache = new Map();
-  }
-
-  if (global.typeNormalizationCache.has(cacheKey)) {
-    return global.typeNormalizationCache.get(cacheKey);
-  }
-
-  try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content: `You are a fashion product type normalizer. Your job is to standardize product type names to a consistent format.
-
-Rules:
-1. Use lowercase
-2. Use hyphens for compound words: "t-shirt" NOT "t shirt" or "tshirt"
-3. Use singular form unless plural is standard: "jeans", "pants", "shorts", "leggings", "tights"
-4. Standard formats:
-   - "t-shirt" for all t-shirt variations
-   - "sports bra" for sports bra variations
-   - "boxer shorts" for boxer/boxers variations
-   - "boxer briefs" for boxer brief variations
-   - "v-neck", "crew neck", "round neck" for necklines
-   - "pyjamas" for all pajama/sleepwear variations
-   - "sneakers", "boots", "sandals", "heels" for shoes
-   - "hoodie", "sweater", "cardigan", "jacket", "coat" for outerwear
-   - "jeans", "pants", "trousers", "shorts", "skirt", "leggings" for bottoms
-   - "dress", "blouse", "shirt" for tops
-   - "bikini", "swimsuit" for swimwear
-   
-5. Normalize variations to standard form:
-   - "short" → "shorts"
-   - "pant" → "pants"
-   - "trouser" → "pants"
-   - "jean" → "jeans"
-   - "boxer" → "boxer shorts"
-   - "tee" → "t-shirt"
-   
-6. Remove any special characters except hyphens and spaces
-7. Ensure single spacing
-
-Return ONLY a JSON object with a "normalized" field containing the standardized type.
-
-Examples:
-{"normalized": "t-shirt"}
-{"normalized": "sports bra"}
-{"normalized": "boxer shorts"}
-{"normalized": "shorts"}
-{"normalized": "pants"}`,
-        },
-        {
-          role: "user",
-          content: `Normalize this product type: "${type}"`,
-        },
-      ],
-      temperature: 0,
-    });
-
-    const result = JSON.parse(completion.choices[0].message.content);
-    const normalized = result.normalized || normalizedLower;
-
-    global.typeNormalizationCache.set(cacheKey, normalized);
-
-    console.log(`   🤖 Type normalized by LLM: "${type}" → "${normalized}"`);
-    return normalized;
-  } catch (error) {
-    console.error(
-      `⚠️ LLM type normalization failed for "${type}":`,
-      error.message
-    );
-    return normalizedLower
-      .replace(/[^a-z0-9\s-]/g, "")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-}
 
 function cleanSpecs(specs) {
   if (!specs || typeof specs !== "object") return {};
@@ -608,27 +461,16 @@ async function buildPushDownFilters(filters = {}, rawQuery = "") {
       conditions.push(condition);
       console.log(`   🔢 Model: ${condition}`);
     } else if (key !== "query") {
+      // All other keys are specs
       let specValue = value.toString().toLowerCase().replace(/'/g, "''");
 
       if (key === "gender") {
-        const normalizedGender = await normalizeGender(specValue);
-        if (normalizedGender) {
-          specValue = normalizedGender;
-          console.log(`   🔄 Normalized gender: "${value}" → "${specValue}"`);
-        }
-
+        // Gender is already normalized by the LLM in the system prompt
         const condition = `LOWER("specs"->>'gender') = '${specValue}'`;
         conditions.push(condition);
         console.log(`   👤 EXACT gender: ${condition}`);
       } else if (key === "type" || key === "style") {
-        const normalized = await normalizeClothingType(specValue);
-        if (normalized) {
-          specValue = normalized;
-          console.log(
-            `   🔄 Normalized type/style: "${value}" → "${specValue}"`
-          );
-        }
-
+        // Type/style is already normalized by the LLM in the system prompt
         const condition = `LOWER("specs"->>'type') ILIKE '%${specValue}%'`;
         conditions.push(condition);
         console.log(`   👕 FLEXIBLE type [${key}]: ${condition}`);
@@ -1348,72 +1190,6 @@ async function executeSearchDatabase(args) {
       filters[key] = args[key];
     }
   });
-
-  if (
-    filters.category &&
-    (filters.category === "CLOTHING" ||
-      filters.category === "FOOTWEAR" ||
-      filters.category === "ACCESSORIES")
-  ) {
-    if (!filters.style && query) {
-      const queryWords = query.toLowerCase().trim().split(/\s+/);
-      if (queryWords.length <= 3) {
-        const fashionTypes = [
-          "pants",
-          "jeans",
-          "shirt",
-          "dress",
-          "skirt",
-          "jacket",
-          "sweater",
-          "hoodie",
-          "t-shirt",
-          "tshirt",
-          "t shirt",
-          "blouse",
-          "cardigan",
-          "coat",
-          "shorts",
-          "leggings",
-          "tights",
-          "trousers",
-          "pyjamas",
-          "pajamas",
-          "underwear",
-          "bra",
-          "bikini",
-          "swimsuit",
-          "sneakers",
-          "boots",
-          "sandals",
-          "heels",
-          "flats",
-          "bag",
-          "backpack",
-          "belt",
-          "hat",
-          "scarf",
-          "necklace",
-          "bracelet",
-          "boxers",
-          "boxer shorts",
-          "boxer briefs",
-          "briefs",
-          "trunks",
-        ];
-
-        for (const word of queryWords) {
-          if (fashionTypes.includes(word)) {
-            filters.style = word;
-            console.log(
-              `   🔍 Auto-added style filter from query: "${filters.style}"`
-            );
-            break;
-          }
-        }
-      }
-    }
-  }
 
   console.log("✨ Final filters:");
   console.log(JSON.stringify(filters, null, 2));
