@@ -24,6 +24,16 @@ const openai = new OpenAI({
 const prisma = new PrismaClient();
 const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
 
+// 🔥 FIX #5: INJECT CURRENT DATE AT RUNTIME
+function getDynamicSystemPrompt() {
+  const currentDate = new Date().toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+  return systemprompt.replace("{{CURRENT_DATE}}", currentDate);
+}
+
 // Configure multer for file uploads
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -225,10 +235,6 @@ Respond with ONLY ONE WORD: either "electronics" or "fashion". If unsure, respon
   }
 }
 
-// LLM-POWERED GENDER NORMALIZATION
-
-// LLM-POWERED TYPE NORMALIZATION
-
 function cleanSpecs(specs) {
   if (!specs || typeof specs !== "object") return {};
 
@@ -307,6 +313,12 @@ const TOOLS = [
             type: "string",
             description:
               "Full model identifier (e.g., 'iphone 15', 'galaxy s24+').",
+          },
+          sort: {
+            type: "string",
+            description:
+              "Order of results. Use 'price_asc' for 'cheapest/budget/affordable', 'price_desc' for 'best/premium/expensive/high-end', 'newest' for 'latest/new/recent'. Default is 'relevance' (hybrid search ranking).",
+            enum: ["price_asc", "price_desc", "newest", "relevance"],
           },
           megapixels: { type: "string", description: "Camera megapixels." },
           screen_size: { type: "string", description: "Screen size." },
@@ -460,17 +472,15 @@ async function buildPushDownFilters(filters = {}, rawQuery = "") {
       const condition = `LOWER("title") LIKE '%${modelNum}%'`;
       conditions.push(condition);
       console.log(`   🔢 Model: ${condition}`);
-    } else if (key !== "query") {
-      // All other keys are specs
+    } else if (key !== "query" && key !== "sort") {
+      // All other keys are specs (ignore 'sort' here)
       let specValue = value.toString().toLowerCase().replace(/'/g, "''");
 
       if (key === "gender") {
-        // Gender is already normalized by the LLM in the system prompt
         const condition = `LOWER("specs"->>'gender') = '${specValue}'`;
         conditions.push(condition);
         console.log(`   👤 EXACT gender: ${condition}`);
       } else if (key === "type" || key === "style") {
-        // Type/style is already normalized by the LLM in the system prompt
         const condition = `LOWER("specs"->>'type') ILIKE '%${specValue}%'`;
         conditions.push(condition);
         console.log(`   👕 FLEXIBLE type [${key}]: ${condition}`);
@@ -495,6 +505,47 @@ async function buildPushDownFilters(filters = {}, rawQuery = "") {
   return whereClause;
 }
 
+function applySorting(results, sortType = "relevance") {
+  console.log(`\n🔢 [SORTING] Applying sort: ${sortType}`);
+  console.log(`   📊 Input results: ${results.length}`);
+
+  if (!results || results.length === 0) return results;
+
+  let sorted = [...results];
+
+  switch (sortType) {
+    case "price_asc":
+      sorted.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+      console.log(
+        `   ✅ Sorted by price (ascending): ${sorted[0]?.price} KWD → ${
+          sorted[sorted.length - 1]?.price
+        } KWD`
+      );
+      break;
+
+    case "price_desc":
+      sorted.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+      console.log(
+        `   ✅ Sorted by price (descending): ${sorted[0]?.price} KWD → ${
+          sorted[sorted.length - 1]?.price
+        } KWD`
+      );
+      break;
+
+    case "newest":
+      sorted.sort((a, b) => new Date(b.scrapedAt) - new Date(a.scrapedAt));
+      console.log(`   ✅ Sorted by newest`);
+      break;
+
+    case "relevance":
+    default:
+      console.log(`   ✅ Keeping relevance order (RRF scores)`);
+      break;
+  }
+
+  return sorted;
+}
+
 async function vectorSearch(
   vectorLiteral,
   filters = {},
@@ -509,7 +560,7 @@ async function vectorSearch(
   const query = `
       SELECT
         "title", "price", "storeName", "productUrl", "category",
-        "imageUrl", "stock", "description", "brand", "specs",
+        "imageUrl", "stock", "description", "brand", "specs", "scrapedAt",
         1 - ("descriptionEmbedding" <=> '${vectorLiteral}'::vector) as similarity
       FROM "Product"
       WHERE "descriptionEmbedding" IS NOT NULL
@@ -541,9 +592,6 @@ async function vectorSearch(
   }
 }
 
-// ============================================================================
-// ELECTRONICS FULLTEXT SEARCH
-// ============================================================================
 async function fulltextSearchElectronics(
   searchQuery,
   filters = {},
@@ -563,13 +611,12 @@ async function fulltextSearchElectronics(
   }
 
   try {
-    // TIER 1: Strict trigram matching (0.5 threshold for electronics)
     await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.5;`);
 
     const query = `
         SELECT 
           "title", "price", "storeName", "productUrl", "category", 
-          "imageUrl", "stock", "description", "brand", "specs",
+          "imageUrl", "stock", "description", "brand", "specs", "scrapedAt",
           similarity(LOWER("title"), '${searchTerm}') as rank
         FROM "Product"
         WHERE LOWER("title") % '${searchTerm}'
@@ -582,7 +629,6 @@ async function fulltextSearchElectronics(
     console.log("   📊 Tier 1 (trigram) results:", results.length);
 
     if (results.length === 0) {
-      // TIER 2: Word-based LIKE search (AND - all words must match)
       console.log("   🔄 Trying Tier 2 (word-based LIKE)...");
 
       const words = searchTerm
@@ -601,7 +647,7 @@ async function fulltextSearchElectronics(
         const fallbackQuery = `
             SELECT 
               "title", "price", "storeName", "productUrl", "category", 
-              "imageUrl", "stock", "description", "brand", "specs",
+              "imageUrl", "stock", "description", "brand", "specs", "scrapedAt",
               0.5 as rank
             FROM "Product"
             WHERE ${likeConditions}
@@ -621,9 +667,6 @@ async function fulltextSearchElectronics(
   }
 }
 
-// ============================================================================
-// FASHION FULLTEXT SEARCH
-// ============================================================================
 async function fulltextSearchFashion(searchQuery, filters = {}, limit = 100) {
   console.log("\n📝 [FULLTEXT - FASHION] Starting fashion fulltext search");
   console.log("   🔍 Search term:", searchQuery);
@@ -637,13 +680,12 @@ async function fulltextSearchFashion(searchQuery, filters = {}, limit = 100) {
   }
 
   try {
-    // TIER 1: Looser trigram matching (0.2 threshold for fashion)
     await prisma.$executeRawUnsafe(`SET pg_trgm.similarity_threshold = 0.2;`);
 
     const query = `
         SELECT 
           "title", "price", "storeName", "productUrl", "category", 
-          "imageUrl", "stock", "description", "brand", "specs",
+          "imageUrl", "stock", "description", "brand", "specs", "scrapedAt",
           similarity(LOWER("title"), '${searchTerm}') as rank
         FROM "Product"
         WHERE LOWER("title") % '${searchTerm}'
@@ -656,7 +698,6 @@ async function fulltextSearchFashion(searchQuery, filters = {}, limit = 100) {
     console.log("   📊 Tier 1 (trigram) results:", results.length);
 
     if (results.length === 0) {
-      // TIER 2: Word-based LIKE search (OR - any word matches)
       console.log("   🔄 Fashion Tier 2: Word-based search...");
 
       const words = searchTerm
@@ -670,12 +711,12 @@ async function fulltextSearchFashion(searchQuery, filters = {}, limit = 100) {
       if (words.length > 0) {
         const likeConditions = words
           .map((word) => `LOWER("title") LIKE '%${word}%'`)
-          .join(" OR "); // OR for fashion - any word matches
+          .join(" OR ");
 
         const fallbackQuery = `
             SELECT 
               "title", "price", "storeName", "productUrl", "category", 
-              "imageUrl", "stock", "description", "brand", "specs",
+              "imageUrl", "stock", "description", "brand", "specs", "scrapedAt",
               0.4 as rank
             FROM "Product"
             WHERE (${likeConditions})
@@ -689,13 +730,12 @@ async function fulltextSearchFashion(searchQuery, filters = {}, limit = 100) {
     }
 
     if (results.length === 0) {
-      // TIER 3: Description search (fashion titles are often vague)
       console.log("   🔄 Fashion Tier 3: Description search...");
 
       const descQuery = `
           SELECT 
             "title", "price", "storeName", "productUrl", "category", 
-            "imageUrl", "stock", "description", "brand", "specs",
+            "imageUrl", "stock", "description", "brand", "specs", "scrapedAt",
             0.3 as rank
           FROM "Product"
           WHERE LOWER("description") LIKE '%${searchTerm}%'
@@ -714,12 +754,6 @@ async function fulltextSearchFashion(searchQuery, filters = {}, limit = 100) {
   }
 }
 
-// ============================================================================
-// ELECTRONICS RRF FUSION
-// ============================================================================
-// ============================================================================
-// ELECTRONICS RRF FUSION (Dynamic Weighting)
-// ============================================================================
 function reciprocalRankFusionElectronics(
   vectorResults,
   fulltextResults,
@@ -775,9 +809,6 @@ function reciprocalRankFusionElectronics(
   console.log("   📊 Fulltext matches:", fulltextMatches.length);
   console.log("   📊 Vector-only matches:", vectorOnlyMatches.length);
 
-  // ═══════════════════════════════════════════════════════════════
-  // AUTOMATIC DYNAMIC WEIGHTING
-  // ═══════════════════════════════════════════════════════════════
   const fulltextRatio =
     fulltextResults.length / Math.max(vectorResults.length, 1);
 
@@ -788,17 +819,14 @@ function reciprocalRankFusionElectronics(
     vectorWeight = 0.7;
     modeName = "Vector-only (no fulltext matches)";
   } else if (fulltextRatio < 0.05) {
-    // <5% fulltext - likely synonym issue (headphones vs headset)
     fulltextWeight = 0.4;
     vectorWeight = 0.6;
     modeName = `Vector-preferred (${(fulltextRatio * 100).toFixed(1)}%)`;
   } else if (fulltextRatio < 0.2) {
-    // 5-20% fulltext - balanced
     fulltextWeight = 0.6;
     vectorWeight = 0.4;
     modeName = `Balanced (${(fulltextRatio * 100).toFixed(1)}%)`;
   } else {
-    // >20% fulltext - trust fulltext
     fulltextWeight = 0.95;
     vectorWeight = 0.05;
     modeName = `Fulltext-preferred (${(fulltextRatio * 100).toFixed(1)}%)`;
@@ -811,7 +839,6 @@ function reciprocalRankFusionElectronics(
     ).toFixed(0)}%`
   );
 
-  // Score and combine ALL results (both fulltext and vector-only)
   const scoredFulltext = fulltextMatches.map((item) => ({
     finalScore:
       item.fulltextScore * fulltextWeight + item.vectorScore * vectorWeight,
@@ -835,9 +862,7 @@ function reciprocalRankFusionElectronics(
 
   return fused;
 }
-// ============================================================================
-// FASHION RRF FUSION
-// ============================================================================
+
 function reciprocalRankFusionFashion(vectorResults, fulltextResults, k = 60) {
   console.log("\n🔀 [RRF - FASHION] Fashion-optimized fusion");
   console.log("   📊 Vector results:", vectorResults.length);
@@ -890,14 +915,12 @@ function reciprocalRankFusionFashion(vectorResults, fulltextResults, k = 60) {
   let finalResults;
 
   if (fulltextMatches.length > 0) {
-    // Fashion: Vector gets MORE weight (60/40)
     finalResults = fulltextMatches.map((item) => ({
       finalScore: item.fulltextScore * 0.6 + item.vectorScore * 0.4,
       ...item,
     }));
     console.log("   ✅ Fashion: Balanced scoring (60/40)");
   } else {
-    // Vector-only: MUCH stronger for fashion (70%)
     finalResults = vectorOnlyMatches.map((item) => ({
       finalScore: item.vectorScore * 0.7,
       ...item,
@@ -917,9 +940,6 @@ function reciprocalRankFusionFashion(vectorResults, fulltextResults, k = 60) {
   return fused;
 }
 
-// ============================================================================
-// ELECTRONICS HYBRID SEARCH
-// ============================================================================
 async function electronicsHybridSearch(
   searchQuery,
   vectorLiteral,
@@ -930,7 +950,6 @@ async function electronicsHybridSearch(
   console.log("   🔍 Query:", searchQuery);
   console.log("   🎛️  Filters:", JSON.stringify(filters, null, 2));
 
-  // STAGE 1: Strict search with ALL filters
   let [vectorResults, fulltextResults] = await Promise.all([
     vectorSearch(vectorLiteral, filters, limit * 2, searchQuery),
     fulltextSearchElectronics(searchQuery, filters, limit * 2),
@@ -950,7 +969,6 @@ async function electronicsHybridSearch(
     return finalResults;
   }
 
-  // STAGE 2: Relaxed search (drop variant, storage, color, RAM)
   console.log("   ⚠️  Stage 1 failed. Trying Stage 2 (relaxed)...");
 
   const relaxedFilters = {
@@ -981,9 +999,6 @@ async function electronicsHybridSearch(
   return finalResults;
 }
 
-// ============================================================================
-// FASHION HYBRID SEARCH
-// ============================================================================
 async function fashionHybridSearch(
   searchQuery,
   vectorLiteral,
@@ -994,9 +1009,8 @@ async function fashionHybridSearch(
   console.log("   🔍 Query:", searchQuery);
   console.log("   🎛️  Filters:", JSON.stringify(filters, null, 2));
 
-  // STAGE 1: Try with ALL filters (gender, style, color)
   let [vectorResults, fulltextResults] = await Promise.all([
-    vectorSearch(vectorLiteral, filters, limit * 3, searchQuery), // Fetch MORE for fashion
+    vectorSearch(vectorLiteral, filters, limit * 3, searchQuery),
     fulltextSearchFashion(searchQuery, filters, limit * 3),
   ]);
 
@@ -1014,7 +1028,6 @@ async function fashionHybridSearch(
     return finalResults;
   }
 
-  // STAGE 2: Drop color only (keep gender, style, category)
   console.log("   🔄 Fashion Stage 2 (drop color)...");
 
   const stage2Filters = {
@@ -1047,18 +1060,17 @@ async function fashionHybridSearch(
     return finalResults;
   }
 
-  // STAGE 3: Drop style too (keep gender and category only) - "Vibe Check" mode
   console.log("   🔄 Fashion Stage 3 (vibe check - gender + category only)...");
 
   const stage3Filters = {
     category: filters.category,
-    gender: filters.gender, // CRITICAL: Keep gender even in vibe mode
+    gender: filters.gender,
     minPrice: filters.minPrice || filters.min_price,
     maxPrice: filters.maxPrice || filters.max_price,
   };
 
   [vectorResults, fulltextResults] = await Promise.all([
-    vectorSearch(vectorLiteral, stage3Filters, limit * 4, searchQuery), // Fetch even MORE
+    vectorSearch(vectorLiteral, stage3Filters, limit * 4, searchQuery),
     fulltextSearchFashion(searchQuery, stage3Filters, limit * 4),
   ]);
 
@@ -1076,9 +1088,6 @@ async function fashionHybridSearch(
   return finalResults;
 }
 
-// ============================================================================
-// MAIN HYBRID SEARCH ROUTER
-// ============================================================================
 async function hybridSearch(
   searchQuery,
   vectorLiteral,
@@ -1089,11 +1098,9 @@ async function hybridSearch(
   console.log("   🔍 Query:", searchQuery);
   console.log("   🎛️  Filters:", JSON.stringify(filters, null, 2));
 
-  // Detect category type
   const categoryType = await getCategoryType(filters.category);
   console.log("   📂 Category type:", categoryType);
 
-  // Route to appropriate search pipeline
   if (categoryType === "fashion") {
     return await fashionHybridSearch(
       searchQuery,
@@ -1109,7 +1116,6 @@ async function hybridSearch(
       limit
     );
   } else {
-    // Default to electronics behavior for unknown categories
     console.log("   ⚠️  Unknown category, using electronics pipeline");
     return await electronicsHybridSearch(
       searchQuery,
@@ -1120,33 +1126,48 @@ async function hybridSearch(
   }
 }
 
+// 🔥 FIX #7: IMPROVED DEDUPLICATION - Model variety, not color variants
 function deduplicateProducts(products) {
-  console.log("\n🔍 [DEDUPLICATION] Starting product deduplication");
+  console.log("\n🔍 [DEDUPLICATION] Starting smart product deduplication");
   console.log("   📊 Input products:", products.length);
 
   const seen = new Map();
   const unique = [];
 
   for (const product of products) {
-    const title = product.title.toLowerCase().trim();
+    // Extract first 20 characters of title (captures "iPhone 15 Pro Max" but ignores color)
+    const titlePrefix = product.title.substring(0, 20).toLowerCase().trim();
     const price = parseFloat(product.price);
 
-    const dedupKey = `${title}_${price.toFixed(2)}`;
+    // Dedupe key: title prefix + price (allows different prices for same model)
+    const dedupKey = `${titlePrefix}_${price.toFixed(2)}`;
 
     if (!seen.has(dedupKey)) {
       seen.set(dedupKey, true);
       unique.push(product);
     } else {
       console.log(
-        `   ⏭️  Skipped duplicate: ${product.title} - ${product.price} KWD`
+        `   ⏭️  Skipped variant: ${product.title} - ${product.price} KWD`
       );
     }
   }
 
-  console.log("   ✅ Unique products:", unique.length);
-  console.log("   🗑️  Duplicates removed:", products.length - unique.length);
+  console.log("   ✅ Unique models:", unique.length);
+  console.log("   🗑️  Variants removed:", products.length - unique.length);
 
   return unique;
+}
+
+// 🔥 FIX #7: BEAUTIFY STORE NAMES
+function beautifyStoreName(storeName) {
+  const storeMap = {
+    BEST_KW: "Best Al yousifi",
+    XCITE: "Xcite",
+    EUREKA: "Eureka",
+    NOON: "Noon",
+  };
+
+  return storeMap[storeName] || storeName;
 }
 
 async function searchWebTool(query) {
@@ -1200,7 +1221,7 @@ async function executeSearchDatabase(args) {
   console.log("📥 Raw arguments received:");
   console.log(JSON.stringify(args, null, 2));
 
-  const { query } = args;
+  const { query, sort = "relevance" } = args;
 
   if (!query || query === "undefined" || query.trim() === "") {
     console.error(`❌ Invalid query: "${query}"`);
@@ -1214,6 +1235,7 @@ async function executeSearchDatabase(args) {
   }
 
   console.log("✅ Query validation passed:", query);
+  console.log("🔢 Sort preference:", sort);
 
   if (args.storage) {
     args.storage = normalizeStorage(args.storage);
@@ -1221,7 +1243,12 @@ async function executeSearchDatabase(args) {
 
   const filters = {};
   Object.keys(args).forEach((key) => {
-    if (key !== "query" && args[key] !== null && args[key] !== undefined) {
+    if (
+      key !== "query" &&
+      key !== "sort" &&
+      args[key] !== null &&
+      args[key] !== undefined
+    ) {
       filters[key] = args[key];
     }
   });
@@ -1234,8 +1261,12 @@ async function executeSearchDatabase(args) {
 
   try {
     const { vectorLiteral } = await getQueryEmbedding(query);
-    const results = await hybridSearch(query, vectorLiteral, filters, 50);
+    let results = await hybridSearch(query, vectorLiteral, filters, 50);
 
+    // Apply sorting
+    results = applySorting(results, sort);
+
+    // Apply smart deduplication (model variety, not color variants)
     const deduplicatedResults = deduplicateProducts(results);
     const productsToReturn = deduplicatedResults.slice(0, 15);
 
@@ -1244,6 +1275,7 @@ async function executeSearchDatabase(args) {
     console.log("   After deduplication:", deduplicatedResults.length);
     console.log("   Sending to frontend:", productsToReturn.length);
     console.log("   Category type:", categoryType);
+    console.log("   Sort applied:", sort);
 
     if (productsToReturn.length > 0) {
       console.log("\n   📋 Product list:");
@@ -1265,7 +1297,7 @@ async function executeSearchDatabase(args) {
       products: productsToReturn.map((p) => ({
         title: p.title,
         price: p.price,
-        storeName: p.storeName,
+        storeName: beautifyStoreName(p.storeName), // 🔥 Beautified store name
         productUrl: p.productUrl,
         imageUrl: p.imageUrl,
         description: p.description,
@@ -1309,7 +1341,6 @@ async function executeSearchWeb(args) {
   };
 }
 
-// Image upload and analysis endpoint
 app.post("/analyze-image", upload.single("image"), async (req, res) => {
   console.log("\n" + "🖼️ ".repeat(40));
   console.log("📸 NEW IMAGE ANALYSIS REQUEST");
@@ -1383,10 +1414,13 @@ app.post("/chat", async (req, res) => {
     const history = await getMemory(sessionId);
     console.log("📚 Chat history:", history.length, "messages");
 
+    // 🔥 FIX #5: USE DYNAMIC SYSTEM PROMPT WITH CURRENT DATE
+    const dynamicPrompt = getDynamicSystemPrompt();
+
     const messages = [
       {
         role: "system",
-        content: systemprompt,
+        content: dynamicPrompt,
       },
       ...history.map((m) => ({ role: m.role, content: m.content })),
       { role: "user", content: message },
@@ -1495,13 +1529,20 @@ app.post("/chat", async (req, res) => {
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    message: "Omnia AI - Dual Pipeline Architecture (Electronics + Fashion)",
+    message:
+      "Omnia AI - Dual Pipeline + Intelligent Sorting + Smart Deduplication",
   });
 });
 
 app.listen(PORT, () => {
-  console.log("\n🚀 Omnia AI Server - Dual Pipeline Architecture");
-  console.log("   ⚡ Electronics: Precision matching (95/5 fulltext/vector)");
-  console.log("   👗 Fashion: Vibe-based search (60/40 or 70% vector-only)");
+  console.log("\n🚀 Omnia AI Server - Production Ready");
+  console.log("   ⚡ Electronics: Precision matching (dynamic RRF)");
+  console.log("   👗 Fashion: Vibe-based search (60/40 or 70% vector)");
+  console.log(
+    "   🔢 Sorting: AI-controlled (cheapest, best, newest, relevance)"
+  );
+  console.log("   🎯 Category: Soft bias (prevents semantic drift)");
+  console.log("   🗑️  Deduplication: Model variety (not color clutter)");
+  console.log("   📅 Date: Dynamic injection (AI knows current date)");
   console.log(`   🌐 Server running on port ${PORT}`);
 });

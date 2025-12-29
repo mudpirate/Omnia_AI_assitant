@@ -748,9 +748,10 @@ async function scrapeProducts(browser, TARGET_URL, categoryName) {
                   const currentPriceElement =
                     tile.querySelector(".cx-product-price");
                   const priceText = currentPriceElement?.textContent || "0";
+                  // 🔥 FIX: Remove commas first, then keep only numbers and dots
                   const price =
                     parseFloat(
-                      priceText.replace(/KD/gi, "").replace(/,/g, "").trim()
+                      priceText.replace(/,/g, "").replace(/[^\d.]/g, "")
                     ) || 0;
 
                   return { title, price, imageUrl, productUrl };
