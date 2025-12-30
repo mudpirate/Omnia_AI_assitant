@@ -14,6 +14,8 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 const LLM_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const VISION_MODEL = "gpt-4o-mini";
+const MODAL_CLIP_URL = process.env.MODAL_CLIP_URL;
+const MODAL_CLIP_BATCH_URL = process.env.MODAL_CLIP_BATCH_URL;
 const EMBEDDING_MODEL =
   process.env.OPENAI_EMBEDDING_MODEL || "text-embedding-3-small";
 
@@ -178,10 +180,25 @@ Image of headphones → "Sony wireless headphones black"`,
 // LLM-powered category type detection (cached)
 const categoryTypeCache = new Map();
 
-async function getCategoryType(category) {
+async function getCategoryType(category, query = "") {
   if (!category) return "unknown";
 
   const categoryKey = category.toUpperCase();
+
+  // 🔥 FIX: ACCESSORIES can be either - check query context FIRST
+  if (categoryKey === "ACCESSORIES") {
+    const lowerQuery = (query || "").toLowerCase();
+    const techKeywords =
+      /case|charger|cable|adapter|screen protector|stand|mount|holder|power bank|iphone|samsung|galaxy|macbook|ipad|airpods|laptop|phone|tablet|usb|lightning|magsafe/i;
+
+    if (techKeywords.test(lowerQuery)) {
+      console.log(`   🔌 ACCESSORIES detected as TECH (query: "${query}")`);
+      return "electronics";
+    } else {
+      console.log(`   👜 ACCESSORIES detected as FASHION (query: "${query}")`);
+      return "fashion";
+    }
+  }
 
   if (categoryTypeCache.has(categoryKey)) {
     console.log(
@@ -383,6 +400,179 @@ async function getQueryEmbedding(text) {
   return { embedding, vectorLiteral };
 }
 
+async function getClipImageEmbedding(imageBase64) {
+  console.log("\n🖼️ [CLIP] Encoding image with Modal CLIP service");
+
+  try {
+    const response = await fetch(MODAL_CLIP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "image",
+        image: imageBase64,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Modal CLIP service error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("   ✅ CLIP embedding generated, dimensions:", data.dimensions);
+
+    return data.embedding;
+  } catch (error) {
+    console.error("   ❌ CLIP encoding error:", error.message);
+    throw error;
+  }
+}
+
+/**
+ * Visual search - find products by image similarity
+ */
+async function visualProductSearch(imageEmbedding, filters = {}, limit = 15) {
+  console.log("\n🔍 [VISUAL SEARCH] Starting image-based product search");
+
+  const vectorLiteral =
+    "[" + imageEmbedding.map((x) => x.toFixed(6)).join(",") + "]";
+
+  // Build WHERE clause
+  let whereConditions = [
+    `"stock" = 'IN_STOCK'`,
+    `"imageEmbedding" IS NOT NULL`,
+  ];
+
+  if (filters.category) {
+    whereConditions.push(`"category" = '${filters.category.toUpperCase()}'`);
+    console.log("   📂 Category filter:", filters.category);
+  }
+  if (filters.brand) {
+    whereConditions.push(
+      `LOWER("brand") ILIKE '%${filters.brand.toLowerCase()}%'`
+    );
+    console.log("   🏷️ Brand filter:", filters.brand);
+  }
+  if (filters.maxPrice) {
+    whereConditions.push(`"price" <= ${parseFloat(filters.maxPrice)}`);
+    console.log("   💰 Max price filter:", filters.maxPrice);
+  }
+
+  const whereClause = whereConditions.join(" AND ");
+
+  const query = `
+    SELECT
+      "title", "price", "storeName", "productUrl", "category",
+      "imageUrl", "stock", "description", "brand", "specs", "scrapedAt",
+      1 - ("imageEmbedding" <=> '${vectorLiteral}'::vector) as similarity
+    FROM "Product"
+    WHERE ${whereClause}
+    ORDER BY "imageEmbedding" <=> '${vectorLiteral}'::vector ASC
+    LIMIT ${limit};
+  `;
+
+  try {
+    const results = await prisma.$queryRawUnsafe(query);
+    console.log("   ✅ Visual search completed");
+    console.log("   📊 Results found:", results.length);
+
+    if (results.length > 0) {
+      console.log("   🔝 Top 3 visual matches:");
+      results.slice(0, 3).forEach((r, i) => {
+        console.log(`      ${i + 1}. ${r.title}`);
+        console.log(
+          `         Similarity: ${(parseFloat(r.similarity) * 100).toFixed(1)}%`
+        );
+      });
+    }
+
+    return results;
+  } catch (error) {
+    console.error("   ❌ Visual search error:", error.message);
+    return [];
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// VISUAL SEARCH ENDPOINT
+// ═══════════════════════════════════════════════════════════════════════
+
+app.post("/visual-search", upload.single("image"), async (req, res) => {
+  console.log("\n" + "🖼️ ".repeat(40));
+  console.log("📸 NEW VISUAL SEARCH REQUEST");
+  console.log("🖼️ ".repeat(40));
+
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: "No image file uploaded",
+      });
+    }
+
+    console.log("📁 File received:");
+    console.log("   Name:", req.file.originalname);
+    console.log("   Size:", req.file.size, "bytes");
+    console.log("   MIME:", req.file.mimetype);
+
+    // Convert to base64
+    const imageBase64 = req.file.buffer.toString("base64");
+
+    // Get optional filters from request body
+    const { category, brand, maxPrice } = req.body;
+    const filters = {};
+    if (category) filters.category = category;
+    if (brand) filters.brand = brand;
+    if (maxPrice) filters.maxPrice = maxPrice;
+
+    // Step 1: Get CLIP embedding from Modal
+    console.log("\n🚀 Step 1: Getting CLIP embedding from Modal...");
+    const imageEmbedding = await getClipImageEmbedding(imageBase64);
+
+    // Step 2: Search for visually similar products
+    console.log("\n🚀 Step 2: Searching for visually similar products...");
+    const results = await visualProductSearch(imageEmbedding, filters, 20);
+
+    // Step 3: Deduplicate results
+    const deduplicatedResults = deduplicateProducts(results);
+    const productsToReturn = deduplicatedResults.slice(0, 15);
+
+    // Determine category type for frontend
+    const categoryType =
+      productsToReturn.length > 0
+        ? await getCategoryType(productsToReturn[0].category, "")
+        : "unknown";
+
+    console.log("\n✅ Visual search completed successfully");
+    console.log("   Products found:", productsToReturn.length);
+    console.log("   Category type:", categoryType);
+    console.log("🖼️ ".repeat(40) + "\n");
+
+    return res.json({
+      success: true,
+      count: productsToReturn.length,
+      categoryType: categoryType,
+      products: productsToReturn.map((p) => ({
+        title: p.title,
+        price: p.price,
+        storeName: beautifyStoreName(p.storeName),
+        productUrl: p.productUrl,
+        imageUrl: p.imageUrl,
+        description: p.description,
+        category: p.category,
+        brand: p.brand,
+        specs: cleanSpecs(p.specs),
+        similarity: (parseFloat(p.similarity) * 100).toFixed(1) + "%",
+      })),
+    });
+  } catch (error) {
+    console.error("❌ [Visual Search] Error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Visual search failed: " + error.message,
+    });
+  }
+});
+
 function normalizeStorage(storageValue) {
   if (!storageValue) return null;
 
@@ -426,6 +616,33 @@ const CORE_COLUMNS = [
 
 const EXACT_MATCH_SPECS = ["variant", "storage", "gender"];
 
+// 🔥 FIX: Build model number filter with word-based matching
+function buildModelNumberFilter(modelNumber) {
+  if (!modelNumber) return null;
+
+  const modelNum = modelNumber.toLowerCase().replace(/'/g, "''").trim();
+
+  // Split into words and filter out very short/common words
+  const words = modelNum
+    .split(/\s+/)
+    .filter(
+      (word) =>
+        word.length > 1 &&
+        !["the", "and", "for", "with", "from", "a", "an"].includes(word)
+    );
+
+  if (words.length === 0) return null;
+
+  if (words.length === 1) {
+    // Single word: use simple LIKE
+    return `LOWER("title") LIKE '%${words[0]}%'`;
+  }
+
+  // Multiple words: ALL words must be present (AND logic)
+  const conditions = words.map((word) => `LOWER("title") LIKE '%${word}%'`);
+  return `(${conditions.join(" AND ")})`;
+}
+
 async function buildPushDownFilters(filters = {}, rawQuery = "") {
   console.log("\n🔍 [FILTER BUILDER] Building WHERE clause (Scalable Mode)");
   console.log("   📥 Input filters:", JSON.stringify(filters, null, 2));
@@ -468,10 +685,12 @@ async function buildPushDownFilters(filters = {}, rawQuery = "") {
       conditions.push(condition);
       console.log(`   🏪 Store: ${condition}`);
     } else if (key === "modelNumber" || key === "model_number") {
-      const modelNum = value.replace(/'/g, "''");
-      const condition = `LOWER("title") LIKE '%${modelNum}%'`;
-      conditions.push(condition);
-      console.log(`   🔢 Model: ${condition}`);
+      // 🔥 FIX: Use word-based matching for model numbers
+      const modelFilter = buildModelNumberFilter(value);
+      if (modelFilter) {
+        conditions.push(modelFilter);
+        console.log(`   🔢 Model (word-based): ${modelFilter}`);
+      }
     } else if (key !== "query" && key !== "sort") {
       // All other keys are specs (ignore 'sort' here)
       let specValue = value.toString().toLowerCase().replace(/'/g, "''");
@@ -950,6 +1169,7 @@ async function electronicsHybridSearch(
   console.log("   🔍 Query:", searchQuery);
   console.log("   🎛️  Filters:", JSON.stringify(filters, null, 2));
 
+  // Stage 1: All filters (strict)
   let [vectorResults, fulltextResults] = await Promise.all([
     vectorSearch(vectorLiteral, filters, limit * 2, searchQuery),
     fulltextSearchElectronics(searchQuery, filters, limit * 2),
@@ -969,8 +1189,91 @@ async function electronicsHybridSearch(
     return finalResults;
   }
 
-  console.log("   ⚠️  Stage 1 failed. Trying Stage 2 (relaxed)...");
+  console.log("   ⚠️  Stage 1 failed. Trying Stage 2 (drop variant/color)...");
 
+  // Stage 2: Drop variant and color only
+  const stage2Filters = {};
+  for (const key of Object.keys(filters)) {
+    if (key !== "variant" && key !== "color") {
+      stage2Filters[key] = filters[key];
+    }
+  }
+
+  [vectorResults, fulltextResults] = await Promise.all([
+    vectorSearch(vectorLiteral, stage2Filters, limit * 2, searchQuery),
+    fulltextSearchElectronics(searchQuery, stage2Filters, limit * 2),
+  ]);
+
+  if (vectorResults.length > 0 || fulltextResults.length > 0) {
+    const fusedResults = reciprocalRankFusionElectronics(
+      vectorResults,
+      fulltextResults
+    );
+    const finalResults = fusedResults.slice(0, limit);
+    console.log(
+      "   ✅ Electronics Stage 2 (no variant/color):",
+      finalResults.length,
+      "results"
+    );
+    return finalResults;
+  }
+
+  console.log(
+    "   ⚠️  Stage 2 failed. Trying Stage 3 (drop one spec at a time)..."
+  );
+
+  // Stage 3: Try dropping specs one at a time to find partial matches
+  const specKeys = Object.keys(stage2Filters).filter(
+    (key) =>
+      ![
+        "category",
+        "brand",
+        "modelNumber",
+        "model_number",
+        "minPrice",
+        "min_price",
+        "maxPrice",
+        "max_price",
+        "storeName",
+        "store_name",
+      ].includes(key)
+  );
+
+  for (const specToDrop of specKeys) {
+    const stage3Filters = {};
+    for (const key of Object.keys(stage2Filters)) {
+      if (key !== specToDrop) {
+        stage3Filters[key] = stage2Filters[key];
+      }
+    }
+
+    console.log(`   🔄 Trying without '${specToDrop}'...`);
+
+    [vectorResults, fulltextResults] = await Promise.all([
+      vectorSearch(vectorLiteral, stage3Filters, limit * 2, searchQuery),
+      fulltextSearchElectronics(searchQuery, stage3Filters, limit * 2),
+    ]);
+
+    if (vectorResults.length > 0 || fulltextResults.length > 0) {
+      const fusedResults = reciprocalRankFusionElectronics(
+        vectorResults,
+        fulltextResults
+      );
+      const finalResults = fusedResults.slice(0, limit);
+      console.log(
+        `   ✅ Electronics Stage 3 (dropped ${specToDrop}):`,
+        finalResults.length,
+        "results"
+      );
+      return finalResults;
+    }
+  }
+
+  console.log(
+    "   ⚠️  Stage 3 failed. Trying Stage 4 (category + brand only)..."
+  );
+
+  // Stage 4: Last resort - category and brand only
   const relaxedFilters = {
     category: filters.category,
     brand: filters.brand,
@@ -991,7 +1294,7 @@ async function electronicsHybridSearch(
   );
   const finalResults = fusedResults.slice(0, limit);
   console.log(
-    "   ✅ Electronics Stage 2 (relaxed):",
+    "   ✅ Electronics Stage 4 (relaxed):",
     finalResults.length,
     "results"
   );
@@ -1098,7 +1401,7 @@ async function hybridSearch(
   console.log("   🔍 Query:", searchQuery);
   console.log("   🎛️  Filters:", JSON.stringify(filters, null, 2));
 
-  const categoryType = await getCategoryType(filters.category);
+  const categoryType = await getCategoryType(filters.category, searchQuery);
   console.log("   📂 Category type:", categoryType);
 
   if (categoryType === "fashion") {
@@ -1256,7 +1559,7 @@ async function executeSearchDatabase(args) {
   console.log("✨ Final filters:");
   console.log(JSON.stringify(filters, null, 2));
 
-  const categoryType = await getCategoryType(filters.category);
+  const categoryType = await getCategoryType(filters.category, query);
   console.log("📂 Category type detected:", categoryType);
 
   try {
@@ -1544,5 +1847,6 @@ app.listen(PORT, () => {
   console.log("   🎯 Category: Soft bias (prevents semantic drift)");
   console.log("   🗑️  Deduplication: Model variety (not color clutter)");
   console.log("   📅 Date: Dynamic injection (AI knows current date)");
+  console.log("   🔧 Model filter: Word-based matching (not exact phrase)");
   console.log(`   🌐 Server running on port ${PORT}`);
 });

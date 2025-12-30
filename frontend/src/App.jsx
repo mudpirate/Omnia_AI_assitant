@@ -17,6 +17,7 @@ import {
   Camera,
   Scan,
   Circle,
+  Sparkles,
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -68,10 +69,17 @@ const customStyles = `
     50% { transform: translateY(-8px); }
   }
 
+  @keyframes pulse-ring {
+    0% { transform: scale(0.8); opacity: 0.8; }
+    50% { transform: scale(1.2); opacity: 0.3; }
+    100% { transform: scale(0.8); opacity: 0.8; }
+  }
+
   .animate-breath { animation: breath 4s ease-in-out infinite; }
   .animate-rise { animation: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
   .animate-fade { animation: fade 0.6s ease-out forwards; }
   .animate-float-gentle { animation: float-gentle 6s ease-in-out infinite; }
+  .animate-pulse-ring { animation: pulse-ring 2s ease-in-out infinite; }
 
   .delay-1 { animation-delay: 0.1s; opacity: 0; }
   .delay-2 { animation-delay: 0.2s; opacity: 0; }
@@ -197,67 +205,74 @@ function App() {
     reader.readAsDataURL(file);
   };
 
-  const analyzeAndSearch = async () => {
+  // 🔥 NEW: CLIP Visual Search - Direct image-to-product matching
+  const visualSearch = async () => {
     if (!selectedImage) return;
     setIsAnalyzingImage(true);
-    setAnalysisStatus("Analyzing image...");
+    setAnalysisStatus("Processing image with Omnia...");
 
     try {
-      const formData = new FormData();
-      formData.append("image", selectedImage);
-      const analysisResponse = await fetch(`${API_URL}/analyze-image`, {
-        method: "POST",
-        body: formData,
-      });
-      const analysisData = await analysisResponse.json();
-      if (!analysisData.success)
-        throw new Error(analysisData.error || "Analysis failed");
-
-      const searchQuery = analysisData.query;
-      setAnalysisStatus(`Searching for "${searchQuery}"`);
+      // Add user message with image
       setMessages((prev) => [
         ...prev,
         {
           role: "user",
-          content: `Image search: "${searchQuery}"`,
+          content: "Visual Search",
           image: imagePreview,
+          isVisualSearch: true,
         },
       ]);
 
-      setIsLoading(true);
-      const searchResponse = await fetch(`${API_URL}/chat`, {
+      setAnalysisStatus("Finding visually similar products...");
+
+      // 🔥 Single API call to /visual-search (CLIP-powered)
+      const formData = new FormData();
+      formData.append("image", selectedImage);
+
+      const response = await fetch(`${API_URL}/visual-search`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: searchQuery,
-          sessionId: sessionId || "default",
-        }),
+        body: formData,
       });
-      const searchData = await searchResponse.json();
-      if (searchData.sessionId && !sessionId)
-        setSessionId(searchData.sessionId);
+
+      if (!response.ok) {
+        throw new Error(`Search failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.error || "Visual search failed");
+      }
+
+      // Add assistant response with products
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: searchData.reply,
-          products: searchData.products || [],
-          generatedQuery: searchQuery,
+          content:
+            data.count > 0
+              ? `I found ${data.count} visually similar products. Here are the best matches:`
+              : "I couldn't find any visually similar products. Try uploading a clearer image or search by text.",
+          products: data.products || [],
+          isVisualSearch: true,
+          categoryType: data.categoryType,
         },
       ]);
+
       clearImage();
     } catch (error) {
+      console.error("Visual search error:", error);
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
-          content: `Image analysis failed: ${error.message}`,
+          content: `Visual search failed: ${error.message}. Please try again or use text search.`,
           error: true,
         },
       ]);
     } finally {
       setIsAnalyzingImage(false);
-      setIsLoading(false);
+      setAnalysisStatus("");
     }
   };
 
@@ -329,7 +344,7 @@ function App() {
             imagePreview={imagePreview}
             isAnalyzing={isAnalyzingImage}
             analysisStatus={analysisStatus}
-            onAnalyze={analyzeAndSearch}
+            onAnalyze={visualSearch}
             onCancel={clearImage}
           />
         )}
@@ -340,9 +355,14 @@ function App() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading || isAnalyzingImage}
-                className="p-3 text-[#9E9E9E] hover:text-[#8B7355] transition-colors duration-300 disabled:opacity-30"
+                className="p-3 text-[#9E9E9E] hover:text-[#8B7355] transition-colors duration-300 disabled:opacity-30 group relative"
+                title="Visual Search with Omnia"
               >
                 <Camera className="w-5 h-5" strokeWidth={1.5} />
+                <Sparkles
+                  className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5 text-[#C73E3A] opacity-0 group-hover:opacity-100 transition-opacity"
+                  strokeWidth={2}
+                />
               </button>
               <input
                 type="text"
@@ -468,9 +488,10 @@ function WelcomeScreen({ onSuggestionClick, onImageUploadClick }) {
     {
       icon: <Scan className="w-5 h-5" strokeWidth={1.5} />,
       title: "Visual Search",
-      subtitle: "Image Recognition",
-      desc: "Find products from photos",
+      subtitle: "Omnia Powered",
+      desc: "Upload a photo to find similar products",
       action: onImageUploadClick,
+      highlight: true,
     },
     {
       icon: <Zap className="w-5 h-5" strokeWidth={1.5} />,
@@ -509,14 +530,28 @@ function WelcomeScreen({ onSuggestionClick, onImageUploadClick }) {
             onClick={() =>
               card.action ? card.action() : onSuggestionClick(card.query)
             }
-            className="group text-left p-8 bg-white/50 hover:bg-white border border-[#2C2C2C]/5 hover:border-[#2C2C2C]/10 transition-all duration-500 card-lift animate-rise"
+            className={`group text-left p-8 bg-white/50 hover:bg-white border transition-all duration-500 card-lift animate-rise ${
+              card.highlight
+                ? "border-[#C73E3A]/20 hover:border-[#C73E3A]/40"
+                : "border-[#2C2C2C]/5 hover:border-[#2C2C2C]/10"
+            }`}
             style={{ animationDelay: `${(idx + 4) * 0.1}s`, opacity: 0 }}
           >
-            <div className="w-12 h-12 rounded-full border border-[#2C2C2C]/10 flex items-center justify-center mb-6 text-[#8B7355] group-hover:border-[#C73E3A]/30 group-hover:text-[#C73E3A] transition-all duration-300">
+            <div
+              className={`w-12 h-12 rounded-full border flex items-center justify-center mb-6 transition-all duration-300 ${
+                card.highlight
+                  ? "border-[#C73E3A]/30 text-[#C73E3A] group-hover:border-[#C73E3A]/60 group-hover:bg-[#C73E3A]/5"
+                  : "border-[#2C2C2C]/10 text-[#8B7355] group-hover:border-[#C73E3A]/30 group-hover:text-[#C73E3A]"
+              }`}
+            >
               {card.icon}
             </div>
             <h3 className="text-base text-[#2C2C2C] mb-1">{card.title}</h3>
-            <p className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase mb-3">
+            <p
+              className={`text-[10px] tracking-[0.2em] uppercase mb-3 ${
+                card.highlight ? "text-[#C73E3A]/70" : "text-[#9E9E9E]"
+              }`}
+            >
               {card.subtitle}
             </p>
             <p className="text-sm text-[#9E9E9E]">{card.desc}</p>
@@ -535,12 +570,18 @@ function MessageBubble({ message, onProductClick }) {
       <div className="flex justify-end animate-rise">
         <div className="max-w-[75%]">
           {message.image && (
-            <div className="mb-4 overflow-hidden border border-[#2C2C2C]/10">
+            <div className="mb-4 overflow-hidden border border-[#2C2C2C]/10 relative">
               <img
                 src={message.image}
                 alt="Uploaded"
                 className="max-w-full max-h-48 object-contain bg-[#F5F1E8]"
               />
+              {message.isVisualSearch && (
+                <div className="absolute bottom-2 right-2 bg-[#C73E3A] text-white text-[9px] tracking-wider uppercase px-2 py-1 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3" strokeWidth={2} />
+                  Omnia Visual Search
+                </div>
+              )}
             </div>
           )}
           <div className="bg-[#2C2C2C] text-white/90 px-6 py-4">
@@ -557,12 +598,12 @@ function MessageBubble({ message, onProductClick }) {
         <Circle className="w-3 h-3" fill="currentColor" strokeWidth={0} />
       </div>
       <div className="flex-1 space-y-10 overflow-hidden">
-        {message.generatedQuery && (
-          <div className="inline-flex items-center gap-3 text-sm text-[#9E9E9E]">
-            <Camera className="w-4 h-4" strokeWidth={1.5} />
+        {message.isVisualSearch && message.products?.length > 0 && (
+          <div className="inline-flex items-center gap-3 text-sm text-[#9E9E9E] bg-[#F5F1E8] px-4 py-2">
+            <Sparkles className="w-4 h-4 text-[#C73E3A]" strokeWidth={1.5} />
             <span>
-              Detected:{" "}
-              <span className="text-[#2C2C2C]">{message.generatedQuery}</span>
+              Visual match powered by{" "}
+              <span className="text-[#C73E3A]">Omnia</span>
             </span>
           </div>
         )}
@@ -577,6 +618,7 @@ function MessageBubble({ message, onProductClick }) {
                 product={product}
                 index={idx}
                 onClick={() => onProductClick(product)}
+                showSimilarity={message.isVisualSearch}
               />
             ))}
           </div>
@@ -591,7 +633,7 @@ function MessageBubble({ message, onProductClick }) {
   );
 }
 
-function ProductCard({ product, index, onClick }) {
+function ProductCard({ product, index, onClick, showSimilarity = false }) {
   const specs = product.specs ? Object.entries(product.specs).slice(0, 2) : [];
   const isFashion = getCategoryType(product.category) === "fashion";
 
@@ -613,6 +655,13 @@ function ProductCard({ product, index, onClick }) {
           <div className="absolute top-4 right-4 text-[10px] tracking-[0.15em] text-[#9E9E9E] uppercase bg-white/90 px-2 py-1">
             {formatStoreName(product.storeName)}
           </div>
+          {/* 🔥 NEW: Similarity badge for visual search */}
+          {showSimilarity && product.similarity && (
+            <div className="absolute top-4 left-4 text-[10px] tracking-[0.1em] text-white uppercase bg-[#C73E3A] px-2 py-1 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" strokeWidth={2} />
+              {product.similarity} match
+            </div>
+          )}
           <div className="absolute bottom-0 left-0 p-5 w-full text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500">
             <div className="font-display text-2xl">
               {parseFloat(product.price).toFixed(3)}
@@ -652,6 +701,13 @@ function ProductCard({ product, index, onClick }) {
         <div className="absolute top-4 left-4 text-[10px] tracking-[0.15em] text-[#9E9E9E] uppercase">
           {formatStoreName(product.storeName)}
         </div>
+        {/* 🔥 NEW: Similarity badge for visual search */}
+        {showSimilarity && product.similarity && (
+          <div className="absolute top-4 right-4 text-[10px] tracking-[0.1em] text-white uppercase bg-[#C73E3A] px-2 py-1 flex items-center gap-1">
+            <Sparkles className="w-3 h-3" strokeWidth={2} />
+            {product.similarity} match
+          </div>
+        )}
       </div>
       <div className="p-5 border-t border-[#2C2C2C]/5">
         <div className="text-[10px] tracking-[0.2em] text-[#8B7355] uppercase mb-2">
@@ -703,9 +759,12 @@ function ImageUploadModal({
       <div className="bg-white border border-[#2C2C2C]/10 max-w-lg w-full overflow-hidden animate-rise shadow-2xl shadow-[#2C2C2C]/5">
         <div className="px-8 py-6 border-b border-[#2C2C2C]/5 flex justify-between items-center">
           <div>
-            <h3 className="text-base text-[#2C2C2C] mb-1">Visual Search</h3>
+            <h3 className="text-base text-[#2C2C2C] mb-1 flex items-center gap-2">
+              Visual Search
+              <Sparkles className="w-4 h-4 text-[#C73E3A]" strokeWidth={2} />
+            </h3>
             <p className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase">
-              AI-powered recognition
+              Omnia • Image Recognition
             </p>
           </div>
           <button
@@ -726,35 +785,55 @@ function ImageUploadModal({
             {isAnalyzing && (
               <div className="absolute inset-0 bg-[#FDFBF7]/90 flex items-center justify-center">
                 <div className="text-center">
-                  <Loader2
-                    className="w-8 h-8 animate-spin mx-auto mb-4 text-[#8B7355]"
-                    strokeWidth={1.5}
-                  />
+                  {/* Animated CLIP processing indicator */}
+                  <div className="relative w-16 h-16 mx-auto mb-4">
+                    <div className="absolute inset-0 border-2 border-[#C73E3A]/20 rounded-full animate-pulse-ring" />
+                    <div
+                      className="absolute inset-2 border-2 border-[#C73E3A]/40 rounded-full animate-pulse-ring"
+                      style={{ animationDelay: "0.3s" }}
+                    />
+                    <div
+                      className="absolute inset-4 border-2 border-[#C73E3A]/60 rounded-full animate-pulse-ring"
+                      style={{ animationDelay: "0.6s" }}
+                    />
+                    <Sparkles
+                      className="absolute inset-0 m-auto w-6 h-6 text-[#C73E3A]"
+                      strokeWidth={2}
+                    />
+                  </div>
                   <p className="text-sm text-[#4A4A4A]">{analysisStatus}</p>
+                  <p className="text-[10px] text-[#9E9E9E] mt-2 tracking-wider uppercase">
+                    Powered by Omnia
+                  </p>
                 </div>
               </div>
             )}
           </div>
-          {analysisStatus && !isAnalyzing && (
-            <div className="mb-8 text-sm text-[#4A4A4A] text-center">
-              {analysisStatus}
-            </div>
-          )}
+
+          {/* Info box about CLIP */}
+          <div className="mb-8 p-4 bg-[#F5F1E8] border-l-2 border-[#C73E3A]/30">
+            <p className="text-xs text-[#4A4A4A] leading-relaxed">
+              <span className="text-[#C73E3A] font-medium">Omnia</span> analyzes
+              your image and finds visually similar products by comparing image
+              features directly — no text description needed.
+            </p>
+          </div>
+
           <div className="flex gap-4">
             <button
               onClick={onAnalyze}
               disabled={isAnalyzing}
-              className="flex-1 bg-[#2C2C2C] text-white py-4 text-sm tracking-wider flex items-center justify-center gap-3 hover:bg-[#4A4A4A] transition-colors disabled:opacity-30"
+              className="flex-1 bg-[#2C2C2C] text-white py-4 text-sm tracking-wider flex items-center justify-center gap-3 hover:bg-[#C73E3A] transition-colors disabled:opacity-30"
             >
               {isAnalyzing ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
-                  Analyzing...
+                  Processing...
                 </>
               ) : (
                 <>
-                  <Search className="w-4 h-4" strokeWidth={1.5} />
-                  Find Product
+                  <Sparkles className="w-4 h-4" strokeWidth={2} />
+                  Find Similar Products
                 </>
               )}
             </button>
@@ -792,6 +871,13 @@ function ProductModal({ product, onClose }) {
             <MapPin className="w-3 h-3" strokeWidth={1.5} />
             {formatStoreName(product.storeName)}
           </div>
+          {/* Show similarity in modal if available */}
+          {product.similarity && (
+            <div className="absolute top-6 right-6 text-[10px] tracking-[0.1em] text-white uppercase bg-[#C73E3A] px-2 py-1 flex items-center gap-1">
+              <Sparkles className="w-3 h-3" strokeWidth={2} />
+              {product.similarity} match
+            </div>
+          )}
           <img
             src={product.imageUrl}
             alt={product.title}
@@ -933,6 +1019,9 @@ function formatStoreName(storeName) {
       BEST_KW: "Best",
       NOON: "Noon",
       EUREKA: "Eureka",
+      DIESEL: "Diesel",
+      "H&M": "H&M",
+      HM: "H&M",
     }[storeName] || storeName.replace(/_/g, " ")
   );
 }

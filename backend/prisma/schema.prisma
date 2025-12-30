@@ -16,6 +16,7 @@ model Product {
   description          String?
   searchKey            String
   descriptionEmbedding Unsupported("vector")?
+  imageEmbedding       Unsupported("vector(768)")?
   specs                Json?
   category             String
   price                Float
