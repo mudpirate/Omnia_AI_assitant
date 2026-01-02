@@ -1004,24 +1004,24 @@ async function scrapePrimarkProducts(browser, categoryUrl, categoryName) {
 export default scrapePrimarkProducts;
 
 // --- STANDALONE TESTING ---
-import puppeteer from "puppeteer";
+// import puppeteer from "puppeteer";
 
-async function testRun() {
-  const browser = await puppeteer.launch({
-    headless: true, // Set to true for production
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
+// async function testRun() {
+//   const browser = await puppeteer.launch({
+//     headless: true, // Set to true for production
+//     args: ["--no-sandbox", "--disable-setuid-sandbox"],
+//   });
 
-  try {
-    await scrapePrimarkProducts(
-      browser,
-      "https://www.primark.com.kw/en/shop-men/clothing/jeans/--physical_stores_codes-ra1_q737_prm",
-      "CLOTHING"
-    );
-  } finally {
-    await browser.close();
-    await prisma.$disconnect();
-  }
-}
+//   try {
+//     await scrapePrimarkProducts(
+//       browser,
+//       "https://www.primark.com.kw/en/shop-men/clothing/jeans/--physical_stores_codes-ra1_q737_prm",
+//       "CLOTHING"
+//     );
+//   } finally {
+//     await browser.close();
+//     await prisma.$disconnect();
+//   }
+// }
 
-testRun().catch(console.error);
+// testRun().catch(console.error);

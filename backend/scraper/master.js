@@ -9,6 +9,9 @@ import path from "path";
 import scrapeProductsEureka from "./eureka.js";
 import scrapeProductsXcite from "./xcite.js";
 import scrapeProductsBest from "./best.js";
+import scrapeBershkaProducts from "./bershka.js";
+import scrapePrimarkProducts from "./primark.js";
+
 // Add more imports as needed
 // import scrapeProductsLulu from "./lulu.js";
 
@@ -62,120 +65,192 @@ const CONFIG = {
 // ============================================================================
 
 const SCRAPING_JOBS = {
-  // EUREKA STORE
-  eureka: {
-    scraper: scrapeProductsEureka,
+  // bershka: {
+  //   scraper: scrapeBershkaProducts,
+  //   priority: 1, // Lower number = higher priority
+  //   jobs: [
+  //     {
+  //       url: "https://www.bershka.com/kw/men/sale/jackets-and-coats-c1010747925.html",
+  //       category: "CLOTHING",
+  //     },
+  // {
+  //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/laptops",
+  //   category: "laptops",
+  // },
+  // {
+  //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/desktops-monitors/desk-top-comp",
+  //   category: "desktops",
+  // },
+  // {
+  //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
+  //   category: "tablets",
+  // },
+  // {
+  //   url: "https://www.eureka.com.kw/products/browse/audio/home-theaters",
+  //   category: "audio",
+  // },
+  // {
+  //   url: "https://www.eureka.com.kw/products/browse/audio/accessories?sort%3Dpriceh2l",
+  //   category: "audio",
+  // },
+  // {
+  //   url: "https://www.eureka.com.kw/products/browse/smart-watches/watches",
+  //   category: "smartwatches",
+  // },
+  // // Add more Eureka categories here
+  //   ],
+  // },
+
+  primark: {
+    scraper: scrapePrimarkProducts,
     priority: 1, // Lower number = higher priority
     jobs: [
       {
-        url: "https://www.eureka.com.kw/products/browse/phones/mobile-phones",
-        category: "mobilephones",
+        url: "https://www.primark.com.kw/en/shop-men/clothing/jeans/--physical_stores_codes-ra1_q737_prm",
+        category: "CLOTHING",
       },
-      {
-        url: "https://www.eureka.com.kw/products/browse/computers-tablets/laptops",
-        category: "laptops",
-      },
-      {
-        url: "https://www.eureka.com.kw/products/browse/computers-tablets/desktops-monitors/desk-top-comp",
-        category: "desktops",
-      },
-      {
-        url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
-        category: "tablets",
-      },
-      {
-        url: "https://www.eureka.com.kw/products/browse/audio/home-theaters",
-        category: "audio",
-      },
-      {
-        url: "https://www.eureka.com.kw/products/browse/audio/accessories?sort%3Dpriceh2l",
-        category: "audio",
-      },
-      {
-        url: "https://www.eureka.com.kw/products/browse/smart-watches/watches",
-        category: "smartwatches",
-      },
+      // {
+      //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/laptops",
+      //   category: "laptops",
+      // },
+      // {
+      //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/desktops-monitors/desk-top-comp",
+      //   category: "desktops",
+      // },
+      // {
+      //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
+      //   category: "tablets",
+      // },
+      // {
+      //   url: "https://www.eureka.com.kw/products/browse/audio/home-theaters",
+      //   category: "audio",
+      // },
+      // {
+      //   url: "https://www.eureka.com.kw/products/browse/audio/accessories?sort%3Dpriceh2l",
+      //   category: "audio",
+      // },
+      // {
+      //   url: "https://www.eureka.com.kw/products/browse/smart-watches/watches",
+      //   category: "smartwatches",
+      // },
       // // Add more Eureka categories here
     ],
   },
 
-  // XCITE STORE
-  xcite: {
-    scraper: scrapeProductsXcite,
-    priority: 1,
-    jobs: [
-      // {
-      //   url: "https://www.xcite.com/mobile-phones/c",
-      //   category: "mobilephones",
-      // },
-      // {
-      //   url: "https://www.xcite.com/laptops/c",
-      //   category: "laptops",
-      // },
-      // {
-      //   url: "https://www.xcite.com/tablets/c",
-      //   category: "tablets",
-      // },
-      // {
-      //   url: "https://www.xcite.com/computer-desktops/c",
-      //   category: "desktops",
-      // },
-      // {
-      //   url: "https://www.xcite.com/personal-audio/c",
-      //   category: "audio",
-      // },
-      {
-        url: "https://www.xcite.com/smart-watches/c",
-        category: "smartwatches",
-      },
-      // Add more Xcite categories here
-    ],
-  },
+  // EUREKA STORE
+  // eureka: {
+  //   scraper: scrapeProductsEureka,
+  //   priority: 1, // Lower number = higher priority
+  //   jobs: [
+  //     {
+  //       url: "https://www.eureka.com.kw/products/browse/phones/mobile-phones",
+  //       category: "mobilephones",
+  //     },
+  //     {
+  //       url: "https://www.eureka.com.kw/products/browse/computers-tablets/laptops",
+  //       category: "laptops",
+  //     },
+  //     {
+  //       url: "https://www.eureka.com.kw/products/browse/computers-tablets/desktops-monitors/desk-top-comp",
+  //       category: "desktops",
+  //     },
+  //     {
+  //       url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
+  //       category: "tablets",
+  //     },
+  //     {
+  //       url: "https://www.eureka.com.kw/products/browse/audio/home-theaters",
+  //       category: "audio",
+  //     },
+  //     {
+  //       url: "https://www.eureka.com.kw/products/browse/audio/accessories?sort%3Dpriceh2l",
+  //       category: "audio",
+  //     },
+  //     {
+  //       url: "https://www.eureka.com.kw/products/browse/smart-watches/watches",
+  //       category: "smartwatches",
+  //     },
+  //     // // Add more Eureka categories here
+  //   ],
+  // },
 
-  // BEST STORE
-  best: {
-    scraper: scrapeProductsBest,
-    priority: 2,
-    jobs: [
-      {
-        url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:samsung:brand:apple",
-        category: "mobilephones",
-      },
-      {
-        url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:xiaomi:brand:honor",
-        category: "mobilephones",
-      },
-      {
-        url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:xiaomi:brand:honor",
-        category: "mobilephones",
-      },
-      {
-        url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:motorola:brand:infinix:brand:vivo:brand:oppo:brand:nothing:brand:google:brand:oneplus:brand:huawei:brand:realmer",
-        category: "mobilephones",
-      },
-      {
-        url: "https://best.com.kw/en/c/laptops-nn",
-        category: "laptops",
-      },
-      {
-        url: "https://best.com.kw/en/c/desktops-nn",
-        category: "desktops",
-      },
-      {
-        url: "https://best.com.kw/en/c/tablets-nn",
-        category: "tablets",
-      },
+  // // XCITE STORE
+  // xcite: {
+  //   scraper: scrapeProductsXcite,
+  //   priority: 1,
+  //   jobs: [
+  //     // {
+  //     //   url: "https://www.xcite.com/mobile-phones/c",
+  //     //   category: "mobilephones",
+  //     // },
+  //     // {
+  //     //   url: "https://www.xcite.com/laptops/c",
+  //     //   category: "laptops",
+  //     // },
+  //     // {
+  //     //   url: "https://www.xcite.com/tablets/c",
+  //     //   category: "tablets",
+  //     // },
+  //     // {
+  //     //   url: "https://www.xcite.com/computer-desktops/c",
+  //     //   category: "desktops",
+  //     // },
+  //     // {
+  //     //   url: "https://www.xcite.com/personal-audio/c",
+  //     //   category: "audio",
+  //     // },
+  //     {
+  //       url: "https://www.xcite.com/smart-watches/c",
+  //       category: "smartwatches",
+  //     },
+  //     // Add more Xcite categories here
+  //   ],
+  // },
 
-      {
-        url: "https://best.com.kw/en/c/headphones-and-earphones-nn",
-        category: "audio",
-      },
-      {
-        url: "https://best.com.kw/en/search/smartwatches",
-        category: "smartwatches",
-      },
-    ],
-  },
+  // // BEST STORE
+  // best: {
+  //   scraper: scrapeProductsBest,
+  //   priority: 2,
+  //   jobs: [
+  //     {
+  //       url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:samsung:brand:apple",
+  //       category: "mobilephones",
+  //     },
+  //     {
+  //       url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:xiaomi:brand:honor",
+  //       category: "mobilephones",
+  //     },
+  //     {
+  //       url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:xiaomi:brand:honor",
+  //       category: "mobilephones",
+  //     },
+  //     {
+  //       url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:motorola:brand:infinix:brand:vivo:brand:oppo:brand:nothing:brand:google:brand:oneplus:brand:huawei:brand:realmer",
+  //       category: "mobilephones",
+  //     },
+  //     {
+  //       url: "https://best.com.kw/en/c/laptops-nn",
+  //       category: "laptops",
+  //     },
+  //     {
+  //       url: "https://best.com.kw/en/c/desktops-nn",
+  //       category: "desktops",
+  //     },
+  //     {
+  //       url: "https://best.com.kw/en/c/tablets-nn",
+  //       category: "tablets",
+  //     },
+
+  //     {
+  //       url: "https://best.com.kw/en/c/headphones-and-earphones-nn",
+  //       category: "audio",
+  //     },
+  //     {
+  //       url: "https://best.com.kw/en/search/smartwatches",
+  //       category: "smartwatches",
+  //     },
+  //   ],
+  // },
 
   // Add more stores...
 };

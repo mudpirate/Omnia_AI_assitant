@@ -1,0 +1,599 @@
+{
+  "categoryDetection": {
+    "hooded puffer jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "khaki",
+        "sku": "6792/551/548",
+        "available_sizes": "S, M, L",
+        "discount": "-30%",
+        "old_price": 35.9
+      }
+    },
+    "boxy fit corduroy jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "corduroy",
+        "pattern": "",
+        "style": "",
+        "color": "camel",
+        "sku": "6861/710/742",
+        "available_sizes": "XS, S, M",
+        "discount": "-30%",
+        "old_price": 24.9
+      }
+    },
+    "technical puffer jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "black",
+        "sku": "6770/046/800",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-30%",
+        "old_price": 29.9
+      }
+    },
+    "synthetic wool trucker jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "synthetic wool",
+        "pattern": "",
+        "style": "casual",
+        "color": "stone",
+        "sku": "6788/564/805",
+        "available_sizes": "S, M",
+        "discount": "-30%",
+        "old_price": 24.9
+      }
+    },
+    "puffy leather effect jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "6811/718/800",
+        "available_sizes": "M",
+        "discount": "-41%",
+        "old_price": 35.9
+      }
+    },
+    "faux fur lapel jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "faux fur",
+        "pattern": "",
+        "style": "casual",
+        "color": "cream",
+        "sku": "6804/073/712",
+        "available_sizes": "L, XL",
+        "discount": "-41%",
+        "old_price": 35.9
+      }
+    },
+    "long wool blend coat": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "coat",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "wool blend",
+        "pattern": "",
+        "style": "casual",
+        "color": "black",
+        "sku": "6958/759/800",
+        "available_sizes": "S",
+        "discount": "-47%",
+        "old_price": 39.9
+      }
+    },
+    "jacket with faux fur collar": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "faux fur",
+        "pattern": "",
+        "style": "",
+        "color": "navy",
+        "sku": "6805/073/401",
+        "available_sizes": "S, M, L",
+        "discount": "-41%",
+        "old_price": 35.9
+      }
+    },
+    "cloth jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "black",
+        "sku": "6803/758/800",
+        "available_sizes": "S, M",
+        "discount": "-40%",
+        "old_price": 29.9
+      }
+    },
+    "boxy faux shearling jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "women",
+        "fit": "boxy",
+        "rise": "",
+        "material": "faux shearling",
+        "pattern": "",
+        "style": "casual",
+        "color": "cream",
+        "sku": "6864/710/712",
+        "available_sizes": "M",
+        "discount": "-35%",
+        "old_price": 27.9
+      }
+    },
+    "long puffer coat": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "coat",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "6961/202/800",
+        "available_sizes": "M",
+        "discount": "-41%",
+        "old_price": 35.9
+      }
+    },
+    "long felt texture coat": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "coat",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "felt",
+        "pattern": "",
+        "style": "casual",
+        "color": "black",
+        "sku": "6959/752/800",
+        "available_sizes": "S",
+        "discount": "-40%",
+        "old_price": 29.9
+      }
+    },
+    "cropped chenille jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "chenille",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "6812/758/800",
+        "available_sizes": "S, M, L",
+        "discount": "-40%",
+        "old_price": 24.9
+      }
+    },
+    "embroidered faux suede boxy-fit overshirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "overshirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "faux suede",
+        "pattern": "",
+        "style": "",
+        "color": "maroon",
+        "sku": "6403/710/122",
+        "available_sizes": "M, L",
+        "discount": "-60%",
+        "old_price": 24.9
+      }
+    },
+    "studded denim jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "denim",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "6758/074/800",
+        "available_sizes": "M, L",
+        "discount": "-41%",
+        "old_price": 35.9
+      }
+    },
+    "denim jacket with pockets": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "denim",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "6753/156/800",
+        "available_sizes": "S, M, L, XL",
+        "discount": "-41%",
+        "old_price": 35.9
+      }
+    },
+    "technical bomber jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bomber jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "khaki",
+        "sku": "6794/109/505",
+        "available_sizes": "S, M, L",
+        "discount": "-40%",
+        "old_price": 29.9
+      }
+    },
+    "leather effect jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "6798/677/800",
+        "available_sizes": "S",
+        "discount": "-40%",
+        "old_price": 29.9
+      }
+    },
+    "boxy fit overshirt with zip": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "overshirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "black",
+        "sku": "1286/197/800",
+        "available_sizes": "M, L, XL",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "printed technical jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "khaki",
+        "sku": "6799/759/924",
+        "available_sizes": "M, L",
+        "discount": "-40%",
+        "old_price": 24.9
+      }
+    },
+    "waxed-effect jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "waxed",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "6791/073/800",
+        "available_sizes": "S, M, L",
+        "discount": "-40%",
+        "old_price": 29.9
+      }
+    },
+    "corduroy puffer jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "corduroy",
+        "pattern": "",
+        "style": "casual",
+        "color": "brown",
+        "sku": "6785/730/700",
+        "available_sizes": "M",
+        "discount": "-40%",
+        "old_price": 29.9
+      }
+    },
+    "cropped boxy fit overshirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "overshirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "grey",
+        "sku": "6401/335/802",
+        "available_sizes": "M, L",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "jacquard denim jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "denim",
+        "pattern": "jacquard",
+        "style": "",
+        "color": "brown",
+        "sku": "6359/156/775",
+        "available_sizes": "S, M",
+        "discount": "-60%",
+        "old_price": 24.9
+      }
+    },
+    "printed denim jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "denim",
+        "pattern": "printed",
+        "style": "",
+        "color": "green",
+        "sku": "1402/335/500",
+        "available_sizes": "S, M",
+        "discount": "-40%",
+        "old_price": 24.9
+      }
+    },
+    "denim trucker jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "denim",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "6751/352/800",
+        "available_sizes": "XS",
+        "discount": "-28%",
+        "old_price": 20.9
+      }
+    },
+    "boxy denim jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "denim",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "brown",
+        "sku": "6760/074/775",
+        "available_sizes": "S, M",
+        "discount": "-41%",
+        "old_price": 35.9
+      }
+    },
+    "checked boxy jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "checked",
+        "style": "",
+        "color": "brown",
+        "sku": "6862/710/700",
+        "available_sizes": "XL",
+        "discount": "-40%",
+        "old_price": 24.9
+      }
+    },
+    "rustic boxy fit jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "camel",
+        "sku": "6769/758/742",
+        "available_sizes": "S, M, L",
+        "discount": "-40%",
+        "old_price": 24.9
+      }
+    },
+    "overshirt with zip": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "overshirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "black",
+        "sku": "6775/564/800",
+        "available_sizes": "S",
+        "discount": "-40%",
+        "old_price": 24.9
+      }
+    },
+    "technical sports jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "sports",
+        "color": "red",
+        "sku": "6776/046/600",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-33%",
+        "old_price": 14.9
+      }
+    },
+    "lightweight puffer gilet": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "gilet",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "lightweight",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "3606/046/800",
+        "available_sizes": "XL",
+        "discount": "-38%",
+        "old_price": 12.9
+      }
+    },
+    "faux shearling jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "faux shearling",
+        "pattern": "",
+        "style": "casual",
+        "color": "black",
+        "sku": "6807/759/800",
+        "available_sizes": "XS, S, M",
+        "discount": "-40%",
+        "old_price": 24.9
+      }
+    },
+    "felt texture jacket with zip": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "felt",
+        "pattern": "",
+        "style": "",
+        "color": "black",
+        "sku": "6789/741/800",
+        "available_sizes": "S, M",
+        "discount": "-40%",
+        "old_price": 29.9
+      }
+    },
+    "puffer gilet": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "gilet",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "black",
+        "sku": "8614/759/800",
+        "available_sizes": "M, L",
+        "discount": "-44%",
+        "old_price": 17.9
+      }
+    }
+  }
+}

@@ -1111,26 +1111,26 @@ async function scrapeBershkaProducts(browser, categoryUrl, categoryName) {
 
 export default scrapeBershkaProducts;
 
-// --- STANDALONE TESTING ---
-import puppeteer from "puppeteer";
+// // --- STANDALONE TESTING ---
+// import puppeteer from "puppeteer";
 
-async function testRun() {
-  const browser = await puppeteer.launch({
-    headless: false, // Set to true for production
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
+// async function testRun() {
+//   const browser = await puppeteer.launch({
+//     headless: true, // Set to true for production
+//     args: ["--no-sandbox", "--disable-setuid-sandbox"],
+//   });
 
-  try {
-    await scrapeBershkaProducts(
-      browser,
-      "https://www.bershka.com/kw/men/sale/trousers-and-jeans-c1010747956.html",
-      "MEN_SALE_TROUSERS_JEANS"
-    );
-  } finally {
-    await browser.close();
-    await prisma.$disconnect();
-  }
-}
+//   try {
+//     await scrapeBershkaProducts(
+//       browser,
+//       "https://www.bershka.com/kw/men/sale/trousers-and-jeans-c1010747956.html",
+//       "MEN_SALE_TROUSERS_JEANS"
+//     );
+//   } finally {
+//     await browser.close();
+//     await prisma.$disconnect();
+//   }
+// }
 
 // Run standalone test
-testRun().catch(console.error);
+// testRun().catch(console.error);

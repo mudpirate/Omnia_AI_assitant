@@ -21,80 +21,61 @@ import {
 } from "lucide-react";
 
 // ═══════════════════════════════════════════════════════════════════════════
-// JAPANESE MINIMAL THEME
-// Zen simplicity, generous whitespace, quiet elegance, subtle warmth
+// MONOCHROME THEME
+// Strict Black & White, Roboto Font, High Contrast, Industrial Cleanliness
 // ═══════════════════════════════════════════════════════════════════════════
 
 const customStyles = `
-  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&family=Noto+Sans+JP:wght@300;400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
 
   :root {
-    --washi: #FDFBF7;
-    --sumi: #2C2C2C;
-    --sumi-light: #4A4A4A;
-    --kinari: #F5F1E8;
-    --cha: #8B7355;
-    --aka: #C73E3A;
-    --matcha: #7D8471;
-    --usuzumi: #9E9E9E;
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #FAFAFA;
+    --text-primary: #000000;
+    --text-secondary: #52525B; /* Zinc-600 */
+    --text-tertiary: #A1A1AA;  /* Zinc-400 */
+    --accent-black: #000000;
+    --border-light: #E4E4E7;   /* Zinc-200 */
   }
 
   * {
-    font-family: 'Noto Sans JP', sans-serif;
-    font-weight: 300;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 400;
   }
 
-  .font-display {
-    font-family: 'Cormorant Garamond', serif;
-    font-weight: 300;
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300; /* Light weight for headings */
   }
 
-  @keyframes breath {
-    0%, 100% { opacity: 0.4; }
-    50% { opacity: 0.8; }
+  .font-medium {
+    font-weight: 500;
   }
 
-  @keyframes rise {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes fade {
+  @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
   }
 
-  @keyframes float-gentle {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
+  @keyframes slide-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
-  @keyframes pulse-ring {
-    0% { transform: scale(0.8); opacity: 0.8; }
-    50% { transform: scale(1.2); opacity: 0.3; }
-    100% { transform: scale(0.8); opacity: 0.8; }
-  }
-
-  .animate-breath { animation: breath 4s ease-in-out infinite; }
-  .animate-rise { animation: rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
-  .animate-fade { animation: fade 0.6s ease-out forwards; }
-  .animate-float-gentle { animation: float-gentle 6s ease-in-out infinite; }
-  .animate-pulse-ring { animation: pulse-ring 2s ease-in-out infinite; }
+  .animate-fade { animation: fade-in 0.4s ease-out forwards; }
+  .animate-rise { animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
   .delay-1 { animation-delay: 0.1s; opacity: 0; }
   .delay-2 { animation-delay: 0.2s; opacity: 0; }
   .delay-3 { animation-delay: 0.3s; opacity: 0; }
 
-  .ink-wash {
-    background: radial-gradient(ellipse at 30% 0%, rgba(44, 44, 44, 0.02) 0%, transparent 50%),
-                radial-gradient(ellipse at 70% 100%, rgba(139, 115, 85, 0.03) 0%, transparent 50%);
-  }
-
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+  /* Minimalist Hover Lines */
   .hover-line {
     position: relative;
+    text-decoration: none;
   }
   .hover-line::after {
     content: '';
@@ -103,25 +84,28 @@ const customStyles = `
     left: 0;
     width: 0;
     height: 1px;
-    background: var(--sumi);
-    transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    background: black;
+    transition: width 0.3s ease;
   }
   .hover-line:hover::after {
     width: 100%;
   }
 
-  .card-lift {
-    transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s ease;
+  .card-hover {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .card-lift:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 40px -20px rgba(44, 44, 44, 0.15);
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+    border-color: #000;
   }
-
-  .enso {
-    border: 1px solid var(--usuzumi);
-    border-radius: 50%;
-    opacity: 0.2;
+  
+  .loader-dot {
+    animation: loader-pulse 1.4s infinite ease-in-out both;
+  }
+  @keyframes loader-pulse {
+    0%, 80%, 100% { transform: scale(0); }
+    40% { transform: scale(1); }
   }
 `;
 
@@ -205,14 +189,12 @@ function App() {
     reader.readAsDataURL(file);
   };
 
-  // 🔥 NEW: CLIP Visual Search - Direct image-to-product matching
   const visualSearch = async () => {
     if (!selectedImage) return;
     setIsAnalyzingImage(true);
-    setAnalysisStatus("Processing image with Omnia...");
+    setAnalysisStatus("Processing image...");
 
     try {
-      // Add user message with image
       setMessages((prev) => [
         ...prev,
         {
@@ -223,9 +205,8 @@ function App() {
         },
       ]);
 
-      setAnalysisStatus("Finding visually similar products...");
+      setAnalysisStatus("Finding matches...");
 
-      // 🔥 Single API call to /visual-search (CLIP-powered)
       const formData = new FormData();
       formData.append("image", selectedImage);
 
@@ -244,15 +225,14 @@ function App() {
         throw new Error(data.error || "Visual search failed");
       }
 
-      // Add assistant response with products
       setMessages((prev) => [
         ...prev,
         {
           role: "assistant",
           content:
             data.count > 0
-              ? `I found ${data.count} visually similar products. Here are the best matches:`
-              : "I couldn't find any visually similar products. Try uploading a clearer image or search by text.",
+              ? `Found ${data.count} similar products.`
+              : "No matches found.",
           products: data.products || [],
           isVisualSearch: true,
           categoryType: data.categoryType,
@@ -266,7 +246,7 @@ function App() {
         ...prev,
         {
           role: "assistant",
-          content: `Visual search failed: ${error.message}. Please try again or use text search.`,
+          content: `Visual search failed: ${error.message}.`,
           error: true,
         },
       ]);
@@ -292,33 +272,33 @@ function App() {
   };
 
   return (
-    <div className="flex h-screen bg-[#FDFBF7] overflow-hidden">
+    <div className="flex h-screen bg-white text-black overflow-hidden font-sans">
       <style>{customStyles}</style>
       <Sidebar />
-      <main className="flex-1 flex flex-col relative h-full ink-wash">
-        <div className="absolute top-32 right-24 w-40 h-40 enso animate-float-gentle pointer-events-none" />
-        <div className="absolute bottom-60 left-[20%] w-2 h-2 rounded-full bg-[#C73E3A]/30 pointer-events-none" />
+      <main className="flex-1 flex flex-col relative h-full">
+        {/* Subtle geometric accent */}
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] border-l border-b border-gray-100 pointer-events-none" />
 
-        <header className="absolute top-8 right-8 z-20">
+        <header className="absolute top-6 right-8 z-20">
           <div className="flex items-center gap-4">
-            <p className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase">
+            <p className="text-xs font-bold tracking-widest text-black uppercase">
               Guest
             </p>
-            <div className="w-8 h-8 rounded-full bg-[#F5F1E8] flex items-center justify-center">
-              <span className="text-[10px] text-[#8B7355]">G</span>
+            <div className="w-8 h-8 bg-black text-white flex items-center justify-center rounded-sm">
+              <span className="text-xs font-bold">G</span>
             </div>
           </div>
         </header>
 
         <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth relative z-10">
-          <div className="max-w-4xl mx-auto px-8 lg:px-16 py-16 min-h-full flex flex-col">
+          <div className="max-w-4xl mx-auto px-6 lg:px-12 py-12 min-h-full flex flex-col">
             {messages.length === 0 ? (
               <WelcomeScreen
                 onSuggestionClick={handleSend}
                 onImageUploadClick={() => fileInputRef.current?.click()}
               />
             ) : (
-              <div className="space-y-16 pb-48 pt-20">
+              <div className="space-y-12 pb-48 pt-12">
                 {messages.map((message, index) => (
                   <MessageBubble
                     key={index}
@@ -337,6 +317,7 @@ function App() {
           <ProductModal
             product={selectedProduct}
             onClose={() => setSelectedProduct(null)}
+            onAsk={(query) => handleSend(query)}
           />
         )}
         {showImageUpload && imagePreview && (
@@ -349,35 +330,31 @@ function App() {
           />
         )}
 
-        <div className="absolute bottom-10 left-0 right-0 px-8 z-30">
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-white/80 backdrop-blur-sm border-b border-[#2C2C2C]/10 flex items-center gap-4 px-2 py-3">
+        <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-100 z-30 pb-6 pt-4 px-6">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-2 rounded-sm focus-within:border-black focus-within:ring-1 focus-within:ring-black transition-all">
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading || isAnalyzingImage}
-                className="p-3 text-[#9E9E9E] hover:text-[#8B7355] transition-colors duration-300 disabled:opacity-30 group relative"
-                title="Visual Search with Omnia"
+                className="p-2 text-gray-500 hover:text-black transition-colors disabled:opacity-30 relative group"
+                title="Visual Search"
               >
                 <Camera className="w-5 h-5" strokeWidth={1.5} />
-                <Sparkles
-                  className="w-2.5 h-2.5 absolute -top-0.5 -right-0.5 text-[#C73E3A] opacity-0 group-hover:opacity-100 transition-opacity"
-                  strokeWidth={2}
-                />
               </button>
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="What are you looking for..."
-                className="flex-1 bg-transparent border-none outline-none text-[#2C2C2C] placeholder-[#9E9E9E] text-base tracking-wide h-10"
+                placeholder="Ask Omnia..."
+                className="flex-1 bg-transparent border-none outline-none text-black placeholder-gray-400 text-sm h-10"
                 disabled={isLoading || isAnalyzingImage}
                 autoFocus
               />
               <button
                 onClick={() => handleSend()}
                 disabled={isLoading || !input.trim() || isAnalyzingImage}
-                className="p-3 text-[#2C2C2C] hover:text-[#C73E3A] disabled:opacity-30 transition-colors duration-300"
+                className="p-2 text-black disabled:text-gray-300 transition-colors"
               >
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin" strokeWidth={1.5} />
@@ -386,10 +363,10 @@ function App() {
                 )}
               </button>
             </div>
-            <div className="flex items-center justify-center gap-6 mt-6 text-[10px] tracking-[0.3em] text-[#9E9E9E] uppercase">
-              <span>Omnia</span>
-              <span className="w-1 h-1 rounded-full bg-[#9E9E9E]/30" />
-              <span>Kuwait</span>
+            <div className="flex items-center justify-center gap-4 mt-3 text-[10px] font-bold tracking-[0.2em] text-gray-300 uppercase">
+              <span>Omnia AI</span>
+              <span className="w-1 h-1 bg-gray-200 rounded-full" />
+              <span>KW</span>
             </div>
           </div>
         </div>
@@ -408,53 +385,53 @@ function App() {
 
 function Sidebar() {
   return (
-    <aside className="w-20 lg:w-64 bg-[#F5F1E8] flex flex-col justify-between py-12 px-4 lg:px-8 hidden md:flex z-40 border-r border-[#2C2C2C]/5">
+    <aside className="w-20 lg:w-64 bg-white border-r border-gray-100 flex flex-col justify-between py-8 px-4 lg:px-6 hidden md:flex z-40">
       <div>
-        <div className="flex items-center gap-4 mb-20">
-          <div className="w-10 h-10 rounded-full border border-[#2C2C2C]/20 flex items-center justify-center">
-            <ShoppingBag className="w-4 h-4 text-[#2C2C2C]" strokeWidth={1.5} />
+        <div className="flex items-center gap-3 mb-16 pl-2">
+          <div className="w-8 h-8 bg-black text-white flex items-center justify-center rounded-sm">
+            <ShoppingBag className="w-4 h-4" strokeWidth={2} />
           </div>
-          <span className="hidden lg:block font-display text-2xl text-[#2C2C2C] tracking-wide">
-            Omnia
+          <span className="hidden lg:block font-bold text-xl text-black tracking-tight">
+            Omnia.
           </span>
         </div>
         <nav className="space-y-1">
           <SidebarItem
-            icon={<Search className="w-4 h-4" strokeWidth={1.5} />}
+            icon={<Search className="w-4 h-4" />}
             label="Discover"
-            sublabel="Search products"
+            sublabel="Search"
             active
           />
           <SidebarItem
-            icon={<LayoutGrid className="w-4 h-4" strokeWidth={1.5} />}
+            icon={<LayoutGrid className="w-4 h-4" />}
             label="Categories"
-            sublabel="Browse all"
+            sublabel="Browse"
           />
           <SidebarItem
-            icon={<TrendingUp className="w-4 h-4" strokeWidth={1.5} />}
+            icon={<TrendingUp className="w-4 h-4" />}
             label="Trending"
-            sublabel="Popular now"
+            sublabel="Popular"
           />
           <SidebarItem
-            icon={<History className="w-4 h-4" strokeWidth={1.5} />}
+            icon={<History className="w-4 h-4" />}
             label="History"
-            sublabel="Past searches"
+            sublabel="Recent"
           />
           <SidebarItem
-            icon={<Star className="w-4 h-4" strokeWidth={1.5} />}
+            icon={<Star className="w-4 h-4" />}
             label="Saved"
-            sublabel="Your favorites"
+            sublabel="Favorites"
           />
         </nav>
       </div>
-      <div className="hidden lg:block border-t border-[#2C2C2C]/10 pt-8">
-        <p className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase mb-3">
-          Pro
-        </p>
-        <p className="text-xs text-[#4A4A4A] leading-relaxed mb-4">
-          Unlock price tracking and unlimited history
-        </p>
-        <button className="text-xs text-[#8B7355] hover-line">Upgrade →</button>
+      <div className="hidden lg:block border-t border-gray-100 pt-6">
+        <div className="bg-gray-50 p-4 rounded-sm border border-gray-100">
+          <p className="text-xs font-bold text-black mb-1">Omnia Pro</p>
+          <p className="text-[10px] text-gray-500 mb-3">Advanced analytics</p>
+          <button className="text-[10px] font-bold uppercase tracking-wider text-black border-b border-black pb-0.5 hover:opacity-70">
+            Upgrade
+          </button>
+        </div>
       </div>
     </aside>
   );
@@ -463,18 +440,16 @@ function Sidebar() {
 function SidebarItem({ icon, label, sublabel, active }) {
   return (
     <button
-      className={`w-full flex items-center gap-4 px-4 py-3 transition-all duration-300 ${
-        active ? "text-[#2C2C2C]" : "text-[#9E9E9E] hover:text-[#4A4A4A]"
+      className={`w-full flex items-center gap-4 px-3 py-3 rounded-sm transition-all duration-200 group ${
+        active
+          ? "bg-black text-white"
+          : "text-gray-500 hover:bg-gray-50 hover:text-black"
       }`}
     >
       {icon}
       <div className="hidden lg:block text-left">
-        <span className="block text-sm">{label}</span>
-        <span className="block text-[10px] tracking-wider text-[#9E9E9E]">
-          {sublabel}
-        </span>
+        <span className={`block text-sm font-medium`}>{label}</span>
       </div>
-      {active && <div className="ml-auto w-1 h-1 rounded-full bg-[#C73E3A]" />}
     </button>
   );
 }
@@ -488,73 +463,66 @@ function WelcomeScreen({ onSuggestionClick, onImageUploadClick }) {
     {
       icon: <Scan className="w-5 h-5" strokeWidth={1.5} />,
       title: "Visual Search",
-      subtitle: "Omnia Powered",
-      desc: "Upload a photo to find similar products",
+      desc: "Search by image",
       action: onImageUploadClick,
       highlight: true,
     },
     {
       icon: <Zap className="w-5 h-5" strokeWidth={1.5} />,
-      title: "Technology",
-      subtitle: "Electronics",
-      desc: "Latest devices & gadgets",
+      title: "Electronics",
+      desc: "Latest gadgets",
       query: "Show me the latest flagship phones",
     },
     {
       icon: <Package className="w-5 h-5" strokeWidth={1.5} />,
       title: "Fashion",
-      subtitle: "Style",
-      desc: "Clothes, shoes, accessories",
+      desc: "Trending styles",
       query: "Trending fashion items under 40 KWD",
     },
   ];
 
   return (
-    <div className="flex flex-col items-center justify-center h-full animate-fade max-w-3xl mx-auto pb-32">
-      <div className="w-24 h-24 enso mb-12 animate-breath" />
-      <div className="text-center space-y-6 mb-20">
-        <p className="text-[10px] tracking-[0.4em] text-[#9E9E9E] uppercase animate-rise delay-1">
-          {greeting}
-        </p>
-        <h1 className="font-display text-5xl md:text-7xl text-[#2C2C2C] leading-[1.1] tracking-wide animate-rise delay-2">
-          What are you looking for?
+    <div className="flex flex-col items-center justify-center h-full animate-fade max-w-3xl mx-auto pb-32 pt-20">
+      <div className="text-center space-y-4 mb-16">
+        <div className="inline-block px-3 py-1 border border-black rounded-full mb-6">
+          <span className="text-[10px] font-bold tracking-widest uppercase">
+            Omnia AI Assistant
+          </span>
+        </div>
+        <h1 className="text-5xl md:text-6xl text-black font-light tracking-tight animate-rise delay-2">
+          {greeting}.
         </h1>
-        <p className="text-lg text-[#9E9E9E] max-w-md mx-auto tracking-wide animate-rise delay-3">
-          Search across Kuwait's top stores
+        <p className="text-xl text-gray-400 font-light animate-rise delay-3">
+          What can I help you find today?
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
         {suggestions.map((card, idx) => (
           <button
             key={idx}
             onClick={() =>
               card.action ? card.action() : onSuggestionClick(card.query)
             }
-            className={`group text-left p-8 bg-white/50 hover:bg-white border transition-all duration-500 card-lift animate-rise ${
+            className={`group text-left p-6 border transition-all duration-300 card-hover animate-rise bg-white ${
               card.highlight
-                ? "border-[#C73E3A]/20 hover:border-[#C73E3A]/40"
-                : "border-[#2C2C2C]/5 hover:border-[#2C2C2C]/10"
+                ? "border-black"
+                : "border-gray-200 hover:border-gray-400"
             }`}
             style={{ animationDelay: `${(idx + 4) * 0.1}s`, opacity: 0 }}
           >
             <div
-              className={`w-12 h-12 rounded-full border flex items-center justify-center mb-6 transition-all duration-300 ${
+              className={`w-10 h-10 flex items-center justify-center mb-12 transition-colors ${
                 card.highlight
-                  ? "border-[#C73E3A]/30 text-[#C73E3A] group-hover:border-[#C73E3A]/60 group-hover:bg-[#C73E3A]/5"
-                  : "border-[#2C2C2C]/10 text-[#8B7355] group-hover:border-[#C73E3A]/30 group-hover:text-[#C73E3A]"
+                  ? "bg-black text-white"
+                  : "bg-gray-50 text-black group-hover:bg-gray-100"
               }`}
             >
               {card.icon}
             </div>
-            <h3 className="text-base text-[#2C2C2C] mb-1">{card.title}</h3>
-            <p
-              className={`text-[10px] tracking-[0.2em] uppercase mb-3 ${
-                card.highlight ? "text-[#C73E3A]/70" : "text-[#9E9E9E]"
-              }`}
-            >
-              {card.subtitle}
-            </p>
-            <p className="text-sm text-[#9E9E9E]">{card.desc}</p>
+            <h3 className="text-sm font-bold text-black mb-1 uppercase tracking-wide">
+              {card.title}
+            </h3>
+            <p className="text-xs text-gray-500">{card.desc}</p>
           </button>
         ))}
       </div>
@@ -568,24 +536,23 @@ function MessageBubble({ message, onProductClick }) {
   if (isUser) {
     return (
       <div className="flex justify-end animate-rise">
-        <div className="max-w-[75%]">
+        <div className="max-w-[85%]">
           {message.image && (
-            <div className="mb-4 overflow-hidden border border-[#2C2C2C]/10 relative">
+            <div className="mb-4 border border-gray-200 p-2 bg-white">
               <img
                 src={message.image}
                 alt="Uploaded"
-                className="max-w-full max-h-48 object-contain bg-[#F5F1E8]"
+                className="max-w-full max-h-64 object-contain filter grayscale hover:grayscale-0 transition-all duration-500"
               />
               {message.isVisualSearch && (
-                <div className="absolute bottom-2 right-2 bg-[#C73E3A] text-white text-[9px] tracking-wider uppercase px-2 py-1 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3" strokeWidth={2} />
-                  Omnia Visual Search
+                <div className="mt-2 text-[10px] font-bold uppercase tracking-widest text-black flex items-center gap-2 border-t border-gray-100 pt-2">
+                  <Scan className="w-3 h-3" /> Visual Search Query
                 </div>
               )}
             </div>
           )}
-          <div className="bg-[#2C2C2C] text-white/90 px-6 py-4">
-            <p className="text-sm tracking-wide">{message.content}</p>
+          <div className="bg-black text-white px-5 py-3 text-sm leading-relaxed">
+            <p>{message.content}</p>
           </div>
         </div>
       </div>
@@ -593,23 +560,15 @@ function MessageBubble({ message, onProductClick }) {
   }
 
   return (
-    <div className="flex gap-8 animate-rise items-start">
-      <div className="w-8 h-8 rounded-full border border-[#C73E3A]/30 flex items-center justify-center flex-shrink-0 text-[#C73E3A]">
-        <Circle className="w-3 h-3" fill="currentColor" strokeWidth={0} />
+    <div className="flex gap-6 animate-rise items-start w-full">
+      <div className="w-8 h-8 bg-white border border-black flex items-center justify-center flex-shrink-0 text-black">
+        <div className="w-2 h-2 bg-black rounded-full" />
       </div>
-      <div className="flex-1 space-y-10 overflow-hidden">
-        {message.isVisualSearch && message.products?.length > 0 && (
-          <div className="inline-flex items-center gap-3 text-sm text-[#9E9E9E] bg-[#F5F1E8] px-4 py-2">
-            <Sparkles className="w-4 h-4 text-[#C73E3A]" strokeWidth={1.5} />
-            <span>
-              Visual match powered by{" "}
-              <span className="text-[#C73E3A]">Omnia</span>
-            </span>
-          </div>
-        )}
-        <div className="text-base text-[#4A4A4A] leading-relaxed tracking-wide">
+      <div className="flex-1 space-y-8 overflow-hidden">
+        <div className="text-sm text-black leading-relaxed max-w-2xl">
           <p className="whitespace-pre-wrap">{message.content}</p>
         </div>
+
         {message.products?.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {message.products.map((product, idx) => (
@@ -623,9 +582,10 @@ function MessageBubble({ message, onProductClick }) {
             ))}
           </div>
         )}
+
         {message.error && (
-          <div className="text-sm text-[#C73E3A]/80 border-l-2 border-[#C73E3A]/30 pl-4">
-            {message.content}
+          <div className="text-xs text-red-500 font-mono bg-red-50 p-3 border border-red-100 inline-block">
+            Error: {message.content}
           </div>
         )}
       </div>
@@ -634,113 +594,52 @@ function MessageBubble({ message, onProductClick }) {
 }
 
 function ProductCard({ product, index, onClick, showSimilarity = false }) {
-  const specs = product.specs ? Object.entries(product.specs).slice(0, 2) : [];
-  const isFashion = getCategoryType(product.category) === "fashion";
-
-  if (isFashion) {
-    return (
-      <button
-        onClick={onClick}
-        className="group bg-white border border-[#2C2C2C]/5 text-left w-full card-lift animate-rise overflow-hidden"
-        style={{ animationDelay: `${index * 60}ms`, opacity: 0 }}
-      >
-        <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#F5F1E8]">
-          <img
-            src={product.imageUrl}
-            alt={product.title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-            onError={(e) => (e.target.style.display = "none")}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#2C2C2C]/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-          <div className="absolute top-4 right-4 text-[10px] tracking-[0.15em] text-[#9E9E9E] uppercase bg-white/90 px-2 py-1">
-            {formatStoreName(product.storeName)}
-          </div>
-          {/* 🔥 NEW: Similarity badge for visual search */}
-          {showSimilarity && product.similarity && (
-            <div className="absolute top-4 left-4 text-[10px] tracking-[0.1em] text-white uppercase bg-[#C73E3A] px-2 py-1 flex items-center gap-1">
-              <Sparkles className="w-3 h-3" strokeWidth={2} />
-              {product.similarity} match
-            </div>
-          )}
-          <div className="absolute bottom-0 left-0 p-5 w-full text-white opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-            <div className="font-display text-2xl">
-              {parseFloat(product.price).toFixed(3)}
-              <span className="text-xs opacity-70 ml-2">KWD</span>
-            </div>
-          </div>
-        </div>
-        <div className="p-5">
-          <div className="text-[10px] tracking-[0.2em] text-[#8B7355] uppercase mb-2">
-            {product.brand}
-          </div>
-          <h3 className="text-sm text-[#2C2C2C] line-clamp-2 group-hover:text-[#C73E3A] transition-colors duration-300">
-            {product.title}
-          </h3>
-          <div className="mt-3 font-display text-lg text-[#2C2C2C]">
-            {parseFloat(product.price).toFixed(3)}{" "}
-            <span className="text-[10px] text-[#9E9E9E]">KWD</span>
-          </div>
-        </div>
-      </button>
-    );
-  }
-
   return (
     <button
       onClick={onClick}
-      className="group bg-white border border-[#2C2C2C]/5 text-left w-full card-lift animate-rise"
-      style={{ animationDelay: `${index * 60}ms`, opacity: 0 }}
+      className="group bg-white border border-gray-200 text-left w-full card-hover animate-rise relative overflow-hidden"
+      style={{ animationDelay: `${index * 50}ms`, opacity: 0 }}
     >
-      <div className="relative aspect-square bg-[#F5F1E8] overflow-hidden">
+      <div className="relative aspect-[4/5] bg-gray-50 overflow-hidden">
         <img
           src={product.imageUrl}
           alt={product.title}
-          className="w-full h-full object-contain p-8 mix-blend-multiply group-hover:scale-105 transition-transform duration-700"
+          className="w-full h-full object-cover mix-blend-multiply transition-transform duration-700 group-hover:scale-105 filter grayscale group-hover:grayscale-0"
           onError={(e) => (e.target.style.display = "none")}
         />
-        <div className="absolute top-4 left-4 text-[10px] tracking-[0.15em] text-[#9E9E9E] uppercase">
-          {formatStoreName(product.storeName)}
+        <div className="absolute top-0 left-0 bg-white/90 border-b border-r border-gray-100 px-3 py-1.5 z-10">
+          <span className="text-[10px] font-bold tracking-widest text-black uppercase">
+            {formatStoreName(product.storeName)}
+          </span>
         </div>
-        {/* 🔥 NEW: Similarity badge for visual search */}
+
         {showSimilarity && product.similarity && (
-          <div className="absolute top-4 right-4 text-[10px] tracking-[0.1em] text-white uppercase bg-[#C73E3A] px-2 py-1 flex items-center gap-1">
-            <Sparkles className="w-3 h-3" strokeWidth={2} />
-            {product.similarity} match
+          <div className="absolute top-0 right-0 bg-black text-white px-3 py-1.5 z-10">
+            <span className="text-[10px] font-bold tracking-widest uppercase flex items-center gap-1">
+              {product.similarity} Match
+            </span>
           </div>
         )}
       </div>
-      <div className="p-5 border-t border-[#2C2C2C]/5">
-        <div className="text-[10px] tracking-[0.2em] text-[#8B7355] uppercase mb-2">
+
+      <div className="p-4 border-t border-gray-100">
+        <div className="text-[10px] text-gray-400 font-bold uppercase mb-1 tracking-wider">
           {product.brand}
         </div>
-        <h3 className="text-sm text-[#2C2C2C] leading-snug line-clamp-2 mb-4 group-hover:text-[#C73E3A] transition-colors duration-300">
+        <h3 className="text-sm font-medium text-black line-clamp-2 mb-3 h-10 leading-tight group-hover:underline">
           {product.title}
         </h3>
-        {specs.length > 0 && (
-          <div className="flex flex-wrap gap-2 mb-4">
-            {specs.map(([k, v], i) => (
-              <span
-                key={i}
-                className="text-[10px] text-[#9E9E9E] border border-[#2C2C2C]/10 px-2 py-1"
-              >
-                {v}
-              </span>
-            ))}
-          </div>
-        )}
-        <div className="flex items-end justify-between pt-4 border-t border-[#2C2C2C]/5">
-          <div>
-            <span className="font-display text-2xl text-[#2C2C2C]">
-              {parseFloat(product.price).toFixed(3)}
-            </span>
-            <span className="text-[10px] text-[#9E9E9E] ml-2 tracking-wider">
+
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 border-dashed">
+          <div className="font-light text-lg text-black">
+            {parseFloat(product.price).toFixed(3)}
+            <span className="text-[10px] text-gray-400 ml-1 font-normal">
               KWD
             </span>
           </div>
-          <ChevronRight
-            className="w-4 h-4 text-[#9E9E9E] group-hover:text-[#C73E3A] group-hover:translate-x-1 transition-all duration-300"
-            strokeWidth={1.5}
-          />
+          <div className="w-6 h-6 flex items-center justify-center bg-gray-100 text-black group-hover:bg-black group-hover:text-white transition-colors">
+            <ChevronRight className="w-3 h-3" />
+          </div>
         </div>
       </div>
     </button>
@@ -755,92 +654,51 @@ function ImageUploadModal({
   onCancel,
 }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-8 bg-[#FDFBF7]/95 backdrop-blur-sm animate-fade">
-      <div className="bg-white border border-[#2C2C2C]/10 max-w-lg w-full overflow-hidden animate-rise shadow-2xl shadow-[#2C2C2C]/5">
-        <div className="px-8 py-6 border-b border-[#2C2C2C]/5 flex justify-between items-center">
-          <div>
-            <h3 className="text-base text-[#2C2C2C] mb-1 flex items-center gap-2">
-              Visual Search
-              <Sparkles className="w-4 h-4 text-[#C73E3A]" strokeWidth={2} />
-            </h3>
-            <p className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase">
-              Omnia • Image Recognition
-            </p>
-          </div>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-white/80 backdrop-blur-sm animate-fade">
+      <div className="bg-white border border-gray-200 max-w-lg w-full shadow-2xl animate-rise">
+        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+          <h3 className="text-sm font-bold uppercase tracking-widest text-black flex items-center gap-2">
+            <Scan className="w-4 h-4" /> Visual Search
+          </h3>
           <button
             onClick={onCancel}
             disabled={isAnalyzing}
-            className="p-2 text-[#9E9E9E] hover:text-[#2C2C2C] transition-colors disabled:opacity-30"
+            className="text-gray-400 hover:text-black transition-colors"
           >
-            <X className="w-5 h-5" strokeWidth={1.5} />
+            <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-8">
-          <div className="relative aspect-video w-full bg-[#F5F1E8] overflow-hidden mb-8">
+        <div className="p-6">
+          <div className="relative aspect-video w-full bg-gray-50 border border-gray-100 mb-6 flex items-center justify-center overflow-hidden">
             <img
               src={imagePreview}
               alt="Selected"
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain filter grayscale"
             />
             {isAnalyzing && (
-              <div className="absolute inset-0 bg-[#FDFBF7]/90 flex items-center justify-center">
+              <div className="absolute inset-0 bg-white/90 flex items-center justify-center backdrop-blur-[2px]">
                 <div className="text-center">
-                  {/* Animated CLIP processing indicator */}
-                  <div className="relative w-16 h-16 mx-auto mb-4">
-                    <div className="absolute inset-0 border-2 border-[#C73E3A]/20 rounded-full animate-pulse-ring" />
-                    <div
-                      className="absolute inset-2 border-2 border-[#C73E3A]/40 rounded-full animate-pulse-ring"
-                      style={{ animationDelay: "0.3s" }}
-                    />
-                    <div
-                      className="absolute inset-4 border-2 border-[#C73E3A]/60 rounded-full animate-pulse-ring"
-                      style={{ animationDelay: "0.6s" }}
-                    />
-                    <Sparkles
-                      className="absolute inset-0 m-auto w-6 h-6 text-[#C73E3A]"
-                      strokeWidth={2}
-                    />
-                  </div>
-                  <p className="text-sm text-[#4A4A4A]">{analysisStatus}</p>
-                  <p className="text-[10px] text-[#9E9E9E] mt-2 tracking-wider uppercase">
-                    Powered by Omnia
+                  <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-black" />
+                  <p className="text-xs font-bold uppercase tracking-widest text-black">
+                    {analysisStatus}
                   </p>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Info box about CLIP */}
-          <div className="mb-8 p-4 bg-[#F5F1E8] border-l-2 border-[#C73E3A]/30">
-            <p className="text-xs text-[#4A4A4A] leading-relaxed">
-              <span className="text-[#C73E3A] font-medium">Omnia</span> analyzes
-              your image and finds visually similar products by comparing image
-              features directly — no text description needed.
-            </p>
-          </div>
-
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <button
               onClick={onAnalyze}
               disabled={isAnalyzing}
-              className="flex-1 bg-[#2C2C2C] text-white py-4 text-sm tracking-wider flex items-center justify-center gap-3 hover:bg-[#C73E3A] transition-colors disabled:opacity-30"
+              className="flex-1 bg-black text-white py-3 text-xs font-bold uppercase tracking-widest hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
-              {isAnalyzing ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" strokeWidth={1.5} />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" strokeWidth={2} />
-                  Find Similar Products
-                </>
-              )}
+              {isAnalyzing ? "Processing..." : "Search"}
             </button>
             <button
               onClick={onCancel}
               disabled={isAnalyzing}
-              className="px-8 py-4 border border-[#2C2C2C]/20 text-[#4A4A4A] text-sm tracking-wider hover:border-[#2C2C2C]/40 transition-colors disabled:opacity-30"
+              className="px-6 py-3 border border-gray-200 text-black text-xs font-bold uppercase tracking-widest hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
               Cancel
             </button>
@@ -851,116 +709,177 @@ function ImageUploadModal({
   );
 }
 
-function ProductModal({ product, onClose }) {
+function ProductModal({ product, onClose, onAsk }) {
+  const [selectedSize, setSelectedSize] = useState("");
+  const [isSayMoreActive, setIsSayMoreActive] = useState(false);
+  const [sayMoreInput, setSayMoreInput] = useState("");
+
   useEffect(() => {
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "unset";
     };
   }, []);
+
   const specs = product.specs ? Object.entries(product.specs) : [];
+
+  const handleSayMoreSubmit = (e) => {
+    e.preventDefault();
+    if (sayMoreInput.trim()) {
+      onAsk(`About ${product.title}: ${sayMoreInput}`);
+      setSayMoreInput("");
+      onClose();
+    }
+  };
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-8 bg-[#FDFBF7]/95 backdrop-blur-sm animate-fade"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-white/50 backdrop-blur-sm animate-fade"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white border border-[#2C2C2C]/10 max-w-4xl w-full max-h-[85vh] overflow-hidden flex flex-col md:flex-row animate-rise shadow-2xl shadow-[#2C2C2C]/5">
-        <div className="w-full md:w-1/2 bg-[#F5F1E8] p-12 flex items-center justify-center relative shrink-0">
-          <div className="absolute top-6 left-6 text-[10px] tracking-[0.15em] text-[#9E9E9E] uppercase flex items-center gap-2">
-            <MapPin className="w-3 h-3" strokeWidth={1.5} />
-            {formatStoreName(product.storeName)}
-          </div>
-          {/* Show similarity in modal if available */}
-          {product.similarity && (
-            <div className="absolute top-6 right-6 text-[10px] tracking-[0.1em] text-white uppercase bg-[#C73E3A] px-2 py-1 flex items-center gap-1">
-              <Sparkles className="w-3 h-3" strokeWidth={2} />
-              {product.similarity} match
-            </div>
-          )}
+      <div className="bg-white border border-gray-200 max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row shadow-2xl animate-rise">
+        {/* Image Section */}
+        <div className="w-full md:w-1/2 bg-gray-50 relative group flex items-center justify-center p-8 border-r border-gray-100">
           <img
             src={product.imageUrl}
             alt={product.title}
-            className="max-w-full max-h-[50vh] object-contain mix-blend-multiply"
-            onError={(e) => {
-              e.target.src = "https://via.placeholder.com/400?text=No+Image";
-            }}
+            className="max-h-[60vh] object-contain mix-blend-multiply filter grayscale hover:grayscale-0 transition-all duration-700"
           />
+
+          {/* Say More Button */}
+          <div className="absolute bottom-6 left-6 z-20">
+            {!isSayMoreActive ? (
+              <button
+                onClick={() => setIsSayMoreActive(true)}
+                className="bg-white border border-gray-200 px-4 py-2 flex items-center gap-2 shadow-sm hover:shadow-md hover:border-black transition-all"
+              >
+                <Sparkles className="w-3 h-3 text-black" />
+                <span className="text-xs font-bold uppercase tracking-widest text-black">
+                  Ask AI
+                </span>
+              </button>
+            ) : (
+              <form
+                onSubmit={handleSayMoreSubmit}
+                className="bg-white border border-black p-1 pl-3 flex items-center gap-2 shadow-lg animate-fade w-72"
+              >
+                <input
+                  autoFocus
+                  className="bg-transparent border-none outline-none text-xs text-black flex-1 min-w-0 placeholder-gray-400 font-normal"
+                  placeholder="Ask about details, sizing..."
+                  value={sayMoreInput}
+                  onChange={(e) => setSayMoreInput(e.target.value)}
+                  onBlur={() => !sayMoreInput && setIsSayMoreActive(false)}
+                />
+                <button
+                  type="submit"
+                  className="p-1.5 bg-black text-white hover:opacity-80"
+                >
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+              </form>
+            )}
+          </div>
         </div>
-        <div className="w-full md:w-1/2 flex flex-col min-h-0 border-l border-[#2C2C2C]/5">
-          <div className="px-8 py-6 border-b border-[#2C2C2C]/5 flex justify-between items-start shrink-0">
-            <div className="pr-4">
-              <div className="text-[10px] tracking-[0.2em] text-[#8B7355] uppercase mb-2">
+
+        {/* Details Section */}
+        <div className="w-full md:w-1/2 flex flex-col h-full bg-white">
+          <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-start">
+            <div className="pr-8">
+              <span className="inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">
                 {product.brand}
-              </div>
-              <h2 className="text-lg text-[#2C2C2C] leading-snug">
+              </span>
+              <h2 className="text-xl font-light text-black leading-snug">
                 {product.title}
               </h2>
             </div>
             <button
               onClick={onClose}
-              className="p-2 text-[#9E9E9E] hover:text-[#2C2C2C] transition-colors shrink-0"
+              className="text-gray-400 hover:text-black"
             >
-              <X className="w-5 h-5" strokeWidth={1.5} />
+              <X className="w-6 h-6" strokeWidth={1} />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar min-h-0">
-            <div className="pb-8 border-b border-[#2C2C2C]/5">
-              <p className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase mb-2">
-                Price
-              </p>
-              <div className="flex items-baseline gap-2">
-                <span className="font-display text-4xl text-[#2C2C2C]">
+
+          <div className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar">
+            <div>
+              <div className="flex items-baseline gap-2 mb-2">
+                <span className="text-4xl font-light text-black">
                   {parseFloat(product.price).toFixed(3)}
                 </span>
-                <span className="text-sm text-[#9E9E9E]">KWD</span>
+                <span className="text-sm text-gray-400">KWD</span>
               </div>
-              <span className="inline-block mt-3 text-[10px] tracking-[0.15em] text-[#7D8471] uppercase border border-[#7D8471]/30 px-2 py-1">
-                In Stock
-              </span>
+              <p className="text-xs text-green-600 font-medium flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-green-600 rounded-full" /> In
+                Stock
+              </p>
             </div>
+
+            {/* Size Selector */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                Select Size
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {["S", "M", "L", "XL"].map((size) => (
+                  <button
+                    key={size}
+                    onClick={() => setSelectedSize(size)}
+                    className={`w-10 h-10 border text-sm font-medium transition-colors ${
+                      selectedSize === size
+                        ? "border-black bg-black text-white"
+                        : "border-gray-200 text-gray-600 hover:border-black"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {specs.length > 0 && (
-              <div>
-                <h3 className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase mb-4">
+              <div className="pt-6 border-t border-gray-100">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4">
                   Specifications
                 </h3>
-                <div className="space-y-3">
+                <dl className="grid grid-cols-1 gap-y-3">
                   {specs.map(([k, v], i) => (
                     <div
                       key={i}
-                      className="flex justify-between items-baseline py-2 border-b border-[#2C2C2C]/5"
+                      className="grid grid-cols-3 text-sm border-b border-gray-50 pb-2 last:border-0"
                     >
-                      <span className="text-xs text-[#9E9E9E]">
+                      <dt className="text-gray-500 capitalize">
                         {formatSpecKey(k)}
-                      </span>
-                      <span className="text-sm text-[#2C2C2C]">
+                      </dt>
+                      <dd className="col-span-2 text-black font-medium text-right">
                         {formatSpecValue(v)}
-                      </span>
+                      </dd>
                     </div>
                   ))}
-                </div>
+                </dl>
               </div>
             )}
+
             {product.description && (
-              <div>
-                <h3 className="text-[10px] tracking-[0.2em] text-[#9E9E9E] uppercase mb-3">
-                  Details
+              <div className="pt-6 border-t border-gray-100">
+                <h3 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-3">
+                  Description
                 </h3>
-                <p className="text-sm text-[#4A4A4A] leading-relaxed">
+                <p className="text-sm text-gray-600 leading-relaxed">
                   {product.description}
                 </p>
               </div>
             )}
           </div>
-          <div className="p-8 border-t border-[#2C2C2C]/5 shrink-0">
+
+          <div className="p-8 border-t border-gray-100 bg-gray-50">
             <a
               href={product.productUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full bg-[#2C2C2C] text-white py-4 text-sm tracking-wider flex items-center justify-center gap-3 hover:bg-[#C73E3A] transition-colors duration-300"
+              className="w-full bg-black text-white py-4 text-xs font-bold uppercase tracking-[0.15em] flex items-center justify-center gap-3 hover:bg-gray-800 transition-colors"
             >
-              Buy Now
-              <ExternalLink className="w-4 h-4" strokeWidth={1.5} />
+              Proceed to Checkout <ExternalLink className="w-4 h-4" />
             </a>
           </div>
         </div>
@@ -971,73 +890,43 @@ function ProductModal({ product, onClose }) {
 
 function LoadingIndicator() {
   return (
-    <div className="flex items-center gap-6 pl-2">
-      <div className="w-8 h-8 rounded-full border border-[#C73E3A]/30 flex items-center justify-center">
-        <div className="w-2 h-2 rounded-full bg-[#C73E3A]/50 animate-breath" />
-      </div>
-      <div className="flex gap-3">
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="w-1.5 h-1.5 rounded-full bg-[#9E9E9E]/40 animate-breath"
-            style={{ animationDelay: `${i * 300}ms` }}
-          />
-        ))}
-      </div>
+    <div className="flex gap-1 pl-1">
+      <div
+        className="w-1.5 h-1.5 bg-black rounded-full loader-dot"
+        style={{ animationDelay: "0s" }}
+      />
+      <div
+        className="w-1.5 h-1.5 bg-black rounded-full loader-dot"
+        style={{ animationDelay: "0.2s" }}
+      />
+      <div
+        className="w-1.5 h-1.5 bg-black rounded-full loader-dot"
+        style={{ animationDelay: "0.4s" }}
+      />
     </div>
   );
 }
 
-function getCategoryType(category) {
-  if (!category) return "electronics";
-  const cat = category.toLowerCase();
-  return [
-    "clothing",
-    "fashion",
-    "apparel",
-    "shirt",
-    "pant",
-    "jeans",
-    "shoe",
-    "sneaker",
-    "dress",
-    "jacket",
-    "t-shirt",
-    "wear",
-    "men",
-    "women",
-  ].some((k) => cat.includes(k))
-    ? "fashion"
-    : "electronics";
-}
-
 function formatStoreName(storeName) {
-  return (
-    {
-      XCITE: "Xcite",
-      BEST: "Best Al-Yousifi",
-      BEST_KW: "Best",
-      NOON: "Noon",
-      EUREKA: "Eureka",
-      DIESEL: "Diesel",
-      "H&M": "H&M",
-      HM: "H&M",
-    }[storeName] || storeName.replace(/_/g, " ")
-  );
+  const names = {
+    XCITE: "Xcite",
+    BEST: "Best Al-Yousifi",
+    BEST_KW: "Best",
+    NOON: "Noon",
+    EUREKA: "Eureka",
+    DIESEL: "Diesel",
+    "H&M": "H&M",
+    HM: "H&M",
+  };
+  return names[storeName] || storeName.replace(/_/g, " ");
 }
 
 function formatSpecKey(key) {
-  return key
-    .replace(/_/g, " ")
-    .split(" ")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
+  return key.replace(/_/g, " ").toLowerCase();
 }
 
 function formatSpecValue(value) {
-  return typeof value === "string"
-    ? value.charAt(0).toUpperCase() + value.slice(1)
-    : value;
+  return typeof value === "string" ? value : value;
 }
 
 export default App;

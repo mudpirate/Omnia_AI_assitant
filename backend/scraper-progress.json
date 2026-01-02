@@ -30,8 +30,22 @@
         "tablets"
       ],
       "failed": []
+    },
+    "bershka": {
+      "completed": [
+        "CLOTHING"
+      ],
+      "failed": []
+    },
+    "primark": {
+      "completed": [
+        "CLOTHING"
+      ],
+      "failed": [
+        "CLOTHING"
+      ]
     }
   },
   "startTime": null,
-  "lastSaved": 1766344906619
+  "lastSaved": 1767361339038
 }

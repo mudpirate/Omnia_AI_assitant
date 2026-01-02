@@ -8,11 +8,11 @@ import { v4 as uuidv4 } from "uuid";
 import multer from "multer";
 import fs from "fs/promises";
 import path from "path";
-import { systemprompt } from "./systemprompt.js";
+import { getDynamicSystemPrompt } from "./dynamicPrompt.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const LLM_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const LLM_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 const VISION_MODEL = "gpt-4o-mini";
 const MODAL_CLIP_URL = process.env.MODAL_CLIP_URL;
 const MODAL_CLIP_BATCH_URL = process.env.MODAL_CLIP_BATCH_URL;
@@ -25,16 +25,6 @@ const openai = new OpenAI({
 
 const prisma = new PrismaClient();
 const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
-
-// 🔥 FIX #5: INJECT CURRENT DATE AT RUNTIME
-function getDynamicSystemPrompt() {
-  const currentDate = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  return systemprompt.replace("{{CURRENT_DATE}}", currentDate);
-}
 
 // Configure multer for file uploads
 const upload = multer({
@@ -1718,7 +1708,7 @@ app.post("/chat", async (req, res) => {
     console.log("📚 Chat history:", history.length, "messages");
 
     // 🔥 FIX #5: USE DYNAMIC SYSTEM PROMPT WITH CURRENT DATE
-    const dynamicPrompt = getDynamicSystemPrompt();
+    const dynamicPrompt = await getDynamicSystemPrompt(message);
 
     const messages = [
       {
