@@ -1763,9 +1763,16 @@ app.post("/chat", async (req, res) => {
         if (functionName === "search_product_database") {
           result = await executeSearchDatabase(args);
           if (result.success && result.products && result.products.length > 0) {
-            products = result.products;
-            categoryType = result.categoryType;
-            console.log("✅ Products set:", products.length);
+            // 🔥 FIX: Merge products instead of overwriting
+            products = [...products, ...result.products];
+            // Only update categoryType if it's currently unknown or handle mixed types
+            if (categoryType === "unknown") {
+              categoryType = result.categoryType;
+            } else if (categoryType !== result.categoryType) {
+              // Handle mixed categories (e.g., iPhone + Headphones)
+              categoryType = "mixed";
+            }
+            console.log("✅ Products merged:", products.length);
             console.log("✅ Category type:", categoryType);
           }
         } else if (functionName === "search_web") {

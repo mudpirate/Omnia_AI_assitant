@@ -72,4 +72,7 @@ enum StoreName {
   EUREKA
   HM
   DIESEL
+  PRIMARK
+  ZARA
+  BERSHKA
 }
