@@ -10,6 +10,9 @@ import fs from "fs/promises";
 import path from "path";
 import { getDynamicSystemPrompt } from "./dynamicPrompt.js";
 
+// 🎨 DeepFashion Integration
+const DEEPFASHION_API_URL = process.env.DEEPFASHION_API_URL;
+
 const app = express();
 const PORT = process.env.PORT || 4000;
 const LLM_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
@@ -482,13 +485,377 @@ async function visualProductSearch(imageEmbedding, filters = {}, limit = 15) {
   }
 }
 
+/**
+ * Extract fashion attributes using DeepFashion model
+ */
+async function extractFashionAttributesFromImage(imageBase64) {
+  console.log("\n🎨 [DEEPFASHION] Extracting fashion attributes");
+
+  if (!DEEPFASHION_API_URL) {
+    console.log(
+      "   ⚠️  DeepFashion API URL not configured, skipping attribute extraction"
+    );
+    return { success: false, attributes: {} };
+  }
+
+  try {
+    const response = await fetch(DEEPFASHION_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        image: imageBase64,
+        mimeType: "image/jpeg",
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`DeepFashion API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || "DeepFashion extraction failed");
+    }
+
+    const attributes = data.attributes;
+
+    console.log("   ✅ Attributes extracted:");
+    console.log(`      📂 Category: ${attributes.category}`);
+    console.log(`      🎨 Color: ${attributes.color}`);
+    console.log(`      👤 Gender: ${attributes.gender}`);
+    if (attributes.sleeveLength)
+      console.log(`      👕 Sleeve: ${attributes.sleeveLength}`);
+    if (attributes.pattern)
+      console.log(`      🔲 Pattern: ${attributes.pattern}`);
+    if (attributes.neckline)
+      console.log(`      👔 Neckline: ${attributes.neckline}`);
+    if (attributes.length) console.log(`      📏 Length: ${attributes.length}`);
+
+    return {
+      success: true,
+      attributes: attributes,
+    };
+  } catch (error) {
+    console.error("   ❌ DeepFashion extraction error:", error.message);
+    return {
+      success: false,
+      attributes: {},
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Build enhanced filters from DeepFashion attributes
+ */
+function buildFashionFiltersFromAttributes(attributes) {
+  const filters = {};
+
+  // Map category
+  const categoryMap = {
+    dress: "CLOTHING",
+    top: "CLOTHING",
+    shirt: "CLOTHING",
+    blouse: "CLOTHING",
+    "t-shirt": "CLOTHING",
+    sweater: "CLOTHING",
+    hoodie: "CLOTHING",
+    jacket: "CLOTHING",
+    coat: "CLOTHING",
+    pants: "CLOTHING",
+    jeans: "CLOTHING",
+    shorts: "CLOTHING",
+    skirt: "CLOTHING",
+    shoes: "FOOTWEAR",
+    sneakers: "FOOTWEAR",
+    boots: "FOOTWEAR",
+    sandals: "FOOTWEAR",
+    heels: "FOOTWEAR",
+    bag: "ACCESSORIES",
+    backpack: "ACCESSORIES",
+  };
+
+  if (attributes.category) {
+    filters.category =
+      categoryMap[attributes.category.toLowerCase()] || "CLOTHING";
+    filters.style = attributes.category.toLowerCase(); // Store original as style
+  }
+
+  // Gender (critical for fashion)
+  if (attributes.gender) {
+    const genderMap = {
+      male: "men",
+      men: "men",
+      female: "women",
+      women: "women",
+      boys: "boys",
+      girls: "girls",
+      unisex: "unisex",
+    };
+    filters.gender =
+      genderMap[attributes.gender.toLowerCase()] ||
+      attributes.gender.toLowerCase();
+  }
+
+  // Color
+  if (attributes.color) {
+    filters.color = attributes.color.toLowerCase();
+  }
+
+  // Additional specs for more precise filtering
+  if (attributes.sleeveLength) {
+    filters.sleeveLength = attributes.sleeveLength.toLowerCase();
+  }
+
+  if (attributes.pattern) {
+    filters.pattern = attributes.pattern.toLowerCase();
+  }
+
+  if (attributes.neckline) {
+    filters.neckline = attributes.neckline.toLowerCase();
+  }
+
+  if (attributes.length) {
+    filters.length = attributes.length.toLowerCase();
+  }
+
+  return filters;
+}
+
+/**
+ * Generate natural language query from attributes
+ */
+function generateQueryFromAttributes(attributes) {
+  const parts = [];
+
+  if (attributes.gender) parts.push(attributes.gender);
+  if (attributes.color) parts.push(attributes.color);
+  if (attributes.category) parts.push(attributes.category);
+  if (
+    attributes.sleeveLength &&
+    ["dress", "shirt", "top", "blouse", "t-shirt"].includes(attributes.category)
+  ) {
+    parts.push(`${attributes.sleeveLength} sleeve`);
+  }
+  if (attributes.pattern && attributes.pattern !== "solid") {
+    parts.push(attributes.pattern);
+  }
+  if (attributes.length && ["dress", "skirt"].includes(attributes.category)) {
+    parts.push(attributes.length);
+  }
+
+  return parts.join(" ");
+}
+
+/**
+ * Enhanced visual search with attribute-based re-ranking
+ */
+async function enhancedVisualSearchWithAttributes(
+  imageEmbedding,
+  fashionAttributes,
+  filters = {},
+  limit = 15
+) {
+  console.log(
+    "\n🔍 [ENHANCED VISUAL SEARCH] Combining CLIP + DeepFashion attributes"
+  );
+
+  const vectorLiteral =
+    "[" + imageEmbedding.map((x) => x.toFixed(6)).join(",") + "]";
+
+  // Build WHERE clause with attribute filters
+  let whereConditions = [
+    `"stock" = 'IN_STOCK'`,
+    `"imageEmbedding" IS NOT NULL`,
+  ];
+
+  // Apply category filter from attributes
+  if (fashionAttributes.category) {
+    const categoryMap = {
+      dress: "CLOTHING",
+      top: "CLOTHING",
+      shirt: "CLOTHING",
+      blouse: "CLOTHING",
+      "t-shirt": "CLOTHING",
+      sweater: "CLOTHING",
+      hoodie: "CLOTHING",
+      jacket: "CLOTHING",
+      coat: "CLOTHING",
+      pants: "CLOTHING",
+      jeans: "CLOTHING",
+      shorts: "CLOTHING",
+      skirt: "CLOTHING",
+      shoes: "FOOTWEAR",
+      sneakers: "FOOTWEAR",
+      boots: "FOOTWEAR",
+      sandals: "FOOTWEAR",
+      heels: "FOOTWEAR",
+    };
+    const dbCategory =
+      categoryMap[fashionAttributes.category.toLowerCase()] || "CLOTHING";
+    whereConditions.push(`"category" = '${dbCategory}'`);
+    console.log(
+      `   📂 Category filter: ${fashionAttributes.category} → ${dbCategory}`
+    );
+  }
+
+  // Apply gender filter (critical for fashion)
+  if (fashionAttributes.gender) {
+    const genderLower = fashionAttributes.gender.toLowerCase();
+    whereConditions.push(`LOWER("specs"->>'gender') = '${genderLower}'`);
+    console.log(`   👤 Gender filter: ${genderLower}`);
+  }
+
+  // Apply color filter
+  if (fashionAttributes.color) {
+    const colorLower = fashionAttributes.color.toLowerCase();
+    whereConditions.push(`LOWER("specs"->>'color') ILIKE '%${colorLower}%'`);
+    console.log(`   🎨 Color filter: ${colorLower}`);
+  }
+
+  // Apply additional attribute filters
+  if (fashionAttributes.sleeveLength) {
+    const sleeveLower = fashionAttributes.sleeveLength.toLowerCase();
+    whereConditions.push(
+      `LOWER("specs"->>'sleeveLength') ILIKE '%${sleeveLower}%'`
+    );
+    console.log(`   👕 Sleeve filter: ${sleeveLower}`);
+  }
+
+  // Apply user-provided filters
+  if (filters.brand) {
+    whereConditions.push(
+      `LOWER("brand") ILIKE '%${filters.brand.toLowerCase()}%'`
+    );
+    console.log("   🏷️ Brand filter:", filters.brand);
+  }
+  if (filters.maxPrice) {
+    whereConditions.push(`"price" <= ${parseFloat(filters.maxPrice)}`);
+    console.log("   💰 Max price filter:", filters.maxPrice);
+  }
+
+  const whereClause = whereConditions.join(" AND ");
+
+  // Get more results initially for re-ranking
+  const query = `
+    SELECT
+      "title", "price", "storeName", "productUrl", "category",
+      "imageUrl", "stock", "description", "brand", "specs", "scrapedAt",
+      1 - ("imageEmbedding" <=> '${vectorLiteral}'::vector) as similarity
+    FROM "Product"
+    WHERE ${whereClause}
+    ORDER BY "imageEmbedding" <=> '${vectorLiteral}'::vector ASC
+    LIMIT ${limit * 3};
+  `;
+
+  try {
+    const results = await prisma.$queryRawUnsafe(query);
+    console.log("   ✅ Initial visual search completed");
+    console.log("   📊 Results found:", results.length);
+
+    // Re-rank results based on attribute matching
+    if (results.length > 0 && fashionAttributes.category) {
+      console.log("\n   🎯 Re-ranking by attribute match scores...");
+
+      const reranked = results.map((product) => {
+        // Calculate attribute match score
+        let attributeScore = 0;
+        let totalWeight = 0;
+
+        // Gender match (weight: 3)
+        if (fashionAttributes.gender && product.specs?.gender) {
+          const genderMatch =
+            product.specs.gender.toLowerCase() ===
+            fashionAttributes.gender.toLowerCase();
+          if (genderMatch) attributeScore += 3;
+          totalWeight += 3;
+        }
+
+        // Color match (weight: 3)
+        if (fashionAttributes.color && product.specs?.color) {
+          const colorMatch = product.specs.color
+            .toLowerCase()
+            .includes(fashionAttributes.color.toLowerCase());
+          if (colorMatch) attributeScore += 3;
+          totalWeight += 3;
+        }
+
+        // Style match (weight: 2)
+        if (fashionAttributes.category && product.specs?.type) {
+          const styleMatch = product.specs.type
+            .toLowerCase()
+            .includes(fashionAttributes.category.toLowerCase());
+          if (styleMatch) attributeScore += 2;
+          totalWeight += 2;
+        }
+
+        // Sleeve match (weight: 1.5)
+        if (fashionAttributes.sleeveLength && product.specs?.sleeveLength) {
+          const sleeveMatch =
+            product.specs.sleeveLength.toLowerCase() ===
+            fashionAttributes.sleeveLength.toLowerCase();
+          if (sleeveMatch) attributeScore += 1.5;
+          totalWeight += 1.5;
+        }
+
+        // Pattern match (weight: 1)
+        if (fashionAttributes.pattern && product.specs?.pattern) {
+          const patternMatch =
+            product.specs.pattern.toLowerCase() ===
+            fashionAttributes.pattern.toLowerCase();
+          if (patternMatch) attributeScore += 1;
+          totalWeight += 1;
+        }
+
+        // Calculate normalized attribute score
+        const normalizedAttrScore =
+          totalWeight > 0 ? attributeScore / totalWeight : 0;
+
+        // Combine visual similarity (70%) + attribute matching (30%)
+        const visualSimilarity = parseFloat(product.similarity);
+        const combinedScore =
+          visualSimilarity * 0.7 + normalizedAttrScore * 0.3;
+
+        return {
+          ...product,
+          attributeScore: normalizedAttrScore,
+          combinedScore: combinedScore,
+        };
+      });
+
+      // Sort by combined score
+      reranked.sort((a, b) => b.combinedScore - a.combinedScore);
+
+      console.log("   📊 Top 3 re-ranked results:");
+      reranked.slice(0, 3).forEach((r, i) => {
+        console.log(`      ${i + 1}. ${r.title}`);
+        console.log(
+          `         Visual: ${(r.similarity * 100).toFixed(
+            1
+          )}% | Attributes: ${(r.attributeScore * 100).toFixed(
+            1
+          )}% | Combined: ${(r.combinedScore * 100).toFixed(1)}%`
+        );
+      });
+
+      return reranked.slice(0, limit);
+    }
+
+    return results.slice(0, limit);
+  } catch (error) {
+    console.error("   ❌ Enhanced visual search error:", error.message);
+    return [];
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 // VISUAL SEARCH ENDPOINT
 // ═══════════════════════════════════════════════════════════════════════
 
 app.post("/visual-search", upload.single("image"), async (req, res) => {
   console.log("\n" + "🖼️ ".repeat(40));
-  console.log("📸 NEW VISUAL SEARCH REQUEST");
+  console.log("📸 NEW VISUAL SEARCH REQUEST (WITH DEEPFASHION)");
   console.log("🖼️ ".repeat(40));
 
   try {
@@ -514,15 +881,42 @@ app.post("/visual-search", upload.single("image"), async (req, res) => {
     if (brand) filters.brand = brand;
     if (maxPrice) filters.maxPrice = maxPrice;
 
-    // Step 1: Get CLIP embedding from Modal
-    console.log("\n🚀 Step 1: Getting CLIP embedding from Modal...");
+    // Step 1: Extract fashion attributes using DeepFashion
+    console.log(
+      "\n🚀 Step 1: Extracting fashion attributes with DeepFashion..."
+    );
+    const attributeResult = await extractFashionAttributesFromImage(
+      imageBase64
+    );
+    const fashionAttributes = attributeResult.success
+      ? attributeResult.attributes
+      : {};
+
+    // Step 2: Get CLIP embedding from Modal
+    console.log("\n🚀 Step 2: Getting CLIP embedding from Modal...");
     const imageEmbedding = await getClipImageEmbedding(imageBase64);
 
-    // Step 2: Search for visually similar products
-    console.log("\n🚀 Step 2: Searching for visually similar products...");
-    const results = await visualProductSearch(imageEmbedding, filters, 20);
+    // Step 3: Enhanced visual search with attribute-based re-ranking
+    console.log("\n🚀 Step 3: Performing enhanced visual search...");
+    let results;
 
-    // Step 3: Deduplicate results
+    if (attributeResult.success && Object.keys(fashionAttributes).length > 0) {
+      // Use enhanced search with attributes
+      results = await enhancedVisualSearchWithAttributes(
+        imageEmbedding,
+        fashionAttributes,
+        filters,
+        20
+      );
+    } else {
+      // Fallback to standard visual search
+      console.log(
+        "   ⚠️  No attributes extracted, using standard visual search"
+      );
+      results = await visualProductSearch(imageEmbedding, filters, 20);
+    }
+
+    // Step 4: Deduplicate results
     const deduplicatedResults = deduplicateProducts(results);
     const productsToReturn = deduplicatedResults.slice(0, 15);
 
@@ -532,15 +926,25 @@ app.post("/visual-search", upload.single("image"), async (req, res) => {
         ? await getCategoryType(productsToReturn[0].category, "")
         : "unknown";
 
-    console.log("\n✅ Visual search completed successfully");
+    // Generate enhanced query if attributes were extracted
+    let enhancedQuery = null;
+    if (attributeResult.success && Object.keys(fashionAttributes).length > 0) {
+      enhancedQuery = generateQueryFromAttributes(fashionAttributes);
+      console.log("\n   💬 Generated query from attributes:", enhancedQuery);
+    }
+
+    console.log("\n✅ Enhanced visual search completed successfully");
     console.log("   Products found:", productsToReturn.length);
     console.log("   Category type:", categoryType);
+    console.log("   Attributes used:", Object.keys(fashionAttributes).length);
     console.log("🖼️ ".repeat(40) + "\n");
 
     return res.json({
       success: true,
       count: productsToReturn.length,
       categoryType: categoryType,
+      extractedAttributes: fashionAttributes, // Send attributes to frontend
+      enhancedQuery: enhancedQuery, // Send generated query
       products: productsToReturn.map((p) => ({
         title: p.title,
         price: p.price,
@@ -551,7 +955,12 @@ app.post("/visual-search", upload.single("image"), async (req, res) => {
         category: p.category,
         brand: p.brand,
         specs: cleanSpecs(p.specs),
-        similarity: (parseFloat(p.similarity) * 100).toFixed(1) + "%",
+        similarity: p.combinedScore
+          ? (parseFloat(p.combinedScore) * 100).toFixed(1) + "%"
+          : (parseFloat(p.similarity) * 100).toFixed(1) + "%",
+        attributeMatch: p.attributeScore
+          ? (parseFloat(p.attributeScore) * 100).toFixed(1) + "%"
+          : null,
       })),
     });
   } catch (error) {

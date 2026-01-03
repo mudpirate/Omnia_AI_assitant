@@ -65,58 +65,45 @@ const CONFIG = {
 // ============================================================================
 
 const SCRAPING_JOBS = {
-  // bershka: {
-  //   scraper: scrapeBershkaProducts,
-  //   priority: 1, // Lower number = higher priority
-  //   jobs: [
-  //     {
-  //       url: "https://www.bershka.com/kw/men/sale/jackets-and-coats-c1010747925.html",
-  //       category: "CLOTHING",
-  //     },
-  // {
-  //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/laptops",
-  //   category: "laptops",
-  // },
-  // {
-  //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/desktops-monitors/desk-top-comp",
-  //   category: "desktops",
-  // },
-  // {
-  //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
-  //   category: "tablets",
-  // },
-  // {
-  //   url: "https://www.eureka.com.kw/products/browse/audio/home-theaters",
-  //   category: "audio",
-  // },
-  // {
-  //   url: "https://www.eureka.com.kw/products/browse/audio/accessories?sort%3Dpriceh2l",
-  //   category: "audio",
-  // },
-  // {
-  //   url: "https://www.eureka.com.kw/products/browse/smart-watches/watches",
-  //   category: "smartwatches",
-  // },
-  // // Add more Eureka categories here
-  //   ],
-  // },
-
-  primark: {
-    scraper: scrapePrimarkProducts,
+  bershka: {
+    scraper: scrapeBershkaProducts,
     priority: 1, // Lower number = higher priority
     jobs: [
       {
-        url: "https://www.primark.com.kw/en/shop-men/clothing/jeans/--physical_stores_codes-ra1_q737_prm",
+        url: "https://www.bershka.com/kw/men/sale/shirts-c1010747933.html",
         category: "CLOTHING",
       },
-      // {
-      //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/laptops",
-      //   category: "laptops",
-      // },
-      // {
-      //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/desktops-monitors/desk-top-comp",
-      //   category: "desktops",
-      // },
+      {
+        url: "https://www.bershka.com/kw/men/sale/t-shirts-and-polo-shirts-c1010747937.html",
+        category: "CLOTHING",
+      },
+      {
+        url: "https://www.bershka.com/kw/men/sale/t-shirts-and-polo-shirts-c1010747937.html",
+        category: "CLOTHING",
+      },
+      {
+        url: "https://www.bershka.com/kw/women/sale/t-shirts-and-tops-c1010850199.html",
+        category: "CLOTHING",
+      },
+    ],
+  },
+
+  primark: {
+    scraper: scrapePrimarkProducts,
+    priority: 2, // Lower number = higher priority
+    jobs: [
+      {
+        url: "https://www.primark.com.kw/en/shop-men/clothing/shirts/--physical_stores_codes-ra1_q737_prm",
+        category: "CLOTHING",
+      },
+      {
+        url: "https://www.primark.com.kw/en/shop-men/clothing/trousers/--physical_stores_codes-ra1_q737_prm",
+        category: "CLOTHING",
+      },
+      {
+        url: "https://www.primark.com.kw/en/shop-women/clothing/tops-t-shirts/--physical_stores_codes-ra1_q737_prm",
+        category: "CLOTHING",
+      },
       // {
       //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
       //   category: "tablets",
@@ -133,7 +120,7 @@ const SCRAPING_JOBS = {
       //   url: "https://www.eureka.com.kw/products/browse/smart-watches/watches",
       //   category: "smartwatches",
       // },
-      // // Add more Eureka categories here
+      // Add more Eureka categories here
     ],
   },
 

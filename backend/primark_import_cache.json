@@ -1,183 +1,63 @@
 {
   "categoryDetection": {
-    "mid-rise baggy jeans": {
+    "long sleeve oxford shirt": {
       "category": "CLOTHING",
       "specs": {
-        "type": "jeans",
+        "type": "shirt",
         "gender": "unisex",
-        "fit": "baggy",
-        "rise": "mid rise",
-        "material": "100% cotton",
-        "pattern": "solid colour",
-        "style": "jeans",
-        "color": "light blue",
-        "sku": "991143280504",
-        "available_sizes": "36/30 (S), 36/32 (R), 36/34 (L), 38/32 (R), 40/32 (R)"
-      }
-    },
-    "low-rise barrel leg jeans": {
-      "category": "CLOTHING",
-      "specs": {
-        "type": "jeans",
-        "gender": "unisex",
-        "fit": "barrel leg",
-        "rise": "low rise",
-        "material": "denim",
-        "pattern": "solid colour",
-        "style": "jeans",
-        "color": "dark blue",
-        "sku": "991143272511",
-        "available_sizes": "34/30 (S), 30/32 (R), 32/30 (S), 32/34 (L)"
-      }
-    },
-    "mid-rise slim fit jeans": {
-      "category": "CLOTHING",
-      "specs": {
-        "type": "jeans",
-        "gender": "unisex",
-        "fit": "slim",
-        "rise": "mid rise",
-        "material": "denim",
-        "pattern": "solid colour",
-        "style": "jeans",
-        "color": "mid blue",
-        "sku": "991143771510",
-        "available_sizes": "33/32 (R), 34/30 (S), 34/32 (R), 34/34 (L), 36/30 (S), 36/32 (R), 36/34 (L), 38/32 (R), 38/30 (S), 28/30 (S), 30/30 (S), 30/32 (R), 32/30 (S), 32/32 (R), 32/34 (L)"
-      }
-    },
-    "stretch straight leg jeans": {
-      "category": "CLOTHING",
-      "specs": {
-        "type": "jeans",
-        "gender": "unisex",
-        "fit": "straight",
-        "rise": "mid rise",
-        "material": "denim",
-        "pattern": "solid colour",
-        "style": "jeans",
-        "color": "indigo",
-        "sku": "991143764526",
-        "available_sizes": "33/32 (R), 34/30 (S), 34/32 (R), 34/34 (L), 36/30 (S), 36/32 (R), 36/34 (L), 38/32 (R), 40/32 (R), 30/30 (S), 30/32 (R), 32/30 (S), 32/32 (R), 32/34 (L)"
-      }
-    },
-    "mid-rise skinny jeans": {
-      "category": "CLOTHING",
-      "specs": {
-        "type": "jeans",
-        "gender": "women",
-        "fit": "skinny",
-        "rise": "mid rise",
-        "material": "denim",
-        "pattern": "solid colour",
-        "style": "jeans",
-        "color": "bright blue",
-        "sku": "991143750532",
-        "available_sizes": "33/32 (R), 34/30 (S), 34/32 (R), 34/34 (L), 36/30 (S), 36/32 (R), 36/34 (L), 28/30 (S), 28/32 (R), 30/30 (S), 30/32 (R), 32/30 (S), 32/32 (R), 32/34 (L)"
-      }
-    },
-    "the stronghold high-waisted straight leg jeans": {
-      "category": "CLOTHING",
-      "specs": {
-        "type": "jeans",
-        "gender": "unisex",
-        "fit": "straight",
-        "rise": "high rise",
-        "material": "denim",
-        "pattern": "solid colour",
-        "style": "jeans",
-        "color": "light blue",
-        "sku": "991129338504",
-        "available_sizes": "30/30 (S), 30/32 (R), 32/30 (S), 32/32 (R), 32/34 (L)"
-      }
-    },
-    "mid-rise straight-leg jeans": {
-      "category": "CLOTHING",
-      "specs": {
-        "type": "jeans",
-        "gender": "unisex",
-        "fit": "straight",
-        "rise": "mid rise",
-        "material": "cotton",
-        "pattern": "solid colour",
-        "style": "jeans",
-        "color": "mid blue",
-        "sku": "991143030510",
-        "available_sizes": "33/32 (R), 34/30 (S), 34/32 (R), 34/34 (L), 36/30 (S), 36/32 (R), 36/34 (L), 38/32 (R), 40/32 (R), 30/30 (S), 30/32 (R), 32/30 (S), 32/32 (R), 32/34 (L)"
-      }
-    },
-    "mid-rise straight leg jeans": {
-      "category": "CLOTHING",
-      "specs": {
-        "type": "jeans",
-        "gender": "unisex",
-        "fit": "regular",
-        "rise": "mid rise",
-        "material": "not specified",
-        "pattern": "solid colour",
-        "style": "jeans",
-        "color": "black",
-        "sku": "991143359804",
-        "available_sizes": "33/32 (R), 34/30 (S), 34/32 (R), 34/34 (L), 36/30 (S), 36/32 (R), 36/34 (L), 38/32 (R), 40/32 (R), 30/30 (S), 30/32 (R), 32/30 (S), 32/32 (R), 32/34 (L)"
-      }
-    },
-    "mid-rise relaxed straight leg jeans": {
-      "category": "CLOTHING",
-      "specs": {
-        "type": "jeans",
-        "gender": "unisex",
-        "fit": "relaxed",
-        "rise": "mid rise",
-        "material": "denim",
-        "pattern": "solid colour",
-        "style": "jeans",
-        "color": "grey",
-        "sku": "991143168706",
-        "available_sizes": "33/32 (R), 34/32 (R), 34/34 (L), 36/30 (S), 36/34 (L), 40/32 (R), 30/30 (S), 32/30 (S), 32/32 (R), 32/34 (L)"
-      }
-    },
-    "mid-rise relaxed jeans": {
-      "category": "CLOTHING",
-      "specs": {
-        "type": "jeans",
-        "gender": "unisex",
-        "fit": "relaxed",
-        "rise": "mid rise",
+        "fit": "",
+        "rise": "",
         "material": "",
         "pattern": "solid colour",
-        "style": "jeans",
-        "color": "blue",
-        "sku": "991143092505",
-        "available_sizes": "33/32 (R), 34/30 (S), 34/32 (R), 36/30 (S), 36/32 (R), 38/32 (R), 38/30 (S), 30/30 (S), 30/32 (R), 32/30 (S), 32/32 (R)"
+        "style": "shirts",
+        "color": "navy",
+        "sku": "991142171528",
+        "available_sizes": "XS, S, M, L, XL, 3XL, 2XL"
       }
     },
-    "high-waisted relaxed jeans": {
+    "check button-up overshirt": {
       "category": "CLOTHING",
       "specs": {
-        "type": "jeans",
-        "gender": "women",
-        "fit": "relaxed",
-        "rise": "high rise",
-        "material": "100% cotton",
-        "pattern": "solid colour",
-        "style": "jeans",
-        "color": "dark blue",
-        "sku": "991143745511",
-        "available_sizes": "34/32 (R), 34/34 (L), 36/30 (S), 36/32 (R), 36/34 (L), 38/32 (R), 40/32 (R), 38/30 (S), 30/32 (R), 32/30 (S), 32/32 (R), 32/34 (L)"
-      }
-    },
-    "mid-rise loose cargo jeans": {
-      "category": "CLOTHING",
-      "specs": {
-        "type": "jeans",
+        "type": "overshirt",
         "gender": "unisex",
-        "fit": "loose",
-        "rise": "mid rise",
-        "material": "not specified",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "checked",
+        "style": "shirts",
+        "color": "blue",
+        "sku": "991153157505",
+        "available_sizes": "S"
+      }
+    },
+    "pure cotton shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "cotton",
         "pattern": "solid colour",
-        "style": "jeans",
-        "color": "black",
-        "sku": "991143322804",
-        "available_sizes": "36/30 (S), 30/30 (S), 30/32 (R), 32/30 (S), 32/32 (R)"
+        "style": "shirts",
+        "color": "khaki",
+        "sku": "991142132416",
+        "available_sizes": "XS, S, M, L, XL, 3XL, 2XL"
+      }
+    },
+    "long sleeve denim shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "denim",
+        "pattern": "solid colour",
+        "style": "shirts",
+        "color": "light blue",
+        "sku": "991142150504",
+        "available_sizes": "XS, S, M, L, XL, 2XL"
       }
     }
   }

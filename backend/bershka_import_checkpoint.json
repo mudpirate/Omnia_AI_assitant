@@ -40,15 +40,19 @@
     "6807/759/800_black",
     "6807/759/712_cream",
     "6789/741/800_black",
-    "8614/759/800_black"
+    "8614/759/800_black",
+    "Grey · Ref. 6384/710/812_unknown",
+    "6413/185/403_light blue",
+    "6417/388/400_blue",
+    "6419/198/250_white"
   ],
-  "processedCount": 41,
+  "processedCount": 45,
   "stats": {
-    "created": 41,
+    "created": 45,
     "updated": 0,
     "skipped": 0,
     "errors": 0
   },
-  "apiCalls": 76,
-  "timestamp": "2026-01-02T13:29:56.317Z"
+  "apiCalls": 84,
+  "timestamp": "2026-01-03T17:31:35.026Z"
 }

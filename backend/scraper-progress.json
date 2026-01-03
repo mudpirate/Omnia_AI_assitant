@@ -1,51 +1,5 @@
 {
-  "stores": {
-    "xcite": {
-      "completed": [
-        "mobilephones",
-        "laptops",
-        "tablets",
-        "desktops",
-        "audio",
-        "smartwatches"
-      ],
-      "failed": []
-    },
-    "eureka": {
-      "completed": [
-        "mobilephones",
-        "laptops",
-        "desktops",
-        "tablets",
-        "audio",
-        "smartwatches"
-      ],
-      "failed": []
-    },
-    "best": {
-      "completed": [
-        "mobilephones",
-        "laptops",
-        "desktops",
-        "tablets"
-      ],
-      "failed": []
-    },
-    "bershka": {
-      "completed": [
-        "CLOTHING"
-      ],
-      "failed": []
-    },
-    "primark": {
-      "completed": [
-        "CLOTHING"
-      ],
-      "failed": [
-        "CLOTHING"
-      ]
-    }
-  },
+  "stores": {},
   "startTime": null,
-  "lastSaved": 1767361339038
+  "lastSaved": 1767461467736
 }

@@ -594,6 +594,72 @@
         "discount": "-44%",
         "old_price": 17.9
       }
+    },
+    "short-sleeve tailored shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "N/A",
+        "material": "N/A",
+        "pattern": "solid",
+        "style": "casual",
+        "sku": "Grey · Ref. 6384/710/812",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "oversized double sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "women",
+        "fit": "oversized",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "light blue",
+        "sku": "6413/185/403",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-67%",
+        "old_price": 17.9
+      }
+    },
+    "oversized denim shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "oversized",
+        "rise": "",
+        "material": "denim",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "blue",
+        "sku": "6417/388/400",
+        "available_sizes": "S, L",
+        "discount": "-67%",
+        "old_price": 17.9
+      }
+    },
+    "boxy-fit print shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "white",
+        "sku": "6419/198/250",
+        "available_sizes": "XS, XL",
+        "discount": "-67%",
+        "old_price": 17.9
+      }
     }
   }
 }

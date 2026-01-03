@@ -1,9 +1,10 @@
-// primark.js - Primark E-commerce Store Scraper (FIXED v3)
-// Handles cookie banners, subscription popups, and "Load more products" pagination
+// primark_with_deepfashion.js - Enhanced Primark Scraper with DeepFashion Integration
+// Extracts visual attributes from product images for better search accuracy
 
 import { PrismaClient, StockStatus } from "@prisma/client";
 import OpenAI from "openai";
 import fs from "fs/promises";
+import fetch from "node-fetch";
 
 // --- GLOBAL CONFIGURATION ---
 const prisma = new PrismaClient();
@@ -12,6 +13,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const STORE_NAME = "PRIMARK";
 const CURRENCY = "KWD";
 const BASE_URL = "https://www.primark.com.kw";
+const DEEPFASHION_API_URL = process.env.DEEPFASHION_API_URL; // Your Modal endpoint
 
 // --- OPTIMIZED CONCURRENCY & RATE LIMITING ---
 const CONCURRENT_LIMIT = 2;
@@ -104,6 +106,193 @@ function buildProductUrl(href) {
   if (href.startsWith("http")) return href;
   const cleanHref = href.startsWith("/") ? href : `/${href}`;
   return `${BASE_URL}${cleanHref}`;
+}
+
+// -------------------------------------------------------------------
+// --- DEEPFASHION IMAGE ANALYSIS ---
+// -------------------------------------------------------------------
+
+/**
+ * Download image from URL and convert to base64
+ */
+async function downloadImageAsBase64(imageUrl) {
+  try {
+    console.log(`     📥 Downloading image...`);
+    const response = await fetch(imageUrl);
+
+    if (!response.ok) {
+      throw new Error(`Failed to download image: ${response.status}`);
+    }
+
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const base64 = buffer.toString("base64");
+
+    console.log(
+      `     ✅ Image downloaded: ${(buffer.length / 1024).toFixed(1)} KB`
+    );
+    return base64;
+  } catch (error) {
+    console.error(`     ❌ Image download failed: ${error.message}`);
+    return null;
+  }
+}
+
+/**
+ * Extract fashion attributes from product image using DeepFashion model
+ */
+async function extractAttributesFromImage(imageUrl) {
+  console.log(`     🎨 [DEEPFASHION] Analyzing product image...`);
+
+  if (!DEEPFASHION_API_URL) {
+    console.log(`     ⚠️  DeepFashion API URL not configured - skipping`);
+    return { success: false, attributes: {} };
+  }
+
+  try {
+    // Download image as base64
+    const imageBase64 = await downloadImageAsBase64(imageUrl);
+
+    if (!imageBase64) {
+      return { success: false, attributes: {} };
+    }
+
+    // Call DeepFashion Modal API
+    console.log(`     🔮 Calling DeepFashion API...`);
+    const response = await fetch(DEEPFASHION_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        image: imageBase64,
+        mimeType: "image/jpeg",
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`DeepFashion API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || "DeepFashion extraction failed");
+    }
+
+    const attributes = data.attributes;
+
+    console.log(`     ✅ Visual attributes extracted:`);
+    console.log(`        📂 Category: ${attributes.category || "N/A"}`);
+    console.log(`        🎨 Color: ${attributes.color || "N/A"}`);
+    console.log(`        👤 Gender: ${attributes.gender || "N/A"}`);
+    if (attributes.sleeveLength)
+      console.log(`        👕 Sleeve: ${attributes.sleeveLength}`);
+    if (attributes.pattern)
+      console.log(`        🔲 Pattern: ${attributes.pattern}`);
+    if (attributes.neckline)
+      console.log(`        👔 Neckline: ${attributes.neckline}`);
+    if (attributes.length)
+      console.log(`        📏 Length: ${attributes.length}`);
+
+    return {
+      success: true,
+      attributes: attributes,
+    };
+  } catch (error) {
+    console.error(`     ❌ DeepFashion analysis failed: ${error.message}`);
+    return {
+      success: false,
+      attributes: {},
+      error: error.message,
+    };
+  }
+}
+
+/**
+ * Merge DeepFashion attributes with scraped specs
+ * DeepFashion attributes take priority for visual properties
+ */
+function mergeAttributes(scrapedSpecs, deepFashionAttributes) {
+  const merged = { ...scrapedSpecs };
+
+  if (deepFashionAttributes.color) {
+    // DeepFashion color overrides scraped color (visual is more accurate)
+    merged.color = deepFashionAttributes.color.toLowerCase();
+    console.log(`     🎨 Using DeepFashion color: ${merged.color}`);
+  }
+
+  if (deepFashionAttributes.gender) {
+    // Normalize gender
+    const genderMap = {
+      male: "men",
+      men: "men",
+      female: "women",
+      women: "women",
+      boys: "boys",
+      girls: "girls",
+      unisex: "unisex",
+      kids: "kids",
+    };
+    merged.gender =
+      genderMap[deepFashionAttributes.gender.toLowerCase()] ||
+      deepFashionAttributes.gender.toLowerCase();
+    console.log(`     👤 Using DeepFashion gender: ${merged.gender}`);
+  }
+
+  if (deepFashionAttributes.pattern) {
+    merged.pattern = deepFashionAttributes.pattern.toLowerCase();
+    console.log(`     🔲 Using DeepFashion pattern: ${merged.pattern}`);
+  }
+
+  if (deepFashionAttributes.sleeveLength) {
+    merged.sleeve_length = deepFashionAttributes.sleeveLength.toLowerCase();
+    console.log(`     👕 Added sleeve length: ${merged.sleeve_length}`);
+  }
+
+  if (deepFashionAttributes.neckline) {
+    merged.neckline = deepFashionAttributes.neckline.toLowerCase();
+    console.log(`     👔 Added neckline: ${merged.neckline}`);
+  }
+
+  if (deepFashionAttributes.length) {
+    merged.length = deepFashionAttributes.length.toLowerCase();
+    console.log(`     📏 Added length: ${merged.length}`);
+  }
+
+  // Map DeepFashion category to product type if not already set
+  if (deepFashionAttributes.category && !merged.type) {
+    const typeMap = {
+      dress: "dress",
+      top: "top",
+      shirt: "shirt",
+      blouse: "blouse",
+      "t-shirt": "t-shirt",
+      sweater: "sweater",
+      hoodie: "hoodie",
+      jacket: "jacket",
+      coat: "coat",
+      pants: "pants",
+      jeans: "jeans",
+      shorts: "shorts",
+      skirt: "skirt",
+      shoes: "shoes",
+      sneakers: "sneakers",
+      boots: "boots",
+      sandals: "sandals",
+      heels: "heels",
+      bag: "bag",
+      backpack: "backpack",
+    };
+
+    const mappedType = typeMap[deepFashionAttributes.category.toLowerCase()];
+    if (mappedType) {
+      merged.type = mappedType;
+      console.log(`     📝 Mapped type from DeepFashion: ${merged.type}`);
+    }
+  }
+
+  return merged;
 }
 
 // -------------------------------------------------------------------
@@ -838,10 +1027,13 @@ async function scrapePrimarkProducts(browser, categoryUrl, categoryName) {
     });
 
     console.log(`\n${"=".repeat(70)}`);
-    console.log(`🏪 PRIMARK SCRAPER`);
+    console.log(`🏪 PRIMARK SCRAPER WITH DEEPFASHION INTEGRATION`);
     console.log(`${"=".repeat(70)}`);
     console.log(`   Category: ${categoryName}`);
     console.log(`   URL: ${categoryUrl}`);
+    console.log(
+      `   DeepFashion: ${DEEPFASHION_API_URL ? "✅ Enabled" : "❌ Disabled"}`
+    );
     console.log(`${"=".repeat(70)}\n`);
 
     const listings = await scrapeProductListings(page, categoryUrl);
@@ -915,7 +1107,14 @@ async function scrapePrimarkProducts(browser, categoryUrl, categoryName) {
         console.log(`     Sizes: ${productData.availableSizes.join(", ")}`);
       }
 
-      console.log(`  🤖 AI extraction...`);
+      // 🎨 STEP 1: Extract visual attributes from image using DeepFashion
+      console.log(`\n  🎨 [DEEPFASHION] Analyzing product image...`);
+      const visualAnalysis = await extractAttributesFromImage(
+        productData.imageUrl
+      );
+
+      // 🤖 STEP 2: Extract specs from text using LLM
+      console.log(`  🤖 Extracting specs from text...`);
       const extracted = await extractProductSpecs(
         productData.title,
         productData.shortDesc,
@@ -929,10 +1128,19 @@ async function scrapePrimarkProducts(browser, categoryUrl, categoryName) {
         }
       );
 
+      // 🔀 STEP 3: Merge visual attributes with text-based specs
+      console.log(`  🔀 Merging visual + text attributes...`);
+      const finalSpecs = visualAnalysis.success
+        ? mergeAttributes(extracted.specs, visualAnalysis.attributes)
+        : extracted.specs;
+
+      console.log(`  ✅ Final specs:`, JSON.stringify(finalSpecs, null, 2));
+
+      // 🤖 STEP 4: Generate embedding with enriched specs
       console.log(`  🤖 Generating embedding...`);
       const searchKey = generateSearchContext(
         productData.title,
-        extracted.specs,
+        finalSpecs,
         productData.price,
         productData.shortDesc
       );
@@ -944,7 +1152,7 @@ async function scrapePrimarkProducts(browser, categoryUrl, categoryName) {
       if (productData.care)
         fullDescription += `\n\nCare: ${productData.care.replace(/;/g, ", ")}`;
 
-      console.log(`  💾 Saving...`);
+      console.log(`  💾 Saving to database...`);
       const record = await prisma.product.create({
         data: {
           title: productData.title,
@@ -955,7 +1163,7 @@ async function scrapePrimarkProducts(browser, categoryUrl, categoryName) {
           stock: StockStatus.IN_STOCK,
           lastSeenAt: new Date(),
           brand: "Primark",
-          specs: extracted.specs,
+          specs: finalSpecs, // ✅ Now includes DeepFashion visual attributes
           searchKey: searchKey,
           storeName: STORE_NAME,
           productUrl: productData.productUrl,
@@ -1003,19 +1211,19 @@ async function scrapePrimarkProducts(browser, categoryUrl, categoryName) {
 
 export default scrapePrimarkProducts;
 
-// --- STANDALONE TESTING ---
+//standalone
 // import puppeteer from "puppeteer";
 
 // async function testRun() {
 //   const browser = await puppeteer.launch({
-//     headless: true, // Set to true for production
+//     headless: false,
 //     args: ["--no-sandbox", "--disable-setuid-sandbox"],
 //   });
 
 //   try {
 //     await scrapePrimarkProducts(
 //       browser,
-//       "https://www.primark.com.kw/en/shop-men/clothing/jeans/--physical_stores_codes-ra1_q737_prm",
+//       "https://www.primark.com.kw/en/shop-men/clothing/tops-t-shirts/--physical_stores_codes-ra1_q737_prm",
 //       "CLOTHING"
 //     );
 //   } finally {
