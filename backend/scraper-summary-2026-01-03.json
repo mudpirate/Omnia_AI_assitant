@@ -1,0 +1,28 @@
+{
+  "completedAt": "2026-01-03T19:15:22.170Z",
+  "duration": {
+    "hours": 1,
+    "minutes": 20,
+    "seconds": 57,
+    "totalMs": 4857233
+  },
+  "stats": {
+    "stores": {
+      "total": 2,
+      "completed": 2,
+      "failed": 0
+    },
+    "categories": {
+      "success": 5,
+      "failed": 2,
+      "skipped": 0
+    },
+    "retries": 4,
+    "successRate": "71.4%"
+  },
+  "failedStores": [],
+  "failedCategories": [
+    "bershka/CLOTHING",
+    "primark/CLOTHING"
+  ]
+}

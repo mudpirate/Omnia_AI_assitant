@@ -1,5 +1,56 @@
 {
-  "stores": {},
+  "stores": {
+    "bershka": {
+      "completed": {
+        "17ce0862b20fbaa9": {
+          "url": "https://www.bershka.com/kw/men/sale/t-shirts-and-polo-shirts-c1010747937.html",
+          "category": "CLOTHING",
+          "completedAt": 1767464378896
+        },
+        "b67fb533a07f760a": {
+          "url": "https://www.bershka.com/kw/men/sale/trousers-and-jeans-c1010747956.html",
+          "category": "CLOTHING",
+          "completedAt": 1767465086969
+        },
+        "df30348b2a47fc16": {
+          "url": "https://www.bershka.com/kw/women/sale/t-shirts-and-tops-c1010850199.html",
+          "category": "CLOTHING",
+          "completedAt": 1767467722150
+        }
+      },
+      "failed": {
+        "5df09e69e74895ce": {
+          "url": "https://www.bershka.com/kw/men/sale/shirts-c1010747933.html",
+          "category": "CLOTHING",
+          "failedAt": 1767462985321
+        }
+      },
+      "metadata": {}
+    },
+    "primark": {
+      "completed": {
+        "25e2abe44912eeaa": {
+          "url": "https://www.primark.com.kw/en/shop-men/clothing/trousers/--physical_stores_codes-ra1_q737_prm",
+          "category": "CLOTHING",
+          "completedAt": 1767463356084
+        },
+        "105eca9233fc0ae8": {
+          "url": "https://www.primark.com.kw/en/shop-women/clothing/tops-t-shirts/--physical_stores_codes-ra1_q737_prm",
+          "category": "CLOTHING",
+          "completedAt": 1767464695051
+        }
+      },
+      "failed": {
+        "491ee2a71625bbdc": {
+          "url": "https://www.primark.com.kw/en/shop-men/clothing/shirts/--physical_stores_codes-ra1_q737_prm",
+          "category": "CLOTHING",
+          "failedAt": 1767463119218
+        }
+      },
+      "metadata": {}
+    }
+  },
   "startTime": null,
-  "lastSaved": 1767461467736
+  "lastSaved": 1767467722156,
+  "version": "2.0"
 }

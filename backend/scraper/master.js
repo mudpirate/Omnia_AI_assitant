@@ -1,9 +1,11 @@
 // runner.js - Optimized for Large-Scale Multi-Store Scraping
+// Enhanced with URL-based progress tracking (allows same category, different URLs)
 import puppeteer from "puppeteer";
 import { PrismaClient } from "@prisma/client";
 import pLimit from "p-limit";
 import fs from "fs/promises";
 import path from "path";
+import crypto from "crypto";
 
 // Import all store scrapers
 import scrapeProductsEureka from "./eureka.js";
@@ -78,7 +80,7 @@ const SCRAPING_JOBS = {
         category: "CLOTHING",
       },
       {
-        url: "https://www.bershka.com/kw/men/sale/t-shirts-and-polo-shirts-c1010747937.html",
+        url: "https://www.bershka.com/kw/men/sale/trousers-and-jeans-c1010747956.html",
         category: "CLOTHING",
       },
       {
@@ -104,23 +106,6 @@ const SCRAPING_JOBS = {
         url: "https://www.primark.com.kw/en/shop-women/clothing/tops-t-shirts/--physical_stores_codes-ra1_q737_prm",
         category: "CLOTHING",
       },
-      // {
-      //   url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
-      //   category: "tablets",
-      // },
-      // {
-      //   url: "https://www.eureka.com.kw/products/browse/audio/home-theaters",
-      //   category: "audio",
-      // },
-      // {
-      //   url: "https://www.eureka.com.kw/products/browse/audio/accessories?sort%3Dpriceh2l",
-      //   category: "audio",
-      // },
-      // {
-      //   url: "https://www.eureka.com.kw/products/browse/smart-watches/watches",
-      //   category: "smartwatches",
-      // },
-      // Add more Eureka categories here
     ],
   },
 
@@ -136,105 +121,6 @@ const SCRAPING_JOBS = {
   //     {
   //       url: "https://www.eureka.com.kw/products/browse/computers-tablets/laptops",
   //       category: "laptops",
-  //     },
-  //     {
-  //       url: "https://www.eureka.com.kw/products/browse/computers-tablets/desktops-monitors/desk-top-comp",
-  //       category: "desktops",
-  //     },
-  //     {
-  //       url: "https://www.eureka.com.kw/products/browse/computers-tablets/tablets",
-  //       category: "tablets",
-  //     },
-  //     {
-  //       url: "https://www.eureka.com.kw/products/browse/audio/home-theaters",
-  //       category: "audio",
-  //     },
-  //     {
-  //       url: "https://www.eureka.com.kw/products/browse/audio/accessories?sort%3Dpriceh2l",
-  //       category: "audio",
-  //     },
-  //     {
-  //       url: "https://www.eureka.com.kw/products/browse/smart-watches/watches",
-  //       category: "smartwatches",
-  //     },
-  //     // // Add more Eureka categories here
-  //   ],
-  // },
-
-  // // XCITE STORE
-  // xcite: {
-  //   scraper: scrapeProductsXcite,
-  //   priority: 1,
-  //   jobs: [
-  //     // {
-  //     //   url: "https://www.xcite.com/mobile-phones/c",
-  //     //   category: "mobilephones",
-  //     // },
-  //     // {
-  //     //   url: "https://www.xcite.com/laptops/c",
-  //     //   category: "laptops",
-  //     // },
-  //     // {
-  //     //   url: "https://www.xcite.com/tablets/c",
-  //     //   category: "tablets",
-  //     // },
-  //     // {
-  //     //   url: "https://www.xcite.com/computer-desktops/c",
-  //     //   category: "desktops",
-  //     // },
-  //     // {
-  //     //   url: "https://www.xcite.com/personal-audio/c",
-  //     //   category: "audio",
-  //     // },
-  //     {
-  //       url: "https://www.xcite.com/smart-watches/c",
-  //       category: "smartwatches",
-  //     },
-  //     // Add more Xcite categories here
-  //   ],
-  // },
-
-  // // BEST STORE
-  // best: {
-  //   scraper: scrapeProductsBest,
-  //   priority: 2,
-  //   jobs: [
-  //     {
-  //       url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:samsung:brand:apple",
-  //       category: "mobilephones",
-  //     },
-  //     {
-  //       url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:xiaomi:brand:honor",
-  //       category: "mobilephones",
-  //     },
-  //     {
-  //       url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:xiaomi:brand:honor",
-  //       category: "mobilephones",
-  //     },
-  //     {
-  //       url: "https://best.com.kw/en/c/mobiles-nn?query=:relevance:allCategories:mobiles-nn:brand:motorola:brand:infinix:brand:vivo:brand:oppo:brand:nothing:brand:google:brand:oneplus:brand:huawei:brand:realmer",
-  //       category: "mobilephones",
-  //     },
-  //     {
-  //       url: "https://best.com.kw/en/c/laptops-nn",
-  //       category: "laptops",
-  //     },
-  //     {
-  //       url: "https://best.com.kw/en/c/desktops-nn",
-  //       category: "desktops",
-  //     },
-  //     {
-  //       url: "https://best.com.kw/en/c/tablets-nn",
-  //       category: "tablets",
-  //     },
-
-  //     {
-  //       url: "https://best.com.kw/en/c/headphones-and-earphones-nn",
-  //       category: "audio",
-  //     },
-  //     {
-  //       url: "https://best.com.kw/en/search/smartwatches",
-  //       category: "smartwatches",
   //     },
   //   ],
   // },
@@ -331,23 +217,49 @@ class BrowserPool {
 }
 
 // ============================================================================
-// PROGRESS TRACKER - Resume from where you left off
+// PROGRESS TRACKER - Enhanced with URL-based tracking
 // ============================================================================
 
 class ProgressTracker {
   constructor(progressFile) {
     this.progressFile = progressFile;
     this.progress = {
-      stores: {},
+      stores: {}, // Now stores URL hashes instead of category names
       startTime: null,
       lastSaved: null,
+      version: "2.0", // Version to track format changes
     };
+  }
+
+  /**
+   * Generate unique hash for a job (store + URL)
+   * This allows same category name with different URLs
+   */
+  generateJobHash(storeName, url) {
+    const input = `${storeName}:${url}`;
+    return crypto
+      .createHash("md5")
+      .update(input)
+      .digest("hex")
+      .substring(0, 16);
   }
 
   async load() {
     try {
       const data = await fs.readFile(this.progressFile, "utf-8");
       this.progress = JSON.parse(data);
+
+      // Check version and migrate if needed
+      if (!this.progress.version || this.progress.version === "1.0") {
+        console.log(`🔄 [Progress] Detected old format, migrating to v2.0...`);
+        this.progress = {
+          stores: {},
+          startTime: this.progress.startTime,
+          lastSaved: this.progress.lastSaved,
+          version: "2.0",
+        };
+      }
+
       console.log(
         `📂 [Progress] Loaded previous progress from ${this.progressFile}`
       );
@@ -373,22 +285,60 @@ class ProgressTracker {
     }
   }
 
-  markCategoryComplete(storeName, category, success) {
+  markJobComplete(storeName, url, category, success) {
     if (!this.progress.stores[storeName]) {
-      this.progress.stores[storeName] = { completed: [], failed: [] };
+      this.progress.stores[storeName] = {
+        completed: {},
+        failed: {},
+        metadata: {}, // Store category names for reporting
+      };
     }
 
+    const jobHash = this.generateJobHash(storeName, url);
+    const timestamp = Date.now();
+
     if (success) {
-      this.progress.stores[storeName].completed.push(category);
+      this.progress.stores[storeName].completed[jobHash] = {
+        url: url,
+        category: category,
+        completedAt: timestamp,
+      };
+      // Remove from failed if it was there
+      delete this.progress.stores[storeName].failed[jobHash];
     } else {
-      this.progress.stores[storeName].failed.push(category);
+      this.progress.stores[storeName].failed[jobHash] = {
+        url: url,
+        category: category,
+        failedAt: timestamp,
+      };
     }
   }
 
-  isCategoryComplete(storeName, category) {
-    return (
-      this.progress.stores[storeName]?.completed?.includes(category) || false
-    );
+  isJobComplete(storeName, url) {
+    const jobHash = this.generateJobHash(storeName, url);
+    return this.progress.stores[storeName]?.completed?.[jobHash] !== undefined;
+  }
+
+  getCompletedJobsCount(storeName) {
+    return Object.keys(this.progress.stores[storeName]?.completed || {}).length;
+  }
+
+  getFailedJobsCount(storeName) {
+    return Object.keys(this.progress.stores[storeName]?.failed || {}).length;
+  }
+
+  getJobInfo(storeName, url) {
+    const jobHash = this.generateJobHash(storeName, url);
+    const completed = this.progress.stores[storeName]?.completed?.[jobHash];
+    const failed = this.progress.stores[storeName]?.failed?.[jobHash];
+
+    if (completed) {
+      return { status: "completed", ...completed };
+    } else if (failed) {
+      return { status: "failed", ...failed };
+    } else {
+      return { status: "pending" };
+    }
   }
 
   async clear() {
@@ -399,10 +349,21 @@ class ProgressTracker {
       // File doesn't exist, that's fine
     }
   }
+
+  printProgress() {
+    console.log(`\n📊 [Progress] Current State:`);
+    for (const [storeName, storeData] of Object.entries(this.progress.stores)) {
+      const completedCount = Object.keys(storeData.completed || {}).length;
+      const failedCount = Object.keys(storeData.failed || {}).length;
+      console.log(
+        `   ${storeName}: ${completedCount} completed, ${failedCount} failed`
+      );
+    }
+  }
 }
 
 // ============================================================================
-// STORE SCRAPER CLASS - Enhanced with Retry Logic
+// STORE SCRAPER CLASS - Enhanced with URL-based tracking
 // ============================================================================
 
 class StoreScraper {
@@ -446,13 +407,20 @@ class StoreScraper {
       for (let i = 0; i < this.jobs.length; i++) {
         const job = this.jobs[i];
 
-        // Check if already completed
-        if (
-          this.progressTracker.isCategoryComplete(this.storeName, job.category)
-        ) {
-          console.log(
-            `⏭️  [${this.storeName}] Skipping ${job.category} (already completed)`
+        // Check if already completed (using URL-based tracking)
+        if (this.progressTracker.isJobComplete(this.storeName, job.url)) {
+          const jobInfo = this.progressTracker.getJobInfo(
+            this.storeName,
+            job.url
           );
+          console.log(
+            `⏭️  [${this.storeName}] Skipping ${
+              job.category
+            } (URL already completed at ${new Date(
+              jobInfo.completedAt
+            ).toLocaleString()})`
+          );
+          console.log(`    URL: ${job.url.substring(0, 80)}...`);
           this.stats.skipped++;
           continue;
         }
@@ -509,6 +477,7 @@ class StoreScraper {
           console.log(
             `🔄 [${this.storeName}] Retry attempt ${attempt}/${this.config.maxRetries} for ${job.category}`
           );
+          console.log(`    URL: ${job.url.substring(0, 80)}...`);
           await sleep(this.config.retryDelay);
           this.stats.retried++;
         }
@@ -516,9 +485,10 @@ class StoreScraper {
         await this.runJob(job, jobNumber, attempt);
         success = true;
 
-        // Mark as complete
-        this.progressTracker.markCategoryComplete(
+        // Mark as complete (using URL-based tracking)
+        this.progressTracker.markJobComplete(
           this.storeName,
+          job.url,
           job.category,
           true
         );
@@ -530,6 +500,7 @@ class StoreScraper {
           console.error(
             `❌ [${this.storeName}] ${job.category} FAILED after ${this.config.maxRetries} retries`
           );
+          console.error(`    URL: ${job.url}`);
           this.stats.failed++;
 
           const errorInfo = {
@@ -540,8 +511,10 @@ class StoreScraper {
           };
           this.stats.errors.push(errorInfo);
 
-          this.progressTracker.markCategoryComplete(
+          // Mark as failed (using URL-based tracking)
+          this.progressTracker.markJobComplete(
             this.storeName,
+            job.url,
             job.category,
             false
           );
@@ -610,6 +583,7 @@ class StoreScraper {
               err.attempts
             } attempts)`
           );
+          console.log(`         URL: ${err.url.substring(0, 60)}...`);
         } else {
           console.log(`      ${idx + 1}. ${err.message}`);
         }
@@ -637,6 +611,7 @@ async function runAllScrapers() {
 
   // Load previous progress
   await progressTracker.load();
+  progressTracker.printProgress();
 
   console.log(`\n${"═".repeat(70)}`);
   console.log(`🤖 MULTI-STORE AUTOMATED SCRAPER SYSTEM - LARGE-SCALE EDITION`);
@@ -665,6 +640,9 @@ async function runAllScrapers() {
   console.log(`   Max Retries per Category: ${CONFIG.maxRetries}`);
   console.log(`   Store Start Delay: ${CONFIG.storeStartDelay}ms`);
   console.log(`   Category Delay: ${CONFIG.categoryDelay}ms`);
+  console.log(
+    `   🔗 Progress Tracking: URL-based (allows duplicate categories)`
+  );
   console.log(
     `\n📦 Stores to process (by priority): ${storeNames.join(", ")}\n`
   );
@@ -808,6 +786,7 @@ async function printFinalReport(results, startTime, progressTracker) {
         store.stats.errors.forEach((err) => {
           if (err.category) {
             console.log(`         - ${err.category}: ${err.message}`);
+            console.log(`           URL: ${err.url.substring(0, 60)}...`);
             failedCategories.push(`${store.storeName}/${err.category}`);
           }
         });

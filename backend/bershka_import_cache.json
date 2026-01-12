@@ -660,6 +660,3779 @@
         "discount": "-67%",
         "old_price": 17.9
       }
+    },
+    "boxy-fit shirt with embroidered print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "women",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "embroidered",
+        "style": "casual",
+        "color": "brown",
+        "sku": "6406/557/717",
+        "available_sizes": "S, M, L",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "short-sleeve cropped satin shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "women",
+        "fit": "cropped",
+        "rise": "",
+        "material": "satin",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "navy",
+        "sku": "6402/710/401",
+        "available_sizes": "S, M, L",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "short-sleeve embroidered corduroy shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "corduroy",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "cream",
+        "sku": "6394/710/712",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-67%",
+        "old_price": 17.9
+      }
+    },
+    "printed short sleeve boxy fit shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "black",
+        "sku": "6392/710/800",
+        "available_sizes": "XS, XL",
+        "discount": "-67%",
+        "old_price": 17.9
+      }
+    },
+    "short sleeve boxy fit shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "navy",
+        "sku": "6395/388/401",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-67%",
+        "old_price": 17.9
+      }
+    },
+    "embroidered short sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "navy",
+        "sku": "6390/758/401",
+        "available_sizes": "XS, S, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "denim shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "denim",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "navy",
+        "sku": "6361/534/401",
+        "available_sizes": "S",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "printed short sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "pink",
+        "sku": "6393/557/902",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "tailored fit shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "tailored",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "black",
+        "sku": "6433/777/800",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "rustic striped short sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "striped",
+        "style": "casual",
+        "color": "brown",
+        "sku": "6388/218/700",
+        "available_sizes": "L",
+        "discount": "-67%",
+        "old_price": 17.9
+      }
+    },
+    "textured striped short sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "striped",
+        "style": "casual",
+        "color": "sand",
+        "sku": "6387/557/706",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "open knit short sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "pink",
+        "sku": "6382/218/607",
+        "available_sizes": "XS, M, L, XL",
+        "discount": "-67%",
+        "old_price": 17.9
+      }
+    },
+    "short sleeve shirt with floral embroidery": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "floral",
+        "style": "casual",
+        "color": "sand",
+        "sku": "6375/044/711",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-67%",
+        "old_price": 17.9
+      }
+    },
+    "rustic print short sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "rustic print",
+        "style": "casual",
+        "color": "cream",
+        "sku": "6378/224/712",
+        "available_sizes": "XS, S",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "tailored boxy fit shirt with embroidery": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "6404/777/800",
+        "available_sizes": "XS, L, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "printed short sleeve oversize fit shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "oversize",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "off white",
+        "sku": "6371/046/251",
+        "available_sizes": "L, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "textured boxy fit short sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "textured",
+        "style": "casual",
+        "color": "brown",
+        "sku": "6376/710/700",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-67%",
+        "old_price": 17.9
+      }
+    },
+    "short sleeve linen blend shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "linen blend",
+        "pattern": "",
+        "style": "casual",
+        "color": "camel",
+        "sku": "1229/721/742",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "striped long sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "striped",
+        "style": "casual",
+        "color": "yellow",
+        "sku": "6364/710/047",
+        "available_sizes": "XS, M, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "short sleeve frayed boxy fit shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "white",
+        "sku": "6368/557/250",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-67%",
+        "old_price": 17.9
+      }
+    },
+    "pleated short sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "1235/557/251",
+        "available_sizes": "L",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "short sleeve rustic shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "beige",
+        "sku": "6383/557/746",
+        "available_sizes": "XS, S, L, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "embroidered short sleeve boxy fit shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "grey",
+        "sku": "6366/388/802",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "textured short sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "textured",
+        "style": "casual",
+        "color": "black",
+        "sku": "1228/388/800",
+        "available_sizes": "XS, S, L, XL",
+        "discount": "-45%",
+        "old_price": 10.9
+      }
+    },
+    "striped short sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "striped",
+        "style": "casual",
+        "color": "blue",
+        "sku": "6367/557/400",
+        "available_sizes": "S",
+        "discount": "-67%",
+        "old_price": 17.9
+      }
+    },
+    "short sleeve crochet shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "crochet",
+        "pattern": "",
+        "style": "casual",
+        "color": "blue",
+        "sku": "6386/218/400",
+        "available_sizes": "M, L, XL",
+        "discount": "-67%",
+        "old_price": 17.9
+      }
+    },
+    "strappy t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "white",
+        "sku": "7969/693/250",
+        "available_sizes": "XS, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "sleeveless boxy fit t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "white",
+        "sku": "8027/169/273",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "retro print long sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "mustard",
+        "sku": "8130/443/305",
+        "available_sizes": "S, XL",
+        "discount": "-54%",
+        "old_price": 12.9
+      }
+    },
+    "mickey mouse long sleeve print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "burgundy",
+        "sku": "8114/071/605",
+        "available_sizes": "XS, L, XL",
+        "discount": "-54%",
+        "old_price": 12.9
+      }
+    },
+    "printed short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "off white",
+        "sku": "8091/152/251",
+        "available_sizes": "L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "bershka music dice short sleeve print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "8133/538/800",
+        "available_sizes": "XS",
+        "discount": "-67%",
+        "old_price": 10.9
+      }
+    },
+    "printed double sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "grey",
+        "sku": "8086/443/802",
+        "available_sizes": "XS, L, XL",
+        "discount": "-54%",
+        "old_price": 12.9
+      }
+    },
+    "short sleeve print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "white",
+        "sku": "8122/696/250",
+        "available_sizes": "XS, S, XL",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "saw print short-sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "saw print",
+        "style": "casual",
+        "color": "white",
+        "sku": "8102/604/250",
+        "available_sizes": "M, L, XL",
+        "discount": "-64%",
+        "old_price": 9.9
+      }
+    },
+    "ribbed short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "ribbed",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "navy",
+        "sku": "8089/116/401",
+        "available_sizes": "L, XL",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "short sleeve t-shirt with print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "white",
+        "sku": "8066/154/250",
+        "available_sizes": "M, L, XL",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "white",
+        "sku": "8070/071/250",
+        "available_sizes": "M",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "donald duck short sleeve print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "navy",
+        "sku": "8129/777/401",
+        "available_sizes": "M, XL",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "short sleeve waffle-knit rib print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "waffle-knit",
+        "pattern": "rib print",
+        "style": "casual",
+        "color": "light blue",
+        "sku": "8124/732/406",
+        "available_sizes": "L, XL",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "textured openwork polo shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "polo shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "textured",
+        "style": "casual",
+        "color": "brown",
+        "sku": "8240/623/700",
+        "available_sizes": "XS, M",
+        "discount": "-54%",
+        "old_price": 12.9
+      }
+    },
+    "neoprene effect print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "neoprene",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "8112/777/800",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "short sleeve sport mesh print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "mesh",
+        "pattern": "print",
+        "style": "casual",
+        "color": "black",
+        "sku": "7977/777/800",
+        "available_sizes": "XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "short sleeve sweatshirt print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "grey",
+        "sku": "8116/732/810",
+        "available_sizes": "S, XL",
+        "discount": "-54%",
+        "old_price": 12.9
+      }
+    },
+    "short sleeve sports t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "burgundy",
+        "sku": "7975/686/606",
+        "available_sizes": "XS, S, M",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "von dutch print vest top with ribbed straps": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "vest top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "pink",
+        "sku": "8031/210/902",
+        "available_sizes": "S, L, XL",
+        "discount": "-64%",
+        "old_price": 9.9
+      }
+    },
+    "boxy-fit short sleeve print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "",
+        "color": "off white",
+        "sku": "8039/116/251",
+        "available_sizes": "XL",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "printed textured short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "sand",
+        "sku": "8044/443/711",
+        "available_sizes": "XL",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "mike towers short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "men",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "grey",
+        "sku": "8037/160/818",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-64%",
+        "old_price": 9.9
+      }
+    },
+    "boxy short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "light blue",
+        "sku": "2810/443/428",
+        "available_sizes": "XS, L, XL",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "rustic polo shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "polo shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "cream",
+        "sku": "8241/376/712",
+        "available_sizes": "S, M, L, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "embroidered short sleeve boxy fit t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "8013/443/251",
+        "available_sizes": "S, XL",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "short sleeve cadillac print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "white",
+        "sku": "8046/039/250",
+        "available_sizes": "M",
+        "discount": "-64%",
+        "old_price": 9.9
+      }
+    },
+    "textured short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "8103/777/251",
+        "available_sizes": "XL",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "short sleeve sport print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "white",
+        "sku": "8243/777/250",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "short sleeve sport print polo shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "polo shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "navy",
+        "sku": "8242/777/401",
+        "available_sizes": "M, XL",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "short sleeve plush t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "plush",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "8094/116/251",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "textured terry polo shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "polo shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "terry",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "8239/376/251",
+        "available_sizes": "M, L",
+        "discount": "-54%",
+        "old_price": 12.9
+      }
+    },
+    "textured short sleeve embroidered t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "8017/443/251",
+        "available_sizes": "M, L",
+        "discount": "-64%",
+        "old_price": 9.9
+      }
+    },
+    "printed short sleeve plush t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "plush",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "white",
+        "sku": "8057/222/250",
+        "available_sizes": "S, M",
+        "discount": "-67%",
+        "old_price": 10.9
+      }
+    },
+    "cars short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "8061/538/800",
+        "available_sizes": "L",
+        "discount": "-64%",
+        "old_price": 9.9
+      }
+    },
+    "oversized long sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "oversized",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "black",
+        "sku": "8068/152/800",
+        "available_sizes": "XS, M, L, XL",
+        "discount": "-67%",
+        "old_price": 10.9
+      }
+    },
+    "short sleeve textured t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "textured",
+        "style": "casual",
+        "color": "black",
+        "sku": "7976/777/800",
+        "available_sizes": "S, M, L, XL",
+        "discount": "-64%",
+        "old_price": 9.9
+      }
+    },
+    "textured polo shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "polo shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "textured",
+        "style": "casual",
+        "color": "camel",
+        "sku": "8562/777/707",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-64%",
+        "old_price": 9.9
+      }
+    },
+    "printed oversize short sleeve polo shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "polo shirt",
+        "gender": "unisex",
+        "fit": "oversize",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "cream",
+        "sku": "3536/443/712",
+        "available_sizes": "S, L, XL",
+        "discount": "-67%",
+        "old_price": 10.9
+      }
+    },
+    "printed short sleeve oversize t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "oversize",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "white",
+        "sku": "2993/696/250",
+        "available_sizes": "XS, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "initial d print short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "2884/084/800",
+        "available_sizes": "S, M",
+        "discount": "-64%",
+        "old_price": 9.9
+      }
+    },
+    "short-sleeved mesh t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "mesh",
+        "pattern": "",
+        "style": "casual",
+        "color": "grey",
+        "sku": "2785/376/802",
+        "available_sizes": "XL",
+        "discount": "-67%",
+        "old_price": 10.9
+      }
+    },
+    "short sleeve seersucker t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "seersucker",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "2880/777/251",
+        "available_sizes": "M, L, XL",
+        "discount": "-64%",
+        "old_price": 9.9
+      }
+    },
+    "basic short-sleeved t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "blue",
+        "sku": "2811/152/400",
+        "available_sizes": "XL, XXL",
+        "discount": "-22%",
+        "old_price": 4.5
+      }
+    },
+    "oversize short sleeve interlock t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "oversize",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "stone",
+        "sku": "2981/478/805",
+        "available_sizes": "XL",
+        "discount": "-67%",
+        "old_price": 10.9
+      }
+    },
+    "basic short sleeve crop t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "white",
+        "sku": "2943/130/250",
+        "available_sizes": "L",
+        "discount": "-64%",
+        "old_price": 9.9
+      }
+    },
+    "textured short sleeve polo shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "polo shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "textured",
+        "style": "casual",
+        "color": "black",
+        "sku": "2778/623/800",
+        "available_sizes": "M",
+        "discount": "-54%",
+        "old_price": 12.9
+      }
+    },
+    "embroidered short sleeve roll-up t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "white",
+        "sku": "2808/093/250",
+        "available_sizes": "XS, S, L",
+        "discount": "-22%",
+        "old_price": 4.5
+      }
+    },
+    "boxy fit short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "white",
+        "sku": "2352/900/250",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-40%",
+        "old_price": 5.9
+      }
+    },
+    "oversize short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "oversize",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "light blue",
+        "sku": "2809/443/428",
+        "available_sizes": "L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "short sleeve plush t-shirt with print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "plush",
+        "pattern": "print",
+        "style": "casual",
+        "color": "cream",
+        "sku": "2933/696/712",
+        "available_sizes": "XS, S",
+        "discount": "-67%",
+        "old_price": 10.9
+      }
+    },
+    "toy story short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "dark grey",
+        "sku": "8053/538/200",
+        "available_sizes": "XS, S, M",
+        "discount": "-64%",
+        "old_price": 9.9
+      }
+    },
+    "demon slayer short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "camel",
+        "sku": "7990/455/707",
+        "available_sizes": "S",
+        "discount": "-64%",
+        "old_price": 9.9
+      }
+    },
+    "super baggy corduroy trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "corduroy",
+        "pattern": "",
+        "style": "casual",
+        "color": "dark grey",
+        "sku": "5424/046/829",
+        "available_sizes": "34, 36, 38, 40",
+        "discount": "-30%",
+        "old_price": 17.9
+      }
+    },
+    "studded flared trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "women",
+        "fit": "flared",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "dark grey",
+        "sku": "5437/710/829",
+        "available_sizes": "38, 40, 42, 44",
+        "discount": "-48%",
+        "old_price": 24.9
+      }
+    },
+    "printed barrel-leg trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "barrel-leg",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "brown",
+        "sku": "0046/179/700",
+        "available_sizes": "34, 36, 40, 44",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "super baggy jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "grey",
+        "sku": "5353/352/811",
+        "available_sizes": "32, 34",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "ripped super baggy jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "ripped",
+        "style": "casual",
+        "color": "blue",
+        "sku": "5356/352/400",
+        "available_sizes": "36",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "super baggy fringe trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "black",
+        "sku": "5430/665/800",
+        "available_sizes": "42, 44",
+        "discount": "-38%",
+        "old_price": 20.9
+      }
+    },
+    "embroidered baggy jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "embroidered",
+        "style": "casual",
+        "color": "navy",
+        "sku": "5370/156/401",
+        "available_sizes": "34, 36, 38, 40, 42",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "balloon-fit flannel trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "balloon",
+        "rise": "",
+        "material": "flannel",
+        "pattern": "",
+        "style": "casual",
+        "color": "black",
+        "sku": "5426/197/800",
+        "available_sizes": "34, 42",
+        "discount": "-38%",
+        "old_price": 20.9
+      }
+    },
+    "studded baggy jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "light blue",
+        "sku": "5358/156/428",
+        "available_sizes": "36, 38",
+        "discount": "-60%",
+        "old_price": 24.9
+      }
+    },
+    "relaxed-fit straight-leg jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "relaxed",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "light blue",
+        "sku": "5334/335/428",
+        "available_sizes": "46",
+        "discount": "-44%",
+        "old_price": 17.9
+      }
+    },
+    "mega baggy jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "dark grey",
+        "sku": "5354/352/809",
+        "available_sizes": "32",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "baggy jacquard jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "jacquard",
+        "pattern": "",
+        "style": "casual",
+        "color": "light blue",
+        "sku": "5327/074/428",
+        "available_sizes": "38",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "straight-leg jeans with laser print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "straight",
+        "rise": "",
+        "material": "",
+        "pattern": "laser print",
+        "style": "casual",
+        "color": "black",
+        "sku": "5390/335/800",
+        "available_sizes": "34",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "flared jeans with fringing": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "women",
+        "fit": "flared",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "black",
+        "sku": "5367/352/800",
+        "available_sizes": "32, 34, 36, 38",
+        "discount": "-60%",
+        "old_price": 24.9
+      }
+    },
+    "barrel trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "mid rise",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "cream",
+        "sku": "5423/388/712",
+        "available_sizes": "38, 40",
+        "discount": "-55%",
+        "old_price": 17.9
+      }
+    },
+    "flared baggy jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "flared",
+        "color": "blue",
+        "sku": "5362/352/400",
+        "available_sizes": "34",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "baggy printed jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "green",
+        "sku": "5337/335/500",
+        "available_sizes": "36, 38, 40, 42, 44, 46",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "loose-fit baggy jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "black",
+        "sku": "5355/534/800",
+        "available_sizes": "32, 34, 44",
+        "discount": "-44%",
+        "old_price": 17.9
+      }
+    },
+    "baggy jeans with belt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "light blue",
+        "sku": "5357/156/428",
+        "available_sizes": "34, 36",
+        "discount": "-44%",
+        "old_price": 17.9
+      }
+    },
+    "super baggy printed trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "brown",
+        "sku": "5421/710/717",
+        "available_sizes": "38, 42, 44",
+        "discount": "-55%",
+        "old_price": 17.9
+      }
+    },
+    "demon slayer skater trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "mid rise",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "5494/455/800",
+        "available_sizes": "M, L, XL",
+        "discount": "-38%",
+        "old_price": 20.9
+      }
+    },
+    "wide-leg linen blend jogger trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "women",
+        "fit": "wide leg",
+        "rise": "",
+        "material": "linen blend",
+        "pattern": "",
+        "style": "casual",
+        "color": "camel",
+        "sku": "0409/665/742",
+        "available_sizes": "XS, S, M",
+        "discount": "-46%",
+        "old_price": 14.9
+      }
+    },
+    "baggy jogger jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jogger jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "cream",
+        "sku": "5376/777/712",
+        "available_sizes": "S, M, L, XL",
+        "discount": "-44%",
+        "old_price": 17.9
+      }
+    },
+    "baggy cargo jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "cargo",
+        "color": "light blue",
+        "sku": "5329/335/426",
+        "available_sizes": "46",
+        "discount": "-44%",
+        "old_price": 17.9
+      }
+    },
+    "textured trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "textured",
+        "style": "casual",
+        "color": "black",
+        "sku": "5524/777/800",
+        "available_sizes": "S, M",
+        "discount": "-38%",
+        "old_price": 12.9
+      }
+    },
+    "balloon fit trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "balloon",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "brown",
+        "sku": "5418/054/700",
+        "available_sizes": "XS, S, M, XL",
+        "discount": "-55%",
+        "old_price": 17.9
+      }
+    },
+    "pleated baggy jogger trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "off white",
+        "sku": "0421/054/251",
+        "available_sizes": "XL",
+        "discount": "-55%",
+        "old_price": 17.9
+      }
+    },
+    "super baggy striped fabric trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "striped",
+        "style": "casual",
+        "color": "cream",
+        "sku": "5413/388/712",
+        "available_sizes": "XXL",
+        "discount": "-55%",
+        "old_price": 17.9
+      }
+    },
+    "textured wide-leg trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "women",
+        "fit": "wide leg",
+        "rise": "",
+        "material": "",
+        "pattern": "textured",
+        "style": "casual",
+        "color": "grey",
+        "sku": "0452/732/802",
+        "available_sizes": "XS, S, L, XL",
+        "discount": "-46%",
+        "old_price": 14.9
+      }
+    },
+    "jogger jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "camel",
+        "sku": "0365/388/730",
+        "available_sizes": "XS, S",
+        "discount": "-46%",
+        "old_price": 14.9
+      }
+    },
+    "wide-leg trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "wide leg",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "white",
+        "sku": "0411/388/250",
+        "available_sizes": "XL",
+        "discount": "-46%",
+        "old_price": 14.9
+      }
+    },
+    "balloon fit baggy jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "brown",
+        "sku": "5335/352/775",
+        "available_sizes": "34",
+        "discount": "-44%",
+        "old_price": 17.9
+      }
+    },
+    "ripped jogger jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "light blue",
+        "sku": "0341/534/428",
+        "available_sizes": "XS, S",
+        "discount": "-46%",
+        "old_price": 14.9
+      }
+    },
+    "loose fit jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "loose",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "light blue",
+        "sku": "0363/450/433",
+        "available_sizes": "34, 36",
+        "discount": "-46%",
+        "old_price": 14.9
+      }
+    },
+    "super skinny ripped jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "skinny",
+        "rise": "",
+        "material": "",
+        "pattern": "ripped",
+        "style": "casual",
+        "color": "black",
+        "sku": "0361/335/800",
+        "available_sizes": "44",
+        "discount": "-52%",
+        "old_price": 20.9
+      }
+    },
+    "baggy jeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "gender": "unisex",
+        "fit": "baggy",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "light blue",
+        "sku": "5330/335/433",
+        "available_sizes": "32, 34, 36, 38, 40, 42, 44, Regular, Tall",
+        "discount": "-44%",
+        "old_price": 17.9
+      }
+    },
+    "plush joggers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "joggers",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "white",
+        "sku": "5490/190/250",
+        "available_sizes": "XL",
+        "discount": "-20%",
+        "old_price": 9.9
+      }
+    },
+    "cargo jogger trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "camel",
+        "sku": "5417/388/742",
+        "available_sizes": "M, L, XL, XXL",
+        "discount": "-46%",
+        "old_price": 14.9
+      }
+    },
+    "long sleeve denim shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "denim",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "navy",
+        "sku": "6252/335/401",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "wnba oversize short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "oversize",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "white",
+        "sku": "7598/173/250",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "short-sleeve monchhichi print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7819/360/251",
+        "available_sizes": "XXS, XS, S, M",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "long sleeve t-shirt with buttons": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "navy",
+        "sku": "6969/727/422",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "fitted shirt with ties": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "fitted",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "blue",
+        "sku": "6272/692/400",
+        "available_sizes": "XS, S, L",
+        "discount": "-67%",
+        "old_price": 10.9
+      }
+    },
+    "technical halter top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "halter top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "violet",
+        "sku": "8703/143/654",
+        "available_sizes": "XXS, XS, S",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "short sleeve contrast t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "yellow",
+        "sku": "7541/152/300",
+        "available_sizes": "XS, S, XL",
+        "discount": "-57%",
+        "old_price": 5.9
+      }
+    },
+    "asymmetric top with rhinestone ring": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "8783/360/800",
+        "available_sizes": "S, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "asymmetric sateen lace camisole top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "camisole",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "sateen",
+        "pattern": "",
+        "style": "casual",
+        "color": "brown",
+        "sku": "8794/008/700",
+        "available_sizes": "M, L",
+        "discount": "-58%",
+        "old_price": 10.9
+      }
+    },
+    "sequinned halter neck top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "8878/323/800",
+        "available_sizes": "L",
+        "discount": "-65%",
+        "old_price": 12.9
+      }
+    },
+    "long sleeve t-shirt with gathering": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "pink",
+        "sku": "7601/714/676",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "tailored shirt with flared sleeves": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "khaki",
+        "sku": "6278/692/505",
+        "available_sizes": "XS, S, M",
+        "discount": "-54%",
+        "old_price": 12.9
+      }
+    },
+    "leather effect halter top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "leather effect",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "8786/710/800",
+        "available_sizes": "L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "draped top with chain straps": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "pink",
+        "sku": "8784/187/607",
+        "available_sizes": "XS, S, M",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "short sleeve stud print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7843/218/251",
+        "available_sizes": "L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "long sleeve bodysuit": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bodysuit",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "cream",
+        "sku": "8905/714/712",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "strappy top with metallic thread": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "metallic thread",
+        "pattern": "",
+        "style": "casual",
+        "color": "pink",
+        "sku": "8903/326/906",
+        "available_sizes": "XS, S, L",
+        "discount": "-57%",
+        "old_price": 5.9
+      }
+    },
+    "rilakkuma print short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7837/256/251",
+        "available_sizes": "XXS, XS, S, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "bandeau top with gathered detail": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "maroon",
+        "sku": "8781/080/122",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "long sleeve blonde lace t-shirt with knot": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "lace",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "navy",
+        "sku": "7654/360/401",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-58%",
+        "old_price": 10.9
+      }
+    },
+    "corpse bride print short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "navy",
+        "sku": "7848/777/401",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "top with zip": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "dark grey",
+        "sku": "8814/008/829",
+        "available_sizes": "S, L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "shimmery draped halter neck top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "8705/662/800",
+        "available_sizes": "S, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "floral satin top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "satin",
+        "pattern": "floral",
+        "style": "casual",
+        "color": "black",
+        "sku": "8771/710/800",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-65%",
+        "old_price": 12.9
+      }
+    },
+    "long sleeve asymmetric tulle t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "tulle",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "navy",
+        "sku": "7651/173/401",
+        "available_sizes": "XS",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "lady gaga print short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "black",
+        "sku": "7621/160/800",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "short sleeve rhinestone t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "cream",
+        "sku": "7619/187/712",
+        "available_sizes": "S, M, L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "loose-fitting top with eyelets": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "loose",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "black",
+        "sku": "8790/360/040",
+        "available_sizes": "S, M, L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "draped tulle strappy top with rhinestone print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "tulle",
+        "pattern": "rhinestone print",
+        "style": "casual",
+        "color": "multicolored",
+        "sku": "8792/187/100",
+        "available_sizes": "XS, S, M",
+        "discount": "-58%",
+        "old_price": 10.9
+      }
+    },
+    "long sleeve halter neck t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "grey",
+        "sku": "7833/360/812",
+        "available_sizes": "XS, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "shimmery textured bardot top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "textured",
+        "style": "casual",
+        "color": "brown",
+        "sku": "8785/710/700",
+        "available_sizes": "S, M",
+        "discount": "-58%",
+        "old_price": 10.9
+      }
+    },
+    "short-sleeve madagascar t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7831/071/251",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "short sleeve shirt with zip": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "grey",
+        "sku": "6267/710/802",
+        "available_sizes": "XS, M, L",
+        "discount": "-67%",
+        "old_price": 10.9
+      }
+    },
+    "blonde lace cardigan": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "cardigan",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "lace",
+        "style": "casual",
+        "color": "cream",
+        "sku": "6978/714/712",
+        "available_sizes": "S",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "ribbed halter top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "ribbed",
+        "style": "casual",
+        "color": "grey",
+        "sku": "8751/693/802",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "bengaline waistcoat": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "waistcoat",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "grey",
+        "sku": "8572/707/810",
+        "available_sizes": "S, M, L",
+        "discount": "-54%",
+        "old_price": 12.9
+      }
+    },
+    "backstreet boys print short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7649/210/251",
+        "available_sizes": "XS",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "long sleeve t-shirt with scarf detail": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "7656/326/800",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "short sleeve t-shirt with studs": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7816/187/251",
+        "available_sizes": "XS, L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "short sleeve crew neck t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "yellow",
+        "sku": "2666/152/300",
+        "available_sizes": "10-12 years, XS, S, M, L, XL",
+        "discount": "-28%",
+        "old_price": 3.5
+      }
+    },
+    "mofusand print long sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "light blue",
+        "sku": "7825/167/106",
+        "available_sizes": "XS, S, L",
+        "discount": "-58%",
+        "old_price": 10.9
+      }
+    },
+    "the devil wears prada print short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7630/167/251",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "asymmetric sleeveless t-shirt with studs": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "7607/360/800",
+        "available_sizes": "XS, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "sleeveless t-shirt with studs": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "dark grey",
+        "sku": "7544/071/200",
+        "available_sizes": "L",
+        "discount": "-57%",
+        "old_price": 5.9
+      }
+    },
+    "sleeveless asymmetric mesh t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "mesh",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7618/326/251",
+        "available_sizes": "XS",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "tailored waistcoat": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "waistcoat",
+        "gender": "unisex",
+        "fit": "tailored",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "maroon",
+        "sku": "8573/168/122",
+        "available_sizes": "M",
+        "discount": "-60%",
+        "old_price": 14.9
+      }
+    },
+    "mofusand print short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7821/167/251",
+        "available_sizes": "XXS, XS, S, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "short sleeve t-shirt with eyelets": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "dark grey",
+        "sku": "7623/173/200",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "lace-up satin shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "satin",
+        "pattern": "",
+        "style": "casual",
+        "color": "cream",
+        "sku": "6275/692/712",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-67%",
+        "old_price": 10.9
+      }
+    },
+    "quick-dry & breathable short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "quick-dry & breathable",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "orange",
+        "sku": "7586/143/759",
+        "available_sizes": "XS, S, M",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "quick-dry & breathable strappy top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "quick-dry & breathable",
+        "pattern": "",
+        "style": "casual",
+        "color": "black",
+        "sku": "8695/143/800",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "printed short sleeve tulle t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "tulle",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "pink",
+        "sku": "7617/360/902",
+        "available_sizes": "S, M, L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "bengaline halter top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "beige",
+        "sku": "8808/707/710",
+        "available_sizes": "M",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "short sleeve polyamide t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "polyamide",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "7625/256/800",
+        "available_sizes": "XS, S, M",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "short sleeve printed t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "grey",
+        "sku": "7736/360/810",
+        "available_sizes": "XS, S, L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "long sleeve check tulle t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "tulle",
+        "pattern": "check",
+        "style": "casual",
+        "color": "black",
+        "sku": "7647/326/800",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "bandeau top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bandeau top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "8816/707/800",
+        "available_sizes": "XS",
+        "discount": "-58%",
+        "old_price": 10.9
+      }
+    },
+    "draped top with studs": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "green",
+        "sku": "8777/360/515",
+        "available_sizes": "XS",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "short sleeve t-shirt with studded print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7823/360/251",
+        "available_sizes": "XS, S, L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "shin chan print short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "black",
+        "sku": "7611/071/800",
+        "available_sizes": "XS, S, M",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "shin chan oversize short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "oversize",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "off white",
+        "sku": "7612/071/251",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "faux suede top with studs": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "faux suede",
+        "pattern": "",
+        "style": "",
+        "color": "brown",
+        "sku": "8770/710/717",
+        "available_sizes": "L",
+        "discount": "-58%",
+        "old_price": 10.9
+      }
+    },
+    "printed strappy top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "off white",
+        "sku": "8887/443/251",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-57%",
+        "old_price": 5.9
+      }
+    },
+    "strappy jacquard top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "jacquard",
+        "style": "casual",
+        "color": "white",
+        "sku": "8773/028/250",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-58%",
+        "old_price": 10.9
+      }
+    },
+    "printed tulle ruffled top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "tulle",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "multicolored",
+        "sku": "8780/360/100",
+        "available_sizes": "M, L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "tinytan print short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7815/167/251",
+        "available_sizes": "XXS, XS, S, M, L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "short-sleeve black pink t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "7637/705/800",
+        "available_sizes": "L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "wnba short sleeve t-shirt with digital filter": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7590/167/251",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "wnba sleeveless asymmetric t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "grey",
+        "sku": "7605/360/812",
+        "available_sizes": "XS",
+        "discount": "-58%",
+        "old_price": 10.9
+      }
+    },
+    "wnba strappy bodysuit": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bodysuit",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "",
+        "color": "black",
+        "sku": "8915/173/800",
+        "available_sizes": "L",
+        "discount": "-58%",
+        "old_price": 10.9
+      }
+    },
+    "sleeveless ribbed t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "ribbed",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "brown",
+        "sku": "2338/152/700",
+        "available_sizes": "XS",
+        "discount": "-28%",
+        "old_price": 3.5
+      }
+    },
+    "long sleeve asymmetric t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "violet",
+        "sku": "7545/360/611",
+        "available_sizes": "S",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "ribbed vest with tie detail": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "vest",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "ribbed",
+        "style": "casual",
+        "color": "black",
+        "sku": "8586/663/800",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-45%",
+        "old_price": 10.9
+      }
+    },
+    "sleeveless top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "navy",
+        "sku": "7594/093/462",
+        "available_sizes": "S",
+        "discount": "-57%",
+        "old_price": 5.9
+      }
+    },
+    "bengaline top with zip": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "black",
+        "sku": "8775/692/800",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-65%",
+        "old_price": 12.9
+      }
+    },
+    "strappy sabrina carpenter top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "black",
+        "sku": "8696/705/800",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "long sleeve tulle print t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "tulle",
+        "pattern": "print",
+        "style": "casual",
+        "color": "black",
+        "sku": "7639/256/800",
+        "available_sizes": "S, M, L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "long-sleeve tulle t-shirt with rhinestones": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "tulle",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "7632/714/800",
+        "available_sizes": "XS, M",
+        "discount": "-58%",
+        "old_price": 10.9
+      }
+    },
+    "rustic gathered shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "green",
+        "sku": "6258/494/500",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-67%",
+        "old_price": 10.9
+      }
+    },
+    "embroidered strappy crop top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "crop top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "embroidered",
+        "style": "casual",
+        "color": "maroon",
+        "sku": "8774/404/122",
+        "available_sizes": "L",
+        "discount": "-69%",
+        "old_price": 14.9
+      }
+    },
+    "halter waistcoat with linen": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "waistcoat",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "linen",
+        "pattern": "",
+        "style": "",
+        "color": "off white",
+        "sku": "8600/692/251",
+        "available_sizes": "S, L",
+        "discount": "-45%",
+        "old_price": 10.9
+      }
+    },
+    "printed pointelle strappy top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "cream",
+        "sku": "8900/326/712",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "short sleeve t-shirt with contrast print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "2705/443/251",
+        "available_sizes": "XS, S, M",
+        "discount": "-57%",
+        "old_price": 5.9
+      }
+    },
+    "gathered halter top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "cream",
+        "sku": "3665/173/712",
+        "available_sizes": "XS",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "strappy lace top with tie": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "black",
+        "sku": "3758/105/800",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "rustic strappy bandeau top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bandeau top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "green",
+        "sku": "8693/218/500",
+        "available_sizes": "S",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "oversize shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "oversize",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "white",
+        "sku": "6274/777/250",
+        "available_sizes": "XS, S",
+        "discount": "-67%",
+        "old_price": 10.9
+      }
+    },
+    "printed long sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "printed",
+        "style": "casual",
+        "color": "dark grey",
+        "sku": "7547/443/809",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "long-sleeve t-shirt with asymmetric neckline": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7603/727/251",
+        "available_sizes": "L",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "strappy sequin top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "sequin",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "8782/710/800",
+        "available_sizes": "L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "top with square neckline and hook-and-eyes fastening": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "black",
+        "sku": "8704/360/800",
+        "available_sizes": "S, M, L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "long-sleeved mesh body": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "body",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "mesh",
+        "pattern": "",
+        "style": "",
+        "color": "violet",
+        "sku": "8916/714/610",
+        "available_sizes": "S",
+        "discount": "-55%",
+        "old_price": 7.9
+      }
+    },
+    "lilo & stitch short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "7569/033/251",
+        "available_sizes": "S, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "long sleeve blonde lace top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "lace",
+        "pattern": "",
+        "style": "casual",
+        "color": "burgundy",
+        "sku": "7542/662/606",
+        "available_sizes": "XS, S, M",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "rustic bandeau top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bandeau top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "white",
+        "sku": "8803/494/250",
+        "available_sizes": "S, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "textured blouse with print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "blouse",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "multicolored",
+        "sku": "6264/207/100",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-58%",
+        "old_price": 10.9
+      }
+    },
+    "oversize short sleeve heavy cotton t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "oversize",
+        "rise": "",
+        "material": "heavy cotton",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "off white",
+        "sku": "2333/443/251",
+        "available_sizes": "L",
+        "discount": "-48%",
+        "old_price": 4.9
+      }
+    },
+    "rustic asymmetric strappy top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "green",
+        "sku": "8689/218/567",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "halter top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "color": "pink",
+        "sku": "8810/168/902",
+        "available_sizes": "XS, S, L",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "kewpie print short-sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "casual",
+        "color": "white",
+        "sku": "7588/167/250",
+        "available_sizes": "10-12 years, XS, S, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "blonde lace top with ruffles": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "maroon",
+        "sku": "3761/187/122",
+        "available_sizes": "XS, S, M",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "rustic tank top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "tank top",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "white",
+        "sku": "3807/741/250",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-60%",
+        "old_price": 8.9
+      }
+    },
+    "lace bandeau top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bandeau top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "",
+        "color": "off white",
+        "sku": "3682/360/251",
+        "available_sizes": "XS, S",
+        "discount": "-54%",
+        "old_price": 9.9
+      }
+    },
+    "tank bodysuit": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bodysuit",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "cream",
+        "sku": "3969/187/712",
+        "available_sizes": "XS, S, M, L, XL",
+        "discount": "-57%",
+        "old_price": 5.9
+      }
+    },
+    "strappy top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "casual",
+        "color": "black",
+        "sku": "3660/662/800",
+        "available_sizes": "XS, S, M, L",
+        "discount": "-48%",
+        "old_price": 4.9
+      }
     }
   }
 }

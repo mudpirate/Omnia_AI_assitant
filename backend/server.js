@@ -10,12 +10,126 @@ import fs from "fs/promises";
 import path from "path";
 import { getDynamicSystemPrompt } from "./dynamicPrompt.js";
 
+const ATTRIBUTE_STRATEGIES = {
+  // STRICT: High-confidence data (always use specific column)
+  // These fields are consistently populated in your database
+  brand: {
+    type: "strict",
+    fields: ["brand"],
+    operator: "ILIKE", // Partial match for brand names
+  },
+
+  category: {
+    type: "strict",
+    fields: ["category"],
+    operator: "=", // Exact match for categories
+  },
+
+  // HYBRID: Messy data (check specs OR title/description)
+  // These fields are ~67% empty in specs, need fallback to title
+  material: {
+    type: "hybrid",
+    fields: ["specs.material", "title", "description"],
+    operator: "ILIKE",
+    weight: "high", // Material is a critical filter
+  },
+
+  detail: {
+    type: "hybrid",
+    fields: ["specs.detail", "specs.pattern", "title"],
+    operator: "ILIKE",
+    weight: "high", // Details are critical (studded, ribbed, etc.)
+    stemming: true, // Enable simple stemming for details
+  },
+
+  color: {
+    type: "hybrid",
+    fields: ["specs.color", "title"],
+    operator: "ILIKE",
+    weight: "medium",
+  },
+
+  gender: {
+    type: "hybrid",
+    fields: ["specs.gender", "title"],
+    operator: "=", // Exact match preferred
+    weight: "high", // Gender is critical for fashion
+  },
+
+  style: {
+    type: "hybrid",
+    fields: ["specs.style", "specs.type", "title"],
+    operator: "ILIKE",
+    weight: "medium",
+  },
+
+  pattern: {
+    type: "hybrid",
+    fields: ["specs.pattern", "specs.detail", "title"],
+    operator: "ILIKE",
+    weight: "low",
+  },
+
+  // FLEXIBLE: Can be in specs or title
+  size: {
+    type: "hybrid",
+    fields: ["specs.size", "title"],
+    operator: "ILIKE",
+    weight: "medium",
+  },
+
+  type: {
+    type: "hybrid",
+    fields: ["specs.type", "specs.style", "title"],
+    operator: "ILIKE",
+    weight: "medium",
+  },
+};
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * CRITICAL FIXES APPLIED (Based on Test 11 Feedback)
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * FIX #1: MODAL_CLIP_URL Validation
+ * - Added explicit check for undefined MODAL_CLIP_URL before fetch
+ * - Prevents "Failed to parse URL from undefined" error
+ * - Location: getClipImageEmbedding() function
+ *
+ * FIX #2: Material Filter Support
+ * - Added 'material' parameter to tool schema and filter builder
+ * - Enables filtering by fabric types: sateen, flannel, leather, denim, etc.
+ * - Uses ILIKE for partial matches (e.g., "sateen blend")
+ * - Location: buildPushDownFilters() function
+ *
+ * FIX #3: Detail Filter Support with Stemming
+ * - Added 'detail' parameter to tool schema and filter builder
+ * - Enables filtering by design details: studded, ribbed, cropped, etc.
+ * - Implements simple stemming ("studded" -> "stud" to match "studs")
+ * - Searches in both title and specs fields
+ * - Location: buildPushDownFilters() function
+ *
+ * FIX #4: Improved Fashion RRF Ranking
+ * - Changed from 60/40 (text/vector) to 50/50 balance
+ * - Prevents generic text matches from burying specific vector matches
+ * - Example: "studded t-shirt" vector match no longer buried by "black t-shirt" text match
+ * - Location: reciprocalRankFusionFashion() function
+ *
+ * FIX #5: Enhanced Fashion Prompt Logic
+ * - Updated FASHION_LOGIC to explicitly extract material and detail
+ * - Added examples for: sateen, flannel, studded, ribbed, lace, etc.
+ * - Marked material/detail as MANDATORY filters when mentioned
+ * - Location: dynamicprompt.js FASHION_LOGIC section
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ */
+
 // 🎨 DeepFashion Integration
 const DEEPFASHION_API_URL = process.env.DEEPFASHION_API_URL;
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const LLM_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
+const LLM_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const VISION_MODEL = "gpt-4o-mini";
 const MODAL_CLIP_URL = process.env.MODAL_CLIP_URL;
 const MODAL_CLIP_BATCH_URL = process.env.MODAL_CLIP_BATCH_URL;
@@ -302,6 +416,16 @@ const TOOLS = [
             description:
               "For clothes (e.g., 'jeans', 'dress', 'skirt', 'shirt', 'jacket'). IMPORTANT: Use consistent format - 't-shirt' NOT 't shirt', 'boxer shorts' NOT 'boxers', 'sports bra' NOT 'sport bra'.",
           },
+          material: {
+            type: "string",
+            description:
+              "Material/fabric type for fashion items (e.g., 'sateen', 'flannel', 'leather', 'denim', 'cotton', 'silk'). Extract ONLY if user explicitly mentions material.",
+          },
+          detail: {
+            type: "string",
+            description:
+              "Distinctive design details for fashion items (e.g., 'studded', 'ribbed', 'cropped', 'ripped', 'embroidered', 'lace'). Extract ONLY if user explicitly mentions detail.",
+          },
           gender: {
             type: "string",
             description: "For clothes (e.g., 'Men', 'Women', 'Unisex').",
@@ -395,6 +519,15 @@ async function getQueryEmbedding(text) {
 
 async function getClipImageEmbedding(imageBase64) {
   console.log("\n🖼️ [CLIP] Encoding image with Modal CLIP service");
+
+  // 🔥 FIX #1: Validate MODAL_CLIP_URL is configured
+  if (!MODAL_CLIP_URL) {
+    const error = new Error(
+      "MODAL_CLIP_URL is not configured. Please add MODAL_CLIP_URL to your .env file."
+    );
+    console.error("   ❌ Configuration error:", error.message);
+    throw error;
+  }
 
   try {
     const response = await fetch(MODAL_CLIP_URL, {
@@ -664,13 +797,18 @@ async function enhancedVisualSearchWithAttributes(
   const vectorLiteral =
     "[" + imageEmbedding.map((x) => x.toFixed(6)).join(",") + "]";
 
-  // Build WHERE clause with attribute filters
+  // ═══════════════════════════════════════════════════════════════════════
+  // BUILD WHERE CLAUSE - RELAXED FILTERING (Test 12 Fix)
+  // ═══════════════════════════════════════════════════════════════════════
+
   let whereConditions = [
     `"stock" = 'IN_STOCK'`,
     `"imageEmbedding" IS NOT NULL`,
   ];
 
-  // Apply category filter from attributes
+  // -------------------------------------------------------------------------
+  // 1. CATEGORY FILTER: SAFE - Always apply
+  // -------------------------------------------------------------------------
   if (fashionAttributes.category) {
     const categoryMap = {
       dress: "CLOTHING",
@@ -691,6 +829,8 @@ async function enhancedVisualSearchWithAttributes(
       boots: "FOOTWEAR",
       sandals: "FOOTWEAR",
       heels: "FOOTWEAR",
+      bag: "ACCESSORIES",
+      backpack: "ACCESSORIES",
     };
     const dbCategory =
       categoryMap[fashionAttributes.category.toLowerCase()] || "CLOTHING";
@@ -700,36 +840,79 @@ async function enhancedVisualSearchWithAttributes(
     );
   }
 
-  // Apply gender filter (critical for fashion)
+  // -------------------------------------------------------------------------
+  // 2. GENDER FILTER: PERMISSIVE - Ignore "Unisex" (🔥 TEST 12 FIX)
+  // -------------------------------------------------------------------------
   if (fashionAttributes.gender) {
     const genderLower = fashionAttributes.gender.toLowerCase();
-    whereConditions.push(`LOWER("specs"->>'gender') = '${genderLower}'`);
-    console.log(`   👤 Gender filter: ${genderLower}`);
+
+    // 🔥 FIX: Skip "unisex" - it doesn't exist in your database
+    if (genderLower !== "unisex") {
+      // Only filter if gender is strictly 'men' or 'women'
+      if (
+        genderLower === "men" ||
+        genderLower === "women" ||
+        genderLower === "male" ||
+        genderLower === "female"
+      ) {
+        // Map 'male' → 'men', 'female' → 'women'
+        const mappedGender =
+          genderLower === "male"
+            ? "men"
+            : genderLower === "female"
+            ? "women"
+            : genderLower;
+
+        whereConditions.push(`LOWER("specs"->>'gender') = '${mappedGender}'`);
+        console.log(`   👤 Gender filter: ${mappedGender}`);
+      } else {
+        console.log(
+          `   👤 Gender: Skipping "${genderLower}" (ambiguous value)`
+        );
+      }
+    } else {
+      console.log(`   👤 Gender: Skipping "unisex" (not in database)`);
+    }
   }
 
-  // Apply color filter
+  // -------------------------------------------------------------------------
+  // 3. COLOR FILTER: SAFE - Apply if detected
+  // -------------------------------------------------------------------------
   if (fashionAttributes.color) {
     const colorLower = fashionAttributes.color.toLowerCase();
     whereConditions.push(`LOWER("specs"->>'color') ILIKE '%${colorLower}%'`);
     console.log(`   🎨 Color filter: ${colorLower}`);
   }
 
-  // Apply additional attribute filters
-  if (fashionAttributes.sleeveLength) {
-    const sleeveLower = fashionAttributes.sleeveLength.toLowerCase();
-    whereConditions.push(
-      `LOWER("specs"->>'sleeveLength') ILIKE '%${sleeveLower}%'`
-    );
-    console.log(`   👕 Sleeve filter: ${sleeveLower}`);
-  }
+  // -------------------------------------------------------------------------
+  // 🛑 REMOVED FILTERS (Test 12 Fix):
+  // -------------------------------------------------------------------------
+  // We DO NOT filter by:
+  // - sleeveLength (too specific, often empty in specs)
+  // - neckline (too specific, often empty in specs)
+  // - pattern (too specific, let CLIP handle visual matching)
+  // - length (too specific, often empty in specs)
+  //
+  // WHY? These attributes are:
+  // 1. Often missing from product specs (67% empty)
+  // 2. Too specific for initial filtering
+  // 3. Better handled by CLIP visual similarity
+  // 4. Can still influence re-ranking (see below)
+  //
+  // Visual search philosophy: Cast a wide net with safe filters,
+  // then let image embeddings find visually similar items.
+  // -------------------------------------------------------------------------
 
-  // Apply user-provided filters
+  // -------------------------------------------------------------------------
+  // 4. USER-PROVIDED FILTERS: Brand and Price
+  // -------------------------------------------------------------------------
   if (filters.brand) {
     whereConditions.push(
       `LOWER("brand") ILIKE '%${filters.brand.toLowerCase()}%'`
     );
     console.log("   🏷️ Brand filter:", filters.brand);
   }
+
   if (filters.maxPrice) {
     whereConditions.push(`"price" <= ${parseFloat(filters.maxPrice)}`);
     console.log("   💰 Max price filter:", filters.maxPrice);
@@ -737,7 +920,11 @@ async function enhancedVisualSearchWithAttributes(
 
   const whereClause = whereConditions.join(" AND ");
 
-  // Get more results initially for re-ranking
+  // ═══════════════════════════════════════════════════════════════════════
+  // EXECUTE VISUAL SEARCH QUERY
+  // ═══════════════════════════════════════════════════════════════════════
+
+  // Get 3x results for re-ranking
   const query = `
     SELECT
       "title", "price", "storeName", "productUrl", "category",
@@ -754,25 +941,45 @@ async function enhancedVisualSearchWithAttributes(
     console.log("   ✅ Initial visual search completed");
     console.log("   📊 Results found:", results.length);
 
-    // Re-rank results based on attribute matching
+    // ═══════════════════════════════════════════════════════════════════
+    // RE-RANKING: Combine CLIP similarity + DeepFashion attributes
+    // ═══════════════════════════════════════════════════════════════════
+
     if (results.length > 0 && fashionAttributes.category) {
       console.log("\n   🎯 Re-ranking by attribute match scores...");
 
       const reranked = results.map((product) => {
-        // Calculate attribute match score
         let attributeScore = 0;
         let totalWeight = 0;
 
-        // Gender match (weight: 3)
+        // Gender match (weight: 3) - High importance
         if (fashionAttributes.gender && product.specs?.gender) {
+          // Normalize gender for comparison
+          const productGender = product.specs.gender.toLowerCase();
+          const searchGender = fashionAttributes.gender.toLowerCase();
+
+          // Handle gender variants
+          const normalizedProductGender =
+            productGender === "male" || productGender === "boys"
+              ? "men"
+              : productGender === "female" || productGender === "girls"
+              ? "women"
+              : productGender;
+
+          const normalizedSearchGender =
+            searchGender === "male" || searchGender === "boys"
+              ? "men"
+              : searchGender === "female" || searchGender === "girls"
+              ? "women"
+              : searchGender;
+
           const genderMatch =
-            product.specs.gender.toLowerCase() ===
-            fashionAttributes.gender.toLowerCase();
+            normalizedProductGender === normalizedSearchGender;
           if (genderMatch) attributeScore += 3;
           totalWeight += 3;
         }
 
-        // Color match (weight: 3)
+        // Color match (weight: 3) - High importance
         if (fashionAttributes.color && product.specs?.color) {
           const colorMatch = product.specs.color
             .toLowerCase()
@@ -781,7 +988,7 @@ async function enhancedVisualSearchWithAttributes(
           totalWeight += 3;
         }
 
-        // Style match (weight: 2)
+        // Style/Category match (weight: 2) - Medium importance
         if (fashionAttributes.category && product.specs?.type) {
           const styleMatch = product.specs.type
             .toLowerCase()
@@ -790,7 +997,8 @@ async function enhancedVisualSearchWithAttributes(
           totalWeight += 2;
         }
 
-        // Sleeve match (weight: 1.5)
+        // Sleeve match (weight: 1.5) - Lower importance
+        // Only used for re-ranking, NOT filtering
         if (fashionAttributes.sleeveLength && product.specs?.sleeveLength) {
           const sleeveMatch =
             product.specs.sleeveLength.toLowerCase() ===
@@ -799,7 +1007,8 @@ async function enhancedVisualSearchWithAttributes(
           totalWeight += 1.5;
         }
 
-        // Pattern match (weight: 1)
+        // Pattern match (weight: 1) - Lowest importance
+        // Only used for re-ranking, NOT filtering
         if (fashionAttributes.pattern && product.specs?.pattern) {
           const patternMatch =
             product.specs.pattern.toLowerCase() ===
@@ -808,11 +1017,27 @@ async function enhancedVisualSearchWithAttributes(
           totalWeight += 1;
         }
 
-        // Calculate normalized attribute score
+        // Neckline match (weight: 1) - Lowest importance
+        // Only used for re-ranking, NOT filtering
+        if (fashionAttributes.neckline && product.specs?.neckline) {
+          const necklineMatch =
+            product.specs.neckline.toLowerCase() ===
+            fashionAttributes.neckline.toLowerCase();
+          if (necklineMatch) attributeScore += 1;
+          totalWeight += 1;
+        }
+
+        // Calculate normalized attribute score (0-1)
         const normalizedAttrScore =
           totalWeight > 0 ? attributeScore / totalWeight : 0;
 
-        // Combine visual similarity (70%) + attribute matching (30%)
+        // ═══════════════════════════════════════════════════════════════
+        // COMBINED SCORE: Visual (70%) + Attributes (30%)
+        // ═══════════════════════════════════════════════════════════════
+        // Visual similarity is more important than attribute matching
+        // because CLIP embeddings capture visual features better than
+        // sparse metadata attributes
+
         const visualSimilarity = parseFloat(product.similarity);
         const combinedScore =
           visualSimilarity * 0.7 + normalizedAttrScore * 0.3;
@@ -824,7 +1049,7 @@ async function enhancedVisualSearchWithAttributes(
         };
       });
 
-      // Sort by combined score
+      // Sort by combined score (descending)
       reranked.sort((a, b) => b.combinedScore - a.combinedScore);
 
       console.log("   📊 Top 3 re-ranked results:");
@@ -842,6 +1067,7 @@ async function enhancedVisualSearchWithAttributes(
       return reranked.slice(0, limit);
     }
 
+    // If no re-ranking needed, return top results
     return results.slice(0, limit);
   } catch (error) {
     console.error("   ❌ Enhanced visual search error:", error.message);
@@ -1042,20 +1268,40 @@ function buildModelNumberFilter(modelNumber) {
   return `(${conditions.join(" AND ")})`;
 }
 
+function stemFashionDetail(detail) {
+  if (!detail || typeof detail !== "string") return detail;
+
+  const lower = detail.toLowerCase().trim();
+
+  // Common fashion detail patterns
+  // "studded" → "stud" (matches "studs", "studded")
+  // "ribbed" → "rib" (matches "ribbed", "rib")
+  // "cropped" → "crop" (matches "cropped", "crop")
+  const stemmed = lower
+    .replace(/ded$/, "") // studded → stud
+    .replace(/ed$/, "") // ribbed → ribb, cropped → cropp
+    .replace(/ing$/, ""); // ripping → ripp
+
+  return stemmed;
+}
+
 async function buildPushDownFilters(filters = {}, rawQuery = "") {
-  console.log("\n🔍 [FILTER BUILDER] Building WHERE clause (Scalable Mode)");
+  console.log("\n🔍 [FILTER BUILDER] Building WHERE clause (Hybrid Strategy)");
   console.log("   📥 Input filters:", JSON.stringify(filters, null, 2));
 
   const conditions = [];
 
+  // Always filter by stock
   conditions.push(`"stock" = 'IN_STOCK'`);
   console.log("   📦 Stock filter: ENABLED");
 
   for (const key of Object.keys(filters)) {
     const value = filters[key];
 
+    // Skip null/undefined/empty values
     if (!value || value === null || value === undefined) continue;
 
+    // Handle price filters
     if (key === "minPrice" || key === "min_price") {
       const priceValue = parseFloat(value);
       if (priceValue > 0) {
@@ -1063,54 +1309,103 @@ async function buildPushDownFilters(filters = {}, rawQuery = "") {
         conditions.push(condition);
         console.log(`   💰 Min price: ${condition}`);
       }
-    } else if (key === "maxPrice" || key === "max_price") {
+      continue;
+    }
+
+    if (key === "maxPrice" || key === "max_price") {
       const priceValue = parseFloat(value);
       if (priceValue > 0 && priceValue < Infinity) {
         const condition = `"price" <= ${priceValue}`;
         conditions.push(condition);
         console.log(`   💰 Max price: ${condition}`);
       }
-    } else if (key === "category") {
-      const condition = `"category" = '${value.toUpperCase()}'`;
-      conditions.push(condition);
-      console.log(`   📂 Category: ${condition}`);
-    } else if (key === "brand") {
-      const brandLower = value.toLowerCase().replace(/'/g, "''");
-      const condition = `LOWER("brand") ILIKE '%${brandLower}%'`;
-      conditions.push(condition);
-      console.log(`   🏷️  Brand: ${condition}`);
-    } else if (key === "storeName" || key === "store_name") {
+      continue;
+    }
+
+    // Handle store name
+    if (key === "storeName" || key === "store_name") {
       const condition = `"storeName" = '${value.toUpperCase()}'`;
       conditions.push(condition);
       console.log(`   🏪 Store: ${condition}`);
-    } else if (key === "modelNumber" || key === "model_number") {
-      // 🔥 FIX: Use word-based matching for model numbers
+      continue;
+    }
+
+    // Handle model number with word-based matching
+    if (key === "modelNumber" || key === "model_number") {
       const modelFilter = buildModelNumberFilter(value);
       if (modelFilter) {
         conditions.push(modelFilter);
         console.log(`   🔢 Model (word-based): ${modelFilter}`);
       }
-    } else if (key !== "query" && key !== "sort") {
-      // All other keys are specs (ignore 'sort' here)
-      let specValue = value.toString().toLowerCase().replace(/'/g, "''");
+      continue;
+    }
 
-      if (key === "gender") {
-        const condition = `LOWER("specs"->>'gender') = '${specValue}'`;
+    // Skip query and sort (not filters)
+    if (key === "query" || key === "sort") continue;
+
+    // ═══════════════════════════════════════════════════════════════════
+    // 🔥 NEW: Configuration-Driven Hybrid Filtering
+    // ═══════════════════════════════════════════════════════════════════
+
+    const strategy = ATTRIBUTE_STRATEGIES[key];
+
+    if (strategy) {
+      const cleanValue = value.toString().toLowerCase().replace(/'/g, "''");
+
+      if (strategy.type === "strict") {
+        // STRICT: Use only the specified column
+        const field = strategy.fields[0];
+        const operator = strategy.operator || "=";
+
+        let condition;
+        if (operator === "ILIKE") {
+          condition = `LOWER("${field}") ILIKE '%${cleanValue}%'`;
+        } else {
+          condition = `LOWER("${field}") = '${cleanValue}'`;
+        }
+
         conditions.push(condition);
-        console.log(`   👤 EXACT gender: ${condition}`);
-      } else if (key === "type" || key === "style") {
-        const condition = `LOWER("specs"->>'type') ILIKE '%${specValue}%'`;
+        console.log(`   🎯 STRICT [${key}]: ${condition}`);
+      } else if (strategy.type === "hybrid") {
+        // HYBRID: Check multiple fields with OR logic
+
+        // Apply stemming if enabled (for details like "studded" → "stud")
+        const searchValue = strategy.stemming
+          ? stemFashionDetail(cleanValue)
+          : cleanValue;
+
+        const orConditions = strategy.fields.map((field) => {
+          // Handle nested JSON fields (specs.material)
+          if (field.includes(".")) {
+            const [col, keyName] = field.split(".");
+            if (strategy.operator === "=") {
+              return `LOWER("${col}"->>'${keyName}') = '${searchValue}'`;
+            } else {
+              return `LOWER("${col}"->>'${keyName}') ILIKE '%${searchValue}%'`;
+            }
+          } else {
+            // Handle regular columns (title, description)
+            return `LOWER("${field}") ILIKE '%${searchValue}%'`;
+          }
+        });
+
+        const condition = `(${orConditions.join(" OR ")})`;
         conditions.push(condition);
-        console.log(`   👕 FLEXIBLE type [${key}]: ${condition}`);
-      } else if (EXACT_MATCH_SPECS.includes(key)) {
-        const condition = `LOWER("specs"->>'${key}') = '${specValue}'`;
-        conditions.push(condition);
-        console.log(`   🎯 EXACT spec [${key}]: ${condition}`);
-      } else {
-        const condition = `LOWER("specs"->>'${key}') ILIKE '%${specValue}%'`;
-        conditions.push(condition);
-        console.log(`   🔄 FLEXIBLE spec [${key}]: ${condition}`);
+
+        if (strategy.stemming) {
+          console.log(
+            `   🔄 HYBRID [${key}] (stemmed "${cleanValue}" → "${searchValue}"): ${condition}`
+          );
+        } else {
+          console.log(`   🔄 HYBRID [${key}]: ${condition}`);
+        }
       }
+    } else {
+      // Fallback for unknown attributes (specs)
+      const specValue = value.toString().toLowerCase().replace(/'/g, "''");
+      const condition = `LOWER("specs"->>'${key}') ILIKE '%${specValue}%'`;
+      conditions.push(condition);
+      console.log(`   📝 SPEC [${key}]: ${condition}`);
     }
   }
 
@@ -1530,20 +1825,41 @@ function reciprocalRankFusionFashion(vectorResults, fulltextResults, k = 60) {
   console.log("   📊 Fulltext matches:", fulltextMatches.length);
   console.log("   📊 Vector-only matches:", vectorOnlyMatches.length);
 
+  // 🔥 FIX #4: Improved fashion ranking logic
+  // Problem: When fulltext finds partial matches (e.g., "black t-shirt" but not "studded"),
+  // it was overpowering vector results that found the correct match.
+  // Solution: Give vector search more weight to prevent burying specific matches
+
   let finalResults;
 
-  if (fulltextMatches.length > 0) {
+  if (fulltextMatches.length > 0 && vectorOnlyMatches.length > 0) {
+    // Both fulltext and vector found results
+    // Use 50/50 balance to give vector matches fair representation
+    finalResults = [
+      ...fulltextMatches.map((item) => ({
+        finalScore: item.fulltextScore * 0.5 + item.vectorScore * 0.5,
+        ...item,
+      })),
+      ...vectorOnlyMatches.map((item) => ({
+        finalScore: item.vectorScore * 0.5, // Give vector-only items a fair chance
+        ...item,
+      })),
+    ];
+    console.log("   ✅ Fashion: Balanced scoring (50/50 vector/text)");
+  } else if (fulltextMatches.length > 0) {
+    // Only fulltext found results
     finalResults = fulltextMatches.map((item) => ({
       finalScore: item.fulltextScore * 0.6 + item.vectorScore * 0.4,
       ...item,
     }));
-    console.log("   ✅ Fashion: Balanced scoring (60/40)");
+    console.log("   ✅ Fashion: Text-preferred (60/40)");
   } else {
+    // Only vector found results
     finalResults = vectorOnlyMatches.map((item) => ({
       finalScore: item.vectorScore * 0.7,
       ...item,
     }));
-    console.log("   ✅ Fashion: Vector-dominant (70%)");
+    console.log("   ✅ Fashion: Vector-only (70%)");
   }
 
   finalResults.sort((a, b) => b.finalScore - a.finalScore);

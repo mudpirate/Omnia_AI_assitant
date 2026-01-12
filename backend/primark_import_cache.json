@@ -59,6 +59,1514 @@
         "sku": "991142150504",
         "available_sizes": "XS, S, M, L, XL, 2XL"
       }
+    },
+    "textured check long sleeved shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "textured material",
+        "pattern": "checked",
+        "style": "shirts",
+        "color": "navy",
+        "sku": "991142319528",
+        "available_sizes": "L, XL, 2XL"
+      }
+    },
+    "waffle texture shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "shirts",
+        "color": "sand",
+        "sku": "991142028602",
+        "available_sizes": "XS, S, M, L, XL, 2XL"
+      }
+    },
+    "regular fit long sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "shirts",
+        "color": "navy",
+        "sku": "991094133528",
+        "available_sizes": "S, M, L, XL, 3XL, 2XL"
+      }
+    },
+    "stretch button-up shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "slim",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "shirts",
+        "color": "navy",
+        "sku": "991060955528",
+        "available_sizes": "XS, S, M, L, XL, 2XL"
+      }
+    },
+    "long sleeve twill shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "twill",
+        "pattern": "solid",
+        "style": "casual",
+        "sku": "991142152716"
+      }
+    },
+    "striped long sleeve shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "striped",
+        "style": "shirts",
+        "color": "blue",
+        "sku": "991129382505",
+        "available_sizes": "S, L, XL, 3XL, 2XL"
+      }
+    },
+    "button-up twill overshirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "overshirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "twill",
+        "pattern": "solid colour",
+        "style": "shirts",
+        "color": "beige",
+        "sku": "991142129118",
+        "available_sizes": "M, XL, 3XL"
+      }
+    },
+    "long sleeve check oxford shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "checked",
+        "style": "shirts",
+        "color": "blue",
+        "sku": "991142164505",
+        "available_sizes": "XS, S, M, L, XL, 3XL, 2XL"
+      }
+    },
+    "long sleeve striped oxford shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "striped",
+        "style": "shirts",
+        "color": "light blue",
+        "sku": "991142168504",
+        "available_sizes": "XS, 2XL"
+      }
+    },
+    "textured regular fit shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "textured fabric",
+        "pattern": "solid colour",
+        "style": "shirts",
+        "color": "charcoal",
+        "sku": "991129454716",
+        "available_sizes": "S, M, L, XL, 3XL, 2XL"
+      }
+    },
+    "slim fit plisse trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "women",
+        "fit": "slim",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "trousers",
+        "color": "black",
+        "sku": "991152867804",
+        "available_sizes": "XS, XL"
+      }
+    },
+    "straight-leg chino trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "straight",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid colour",
+        "style": "trousers",
+        "color": "khaki",
+        "sku": "991143891416",
+        "available_sizes": "34/30 (S), 34/32 (R), 28/30 (S), 30/30 (S), 30/32 (R), 32/30 (S), 32/34 (L)"
+      }
+    },
+    "slim fit chino trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "men",
+        "fit": "slim",
+        "rise": "",
+        "material": "twill",
+        "pattern": "solid colour",
+        "style": "trousers",
+        "color": "khaki",
+        "sku": "991143908416",
+        "available_sizes": "34/32 (R), 34/34 (L), 36/32 (R), 36/34 (L), 38/32 (R), 30/32 (R), 32/30 (S)"
+      }
+    },
+    "the stronghold pleated chinos": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "chinos",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "trousers",
+        "color": "black",
+        "sku": "991143253804",
+        "available_sizes": "34/30 (S), 34/32 (R), 36/30 (S), 40/32 (R), 30/30 (S)"
+      }
+    },
+    "utility cargo trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "trousers",
+        "color": "charcoal",
+        "sku": "991143327716",
+        "available_sizes": "XS, S, M, L, XL"
+      }
+    },
+    "cuffed cargo trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "mid rise",
+        "material": "not specified",
+        "pattern": "solid colour",
+        "style": "trousers",
+        "color": "grey",
+        "sku": "991123742706",
+        "available_sizes": "S, M, L, 2XL"
+      }
+    },
+    "formal twill trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "mid rise",
+        "material": "twill",
+        "pattern": "solid colour",
+        "style": "trousers",
+        "color": "black",
+        "sku": "991007107804",
+        "available_sizes": "34/30 (S), 34/32 (R), 36/32 (R), 36/34 (L), 30/30 (S)"
+      }
+    },
+    "jersey slim fit trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "slim",
+        "rise": "",
+        "material": "twill",
+        "pattern": "solid colour",
+        "style": "trousers",
+        "color": "black",
+        "sku": "991152887804",
+        "available_sizes": "XS, S, M, L, XL"
+      }
+    },
+    "straight leg twill trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "twill",
+        "pattern": "solid colour",
+        "style": "trousers",
+        "color": "black",
+        "sku": "991007105804",
+        "available_sizes": "34/32 (R), 34/34 (L), 36/30 (S), 36/32 (R), 36/34 (L), 38/32 (R), 30/32 (R), 32/30 (S), 32/32 (R), 32/34 (L)"
+      }
+    },
+    "slim fit formal trousers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "trousers",
+        "gender": "men",
+        "fit": "slim",
+        "rise": "",
+        "material": "cotton 74%; nylon 26%",
+        "pattern": "solid colour",
+        "style": "trousers",
+        "color": "green",
+        "sku": "991152932414",
+        "available_sizes": "XS, S, M, L, XL, 2XL"
+      }
+    },
+    "square neck peplum top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "burgundy",
+        "sku": "991154804368",
+        "available_sizes": "M"
+      }
+    },
+    "ruched bardot top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991154468804",
+        "available_sizes": "S"
+      }
+    },
+    "seamless performance crop top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "crop top",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "stretchy, ribbed knit",
+        "pattern": "solid",
+        "style": "tops",
+        "color": "navy",
+        "sku": "991138317528",
+        "available_sizes": "XXS, XS, S, M, L"
+      }
+    },
+    "stranger things wsqk long sleeve top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "cropped",
+        "rise": "",
+        "material": "soft cotton",
+        "pattern": "print",
+        "style": "tops & t-shirts",
+        "color": "red",
+        "sku": "991150028352",
+        "available_sizes": "XS, S, M, L"
+      }
+    },
+    "stranger things cropped ringer t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "cropped",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "t-shirts",
+        "color": "navy",
+        "sku": "991150016528",
+        "available_sizes": "XXS, XL"
+      }
+    },
+    "scoop neck long sleeve top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "black",
+        "sku": "991153174804",
+        "available_sizes": "L"
+      }
+    },
+    "seamless built-in bra cami": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "cami",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "seamless",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "sand",
+        "sku": "991139937602",
+        "available_sizes": "XS-6/8, S-10/12, M-12/14, L-14/16, XL-18/20, 2XL-22/24"
+      }
+    },
+    "the edit ultimate tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "t-shirts",
+        "color": "teal",
+        "sku": "991152213514",
+        "available_sizes": "S"
+      }
+    },
+    "essential baby tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "kids",
+        "fit": "regular",
+        "rise": "",
+        "material": "95% cotton",
+        "pattern": "solid colour",
+        "style": "t-shirts",
+        "color": "grey marl",
+        "sku": "991145899720",
+        "available_sizes": "M"
+      }
+    },
+    "cosy long sleeve top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "fitted",
+        "rise": "",
+        "material": "comfy fabric",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "khaki",
+        "sku": "991143584416",
+        "available_sizes": "S, L"
+      }
+    },
+    "ruched front long sleeve top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "stone",
+        "sku": "991153055112",
+        "available_sizes": "M, XL"
+      }
+    },
+    "paula echevarría classic long sleeve top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "slim",
+        "rise": "",
+        "material": "soft, fine-gauge fabric",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "brown",
+        "sku": "991152511616",
+        "available_sizes": "L"
+      }
+    },
+    "paula echevarría seamless high neck bodysuit": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bodysuit",
+        "gender": "women",
+        "fit": "bodycon",
+        "rise": "high rise",
+        "material": "smooth stretch fabric",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "tan",
+        "sku": "991152282612",
+        "available_sizes": "L"
+      }
+    },
+    "paula echevarría compact long sleeve top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "fitted",
+        "rise": "",
+        "material": "compact fabric",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "brown",
+        "sku": "991153099616",
+        "available_sizes": "XS, M"
+      }
+    },
+    "the grinch t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "t-shirts",
+        "color": "bright green",
+        "sku": "991153031434",
+        "available_sizes": "L, XL"
+      }
+    },
+    "essential long sleeve tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "brown",
+        "sku": "991145115616",
+        "available_sizes": "XXS, S, M, L, XL, 2XL"
+      }
+    },
+    "long sleeve bodysuit": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bodysuit",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991145017804",
+        "available_sizes": "XS-6/8, S-10/12, XL-18/20"
+      }
+    },
+    "primark heat iq extra warm long sleeve thermal top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "thermal top",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "fleece",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "grey",
+        "sku": "991145979706",
+        "available_sizes": "S-10/12, 2XS-4/6"
+      }
+    },
+    "cap sleeve button down tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "t-shirts",
+        "color": "blue",
+        "sku": "991156373505",
+        "available_sizes": "S, L"
+      }
+    },
+    "essential long sleeve bodysuit": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bodysuit",
+        "gender": "women",
+        "fit": "slim",
+        "rise": "high rise",
+        "material": "polyamide blend",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "fig",
+        "sku": "991144500618",
+        "available_sizes": "S, M, XL"
+      }
+    },
+    "buttery soft long sleeve top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "body hugging",
+        "rise": "",
+        "material": "buttery soft fabric",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "black",
+        "sku": "991136732804",
+        "available_sizes": "XS, S, M, L"
+      }
+    },
+    "scoop neck stretch vest": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "vest",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "light pink",
+        "sku": "991141086305",
+        "available_sizes": "L"
+      }
+    },
+    "striped short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "pure cotton",
+        "pattern": "striped",
+        "style": "tops & t-shirts",
+        "color": "black/white",
+        "sku": "991123940980",
+        "available_sizes": "XS, S, M"
+      }
+    },
+    "buttery soft fitted tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "fitted",
+        "rise": "",
+        "material": "buttery soft fabric",
+        "pattern": "solid colour",
+        "style": "t-shirts",
+        "color": "black",
+        "sku": "991136733804",
+        "available_sizes": "XXS, XS, S, M, L, XL, 2XL"
+      }
+    },
+    "nba chicago bulls mesh t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "mesh",
+        "pattern": "logo",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991150550804",
+        "available_sizes": "S, M, L"
+      }
+    },
+    "the edit ribbed sweatshirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "sweatshirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "ribbed knit",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "burgundy",
+        "sku": "991148247368",
+        "available_sizes": "XS"
+      }
+    },
+    "buttery soft short sleeve tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "snug",
+        "rise": "",
+        "material": "ultra-smooth, stretchy fabric",
+        "pattern": "solid colour",
+        "style": "t-shirts",
+        "color": "chocolate",
+        "sku": "991136757622",
+        "available_sizes": "XS, S, M, L, XL"
+      }
+    },
+    "essential short sleeve v-neck t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "pure cotton",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991123535804",
+        "available_sizes": "XS, S, 2XL"
+      }
+    },
+    "printed performance crop top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "crop top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "patterned",
+        "style": "tops",
+        "color": "multi",
+        "sku": "991150207935",
+        "available_sizes": "XXS, XS, S, M, 2XL"
+      }
+    },
+    "buttery soft cut out vest": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "vest",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "chocolate",
+        "sku": "991150379622",
+        "available_sizes": "XS, M, 2XL"
+      }
+    },
+    "cropped pinstripe blouse": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "blouse",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "pinstriped",
+        "style": "tops",
+        "color": "navy",
+        "sku": "991156837528",
+        "available_sizes": "S, M"
+      }
+    },
+    "buttery soft v-neck performance tank": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "tank top",
+        "gender": "women",
+        "fit": "snug",
+        "rise": "",
+        "material": "buttery soft",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "black",
+        "sku": "991137064804",
+        "available_sizes": "XS, S, XL, 2XL"
+      }
+    },
+    "denim peplum top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "peplum top",
+        "gender": "women",
+        "fit": "fitted",
+        "rise": "",
+        "material": "denim",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "indigo",
+        "sku": "991145906526",
+        "available_sizes": "12"
+      }
+    },
+    "scoop neck ruche detail top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "style": "casual",
+        "sku": "no-sku-47"
+      }
+    },
+    "long sleeve jersey top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "slim",
+        "rise": "N/A",
+        "material": "jersey",
+        "pattern": "solid colour",
+        "style": "tops",
+        "sku": "991144874804",
+        "available_sizes": "XL"
+      }
+    },
+    "soft touch bodysuit": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bodysuit",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "soft blend of cotton",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "navy",
+        "sku": "991076971528",
+        "available_sizes": "S-10/12, M-12/14"
+      }
+    },
+    "seamless supersoft vest": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "vest",
+        "gender": "women",
+        "fit": "body-hugging",
+        "rise": "",
+        "material": "smooth, stretchy fabric",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "tan",
+        "sku": "991149735612",
+        "available_sizes": "XXS, XS, S, M, L, XL"
+      }
+    },
+    "ribbed long sleeve bodysuit": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bodysuit",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "stretch ribbed fabric",
+        "pattern": "solid",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991076967804",
+        "available_sizes": "S-10/12"
+      }
+    },
+    "longline vest": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "vest",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991093588804",
+        "available_sizes": "XS-6/8, M-12/14, L-14/16, XL-18/20, 2XL-22/24"
+      }
+    },
+    "short sleeve seamless performance top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "body-skimming",
+        "rise": "N/A",
+        "material": "N/A",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "sku": "991123492804",
+        "available_sizes": "XS, M"
+      }
+    },
+    "knitted tie side bib": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bib",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "ribbed knit",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991149212804"
+      }
+    },
+    "essential crew neck tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "relaxed",
+        "rise": "",
+        "material": "soft fabric",
+        "pattern": "solid colour",
+        "style": "t-shirts",
+        "color": "black",
+        "sku": "991151496804",
+        "available_sizes": "M"
+      }
+    },
+    "cropped ribbed crew top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "close",
+        "rise": "",
+        "material": "cotton-rich",
+        "pattern": "striped",
+        "style": "tops",
+        "color": "dark green",
+        "sku": "991144779415",
+        "available_sizes": "XS, M"
+      }
+    },
+    "cropped graphic tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "relaxed",
+        "rise": "",
+        "material": "100% cotton",
+        "pattern": "print",
+        "style": "t-shirts",
+        "color": "burgundy",
+        "sku": "991145649368",
+        "available_sizes": "XS, S, M"
+      }
+    },
+    "cinched long sleeve tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "fitted",
+        "rise": "",
+        "material": "95% cotton",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "pink",
+        "sku": "991156621306",
+        "available_sizes": "M, L"
+      }
+    },
+    "stranger things hawkins tigers tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "relaxed",
+        "rise": "",
+        "material": "100% cotton",
+        "pattern": "print",
+        "style": "t-shirts",
+        "color": "cream",
+        "sku": "991149870116",
+        "available_sizes": "S, M, L"
+      }
+    },
+    "essential boxy cotton tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "100% cotton",
+        "pattern": "print",
+        "style": "tea towels",
+        "color": "green",
+        "sku": "991145019414",
+        "available_sizes": "XS, S"
+      }
+    },
+    "thermal long sleeve base layer": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "base layer",
+        "gender": "unisex",
+        "fit": "",
+        "rise": "",
+        "material": "thermal",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "fig",
+        "sku": "991144731618",
+        "available_sizes": "L-14/16, XL-18/20, 2XS-4/6"
+      }
+    },
+    "built in bra cami top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "cami top",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "smooth black fabric",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "black",
+        "sku": "991130993804",
+        "available_sizes": "XS-6/8, S-10/12, M-12/14, L-14/16, XL-18/20, 2XL-22/24"
+      }
+    },
+    "2pk shapewear cami top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "cami top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "black/white",
+        "sku": "991107022980",
+        "available_sizes": "XS-6/8, S-10/12, L-14/16, XL-18/20"
+      }
+    },
+    "stretch long sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "close",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991108506804",
+        "available_sizes": "M, XL"
+      }
+    },
+    "shirred lace tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "polyester 98%; elastane 2%",
+        "pattern": "solid colour",
+        "style": "t-shirts",
+        "color": "black",
+        "sku": "991154166804",
+        "available_sizes": "L"
+      }
+    },
+    "cinched heavy weight tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "relaxed",
+        "rise": "",
+        "material": "heavy weight fabric",
+        "pattern": "solid colour",
+        "style": "t-shirts",
+        "color": "chocolate",
+        "sku": "991155170622",
+        "available_sizes": "L"
+      }
+    },
+    "essential longline t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "slouchy",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991091481804",
+        "available_sizes": "XS-6/8, S-10/12, M-12/14, L-14/16, 2XL-22/24"
+      }
+    },
+    "essential stretch jersey cami": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "cami",
+        "gender": "women",
+        "fit": "slim",
+        "rise": "",
+        "material": "jersey",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991108505804",
+        "available_sizes": "XXS, XS, S, L, 3XL, 2XL"
+      }
+    },
+    "performance vest top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "vest top",
+        "gender": "women",
+        "fit": "",
+        "rise": "",
+        "material": "lightweight",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "black",
+        "sku": "991136259804",
+        "available_sizes": "XXS, XS, XL, 2XL"
+      }
+    },
+    "pantera graphic t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "relaxed",
+        "rise": "",
+        "material": "",
+        "pattern": "print",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991149301804",
+        "available_sizes": "XS, S, M, L, XL, 2XL"
+      }
+    },
+    "seamless shaping bodysuit": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bodysuit",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "mid rise",
+        "material": "93% nylon; 7% elastane",
+        "pattern": "solid colour",
+        "style": "bodysuits",
+        "color": "black",
+        "sku": "991137461804",
+        "available_sizes": "XS-6/8, S-10/12, M-12/14, L-14/16"
+      }
+    },
+    "thermal roll neck top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "viscose 60%; polyester 34%; elastane 6%",
+        "pattern": "solid colour",
+        "style": "thermals",
+        "color": "black",
+        "sku": "991145008804",
+        "available_sizes": "XS-6/8, S-10/12, 2XL-22/24, 2XS-4/6"
+      }
+    },
+    "stretch scoop neck vest": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "vest",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "high rise",
+        "material": "rich in cotton",
+        "pattern": "solid",
+        "style": "tops & t-shirts",
+        "color": "grey marl",
+        "sku": "991107841720",
+        "available_sizes": "M, L, XL, 2XL"
+      }
+    },
+    "stretch crew neck t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991124194804",
+        "available_sizes": "XXS, XS, S, M, L, XL, 2XL"
+      }
+    },
+    "polyamide long sleeve crew top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "fitted",
+        "rise": "",
+        "material": "polyamide",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "taupe",
+        "sku": "991145248606",
+        "available_sizes": "XS, XL"
+      }
+    },
+    "essential short sleeve tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "viscose 56%; nylon 40%; elastane 4%",
+        "pattern": "solid colour",
+        "style": "t-shirts",
+        "color": "burgundy",
+        "sku": "991151999368",
+        "available_sizes": "S, M"
+      }
+    },
+    "second skin t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "slim",
+        "rise": "",
+        "material": "stretchy, lightweight fabric",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991131068804",
+        "available_sizes": "S, M, L"
+      }
+    },
+    "relaxed cotton tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "relaxed",
+        "rise": "",
+        "material": "100% cotton",
+        "pattern": "solid colour",
+        "style": "t-shirts",
+        "color": "brown",
+        "sku": "991145053616",
+        "available_sizes": "M"
+      }
+    },
+    "performance shaping jacket": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "gender": "women",
+        "fit": "close fit",
+        "rise": "",
+        "material": "stretch fabric",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "black",
+        "sku": "991136562804",
+        "available_sizes": "XS, S, M, L, XL"
+      }
+    },
+    "long sleeve ribbed top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "fitted",
+        "rise": "",
+        "material": "ribbed",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991144813804",
+        "available_sizes": "XS, M, L"
+      }
+    },
+    "oversized boxy t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "oversized",
+        "rise": "",
+        "material": "",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "brown",
+        "sku": "991102694616",
+        "available_sizes": "M-12/14, XL-18/20"
+      }
+    },
+    "seamless high neck bodysuit": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "bodysuit",
+        "gender": "women",
+        "fit": "form-fitting",
+        "rise": "high rise",
+        "material": "stretchy fabric",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "black",
+        "sku": "991144759804",
+        "available_sizes": "S"
+      }
+    },
+    "stripe long sleeve top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "relaxed",
+        "rise": "",
+        "material": "100% cotton",
+        "pattern": "striped",
+        "style": "tops & t-shirts",
+        "color": "black/white",
+        "sku": "991105845980",
+        "available_sizes": "M, L, XL, 2XL"
+      }
+    },
+    "long sleeve cotton crew neck": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "crew neck",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "100% cotton",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "black",
+        "sku": "991108621804",
+        "available_sizes": "S, M, L, XL"
+      }
+    },
+    "second skin crew neck tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "fitted",
+        "rise": "",
+        "material": "stretchy fabric",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "fig",
+        "sku": "991145143618",
+        "available_sizes": "XXS, XS, S, M, L, XL"
+      }
+    },
+    "knitted peplum tank top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "tank top",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "high rise",
+        "material": "fine knit",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "black",
+        "sku": "991151226804",
+        "available_sizes": "XXS, XS, S, M, L, 2XL"
+      }
+    },
+    "essential short sleeve t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "regular",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991123947804",
+        "available_sizes": "XXS, XS, S, M, L, XL, 2XL"
+      }
+    },
+    "oversized essential jersey t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "oversized",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991093088804",
+        "available_sizes": "S-10/12, M-12/14, XL-18/20"
+      }
+    },
+    "scoop neck stretch cami top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "cami top",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "soft and stretchy fabric",
+        "pattern": "solid",
+        "style": "tops & t-shirts",
+        "color": "grey marl",
+        "sku": "991107812720",
+        "available_sizes": "XS"
+      }
+    },
+    "essential stretch vest top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "vest top",
+        "gender": "women",
+        "fit": "snug",
+        "rise": "",
+        "material": "",
+        "pattern": "solid",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991107827804",
+        "available_sizes": "XXS, XS, S, M, L, XL, 2XL"
+      }
+    },
+    "boxy fit t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "unisex",
+        "fit": "boxy",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "style": "tops & t-shirts",
+        "color": "black",
+        "sku": "991091042804",
+        "available_sizes": "XS-6/8, S-10/12, M-12/14, L-14/16, XL-18/20, 2XL-22/24, 2XS-4/6"
+      }
+    },
+    "the edit ultimate slim fit tee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "gender": "women",
+        "fit": "slim",
+        "rise": "",
+        "material": "soft fabric",
+        "pattern": "solid colour",
+        "style": "t-shirts",
+        "color": "pink",
+        "sku": "991147661306",
+        "available_sizes": "S"
+      }
+    },
+    "the edit cashmere blend vest": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "vest",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "cashmere blend",
+        "pattern": "solid colour",
+        "style": "tops & t-shirts",
+        "color": "grey",
+        "sku": "991144289706",
+        "available_sizes": "XS, XL"
+      }
+    },
+    "the edit draped long sleeve top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "gender": "women",
+        "fit": "regular",
+        "rise": "",
+        "material": "modal 66%; polyester 34%",
+        "pattern": "solid colour",
+        "style": "tops",
+        "color": "chocolate",
+        "sku": "991152002622",
+        "available_sizes": "M"
+      }
     }
   }
 }

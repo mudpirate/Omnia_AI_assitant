@@ -3,21 +3,13 @@
  * LLM-POWERED DYNAMIC PROMPT SYSTEM FOR OMNIA AI
  * ═══════════════════════════════════════════════════════════════════════
  *
- * Purpose: Use GPT-4o-mini to intelligently classify queries instead of
- * hardcoded keyword arrays. This handles curveball queries and scales
- * automatically.
- *
- * Strategy:
- * 1. Fast LLM call to classify query intent
- * 2. Build appropriate prompt based on LLM analysis
- * 3. Cache results to minimize API calls
+ * TEST 12 FIXES APPLIED:
+ * - Enhanced material/detail extraction with concrete examples
+ * - More explicit instructions for fashion-specific attributes
+ * - Improved LLM guidance for mandatory filter extraction
  */
 
 import OpenAI from "openai";
-
-// ═══════════════════════════════════════════════════════════════════════
-// LLM CLASSIFIER (Smart Query Analysis)
-// ═══════════════════════════════════════════════════════════════════════
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -25,17 +17,15 @@ const openai = new OpenAI({
 
 // Cache for query classifications (reduces API calls)
 const classificationCache = new Map();
-const CACHE_SIZE = 1000; // Keep last 1000 classifications
+const CACHE_SIZE = 1000;
 
 /**
  * LLM-powered query classifier
- * Returns structured analysis of user intent
  */
 async function classifyQueryWithLLM(query) {
   console.log("\n🤖 [LLM CLASSIFIER] Analyzing query with GPT-4o-mini");
   console.log("   Query:", query);
 
-  // Check cache first
   const cacheKey = query.toLowerCase().trim();
   if (classificationCache.has(cacheKey)) {
     console.log("   💾 Cache hit - returning cached classification");
@@ -101,9 +91,7 @@ Respond with ONLY valid JSON in this exact format:
     console.log("      Reasoning:", classification.reasoning);
     console.log("      Tokens used:", response.usage?.total_tokens);
 
-    // Cache the result
     if (classificationCache.size >= CACHE_SIZE) {
-      // Remove oldest entry (simple FIFO)
       const firstKey = classificationCache.keys().next().value;
       classificationCache.delete(firstKey);
     }
@@ -112,7 +100,6 @@ Respond with ONLY valid JSON in this exact format:
     return classification;
   } catch (error) {
     console.error("   ❌ LLM classification error:", error.message);
-    // Fallback to safe default
     return {
       domain: "none",
       requestType: "general",
@@ -122,7 +109,7 @@ Respond with ONLY valid JSON in this exact format:
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// CORE PROMPT SECTIONS (Always Included)
+// CORE PROMPT SECTIONS
 // ═══════════════════════════════════════════════════════════════════════
 
 const CORE_IDENTITY = `You are Omnia AI, a helpful shopping assistant for electronics and fashion in Kuwait.
@@ -140,7 +127,7 @@ YOU MUST CALL A TOOL FOR ALMOST EVERY USER MESSAGE.
 - Any product: phone, laptop, tablet, headphones, clothes, shoes, watch, etc.
 - Any brand: iPhone, Samsung, Apple, Nike, Adidas, Sony, H&M, Zara, etc.
 - Any action: "show me", "find me", "I want", "I need", "looking for", "buy"
-- Any spec: storage, RAM, screen size, color, price, etc.
+- Any spec: storage, RAM, screen size, color, price, material, detail, etc.
 
 **ALWAYS call search_web when user asks:**
 - "What is the best...", "Which is better...", "Compare..."
@@ -229,10 +216,6 @@ If user asks for "iPhone case" and tool returns iPhones (not cases), say:
 "I don't have iPhone cases in Omnia right now."
 
 **ALWAYS verify the category matches what the user asked for!**`;
-
-// ═══════════════════════════════════════════════════════════════════════
-// DOMAIN-SPECIFIC SECTIONS (Conditionally Included)
-// ═══════════════════════════════════════════════════════════════════════
 
 const ELECTRONICS_LOGIC = `
 **═══════════════════════════════════════════════════════════════════════**
@@ -354,9 +337,10 @@ User: "wireless headphones"
   "category": "AUDIO"
 }`;
 
+// 🔥 FIX: Enhanced FASHION_LOGIC with explicit material/detail extraction
 const FASHION_LOGIC = `
 **═══════════════════════════════════════════════════════════════════════**
-**👗 FASHION-SPECIFIC RULES**
+**👗 FASHION-SPECIFIC RULES (TEST 12 FIXES APPLIED)**
 **═══════════════════════════════════════════════════════════════════════**
 
 **CATEGORY VOCABULARY:**
@@ -364,7 +348,27 @@ const FASHION_LOGIC = `
 - All Shoes (Sneakers/Boots/Sandals/Heels) → "FOOTWEAR"
 - Bags/Belts/Hats/Scarves/Jewelry/Sunglasses → "ACCESSORIES"
 
-**CRITICAL FASHION FILTERING RULES:**
+**═══════════════════════════════════════════════════════════════════════**
+**🔥 CRITICAL: MATERIAL & DETAIL EXTRACTION (MANDATORY)**
+**═══════════════════════════════════════════════════════════════════════**
+
+When the user mentions MATERIALS or DETAILS, you MUST extract them as separate filters.
+These are NOT optional - they are HARD REQUIREMENTS.
+
+**MATERIALS (Always extract if mentioned):**
+- Fabrics: "sateen", "flannel", "denim", "cotton", "linen", "silk", "leather"
+- Blends: "cotton blend", "polyester", "wool", "cashmere"
+- Special: "faux leather", "vegan leather", "suede"
+
+**DETAILS (Always extract if mentioned):**
+- Decorative: "studded", "embroidered", "lace", "sequined", "printed"
+- Structure: "ribbed", "pleated", "ruched", "gathered"
+- Cut: "cropped", "ripped", "distressed", "frayed"
+- Pattern: "floral", "striped", "checked", "polka dot"
+
+**═══════════════════════════════════════════════════════════════════════**
+**EXTRACTION RULES WITH EXAMPLES**
+**═══════════════════════════════════════════════════════════════════════**
 
 1. **Product Type (style):** Extract clothing type
    - "pants" → style: "pants"
@@ -387,11 +391,25 @@ const FASHION_LOGIC = `
    - "blue t-shirt" → color: "blue", style: "t-shirt"
    - "black jeans" → color: "black", style: "jeans"
 
-**GENDER NORMALIZATION:**
-- { "girl", "girls", "ladies", "female", "woman", "women's" } → "women"
-- { "boy", "boys", "guys", "male", "man", "men's" } → "men"
+4. **Material (MANDATORY - DO NOT SKIP):**
+   - "sateen top" → material: "sateen", style: "top"
+   - "flannel trousers" → material: "flannel", style: "trousers"
+   - "leather jacket" → material: "leather", style: "jacket"
+   - "denim jeans" → material: "denim", style: "jeans"
+   - "cotton shirt" → material: "cotton", style: "shirt"
+   - "silk dress" → material: "silk", style: "dress"
 
-**TOOL CALL EXAMPLES:**
+5. **Detail (MANDATORY - DO NOT SKIP):**
+   - "studded t-shirt" → detail: "studded", style: "t-shirt"
+   - "ribbed sweater" → detail: "ribbed", style: "sweater"
+   - "cropped top" → detail: "cropped", style: "top"
+   - "ripped jeans" → detail: "ripped", style: "jeans"
+   - "embroidered dress" → detail: "embroidered", style: "dress"
+   - "lace top" → detail: "lace", style: "top"
+
+**═══════════════════════════════════════════════════════════════════════**
+**COMPREHENSIVE TOOL CALL EXAMPLES (TEST 12 COMPLIANT)**
+**═══════════════════════════════════════════════════════════════════════**
 
 User: "shorts for men"
 {
@@ -425,6 +443,67 @@ User: "black dress"
   "style": "dress"
 }
 
+User: "sateen lace top"
+{
+  "query": "sateen lace top",
+  "category": "CLOTHING",
+  "style": "top",
+  "material": "sateen",
+  "detail": "lace"
+}
+
+User: "black studded t-shirt"
+{
+  "query": "black studded t-shirt",
+  "category": "CLOTHING",
+  "style": "t-shirt",
+  "color": "black",
+  "detail": "studded"
+}
+
+User: "flannel trousers"
+{
+  "query": "flannel trousers",
+  "category": "CLOTHING",
+  "style": "trousers",
+  "material": "flannel"
+}
+
+User: "ribbed sweater"
+{
+  "query": "ribbed sweater",
+  "category": "CLOTHING",
+  "style": "sweater",
+  "detail": "ribbed"
+}
+
+User: "cropped leather jacket"
+{
+  "query": "cropped leather jacket",
+  "category": "CLOTHING",
+  "style": "jacket",
+  "material": "leather",
+  "detail": "cropped"
+}
+
+User: "ripped denim jeans"
+{
+  "query": "ripped denim jeans",
+  "category": "CLOTHING",
+  "style": "jeans",
+  "material": "denim",
+  "detail": "ripped"
+}
+
+User: "embroidered silk dress"
+{
+  "query": "embroidered silk dress",
+  "category": "CLOTHING",
+  "style": "dress",
+  "material": "silk",
+  "detail": "embroidered"
+}
+
 User: "women's sneakers size 38"
 {
   "query": "women's sneakers size 38",
@@ -439,7 +518,18 @@ User: "backpack"
   "query": "backpack",
   "category": "ACCESSORIES",
   "style": "backpack"
-}`;
+}
+
+**═══════════════════════════════════════════════════════════════════════**
+**GENDER NORMALIZATION**
+**═══════════════════════════════════════════════════════════════════════**
+- { "girl", "girls", "ladies", "female", "woman", "women's" } → "women"
+- { "boy", "boys", "guys", "male", "man", "men's" } → "men"
+
+**⚠️ CRITICAL REMINDER:**
+If a user mentions "flannel", "sateen", "studded", "ribbed", or ANY material/detail,
+you MUST extract it. These are NOT optional - they are mandatory filters that define
+what the user is searching for.`;
 
 const TECH_ACCESSORIES_LOGIC = `
 **═══════════════════════════════════════════════════════════════════════**
@@ -513,9 +603,6 @@ When extracting 'store_name', use these EXACT database codes:
 // DYNAMIC PROMPT BUILDER
 // ═══════════════════════════════════════════════════════════════════════
 
-/**
- * Build dynamic system prompt based on LLM classification
- */
 async function buildDynamicPrompt(query, classification) {
   const currentDate = new Date().toLocaleDateString("en-US", {
     year: "numeric",
@@ -527,7 +614,6 @@ async function buildDynamicPrompt(query, classification) {
   console.log("   Domain:", classification.domain);
   console.log("   Request Type:", classification.requestType);
 
-  // Start with core sections (always included)
   const sections = [
     CORE_IDENTITY.replace("{{CURRENT_DATE}}", currentDate),
     MANDATORY_TOOL_RULES,
@@ -536,7 +622,6 @@ async function buildDynamicPrompt(query, classification) {
     NO_RESULTS_HANDLING,
   ];
 
-  // Add domain-specific sections based on LLM classification
   if (classification.domain === "electronics") {
     console.log("   📱 Adding: ELECTRONICS_LOGIC");
     sections.push(ELECTRONICS_LOGIC);
@@ -551,13 +636,11 @@ async function buildDynamicPrompt(query, classification) {
     sections.push(FASHION_LOGIC);
   }
 
-  // Add web search logic if needed
   if (classification.requestType === "web_search") {
     console.log("   🌐 Adding: WEB_SEARCH_LOGIC");
     sections.push(WEB_SEARCH_LOGIC);
   }
 
-  // Always add store vocabulary
   sections.push(STORE_VOCABULARY);
 
   const finalPrompt = sections.join("\n\n");
@@ -571,7 +654,6 @@ async function buildDynamicPrompt(query, classification) {
 
 /**
  * Main export - get dynamic system prompt for a query
- * Uses LLM to classify query instead of hardcoded keywords
  */
 export async function getDynamicSystemPrompt(query) {
   console.log("\n" + "═".repeat(80));
@@ -579,10 +661,7 @@ export async function getDynamicSystemPrompt(query) {
   console.log("═".repeat(80));
 
   try {
-    // Step 1: Classify query using LLM
     const classification = await classifyQueryWithLLM(query);
-
-    // Step 2: Build appropriate prompt
     const prompt = await buildDynamicPrompt(query, classification);
 
     console.log("═".repeat(80) + "\n");
@@ -592,7 +671,6 @@ export async function getDynamicSystemPrompt(query) {
     console.error("❌ [Dynamic Prompt] Error:", error.message);
     console.log("   Using minimal safe prompt");
 
-    // Fallback: return minimal prompt
     const currentDate = new Date().toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
@@ -607,5 +685,4 @@ export async function getDynamicSystemPrompt(query) {
   }
 }
 
-// Export classification function for testing
 export { classifyQueryWithLLM };
