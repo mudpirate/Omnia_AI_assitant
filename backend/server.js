@@ -86,50 +86,14 @@ const ATTRIBUTE_STRATEGIES = {
   },
 };
 
-/**
- * ═══════════════════════════════════════════════════════════════════════
- * CRITICAL FIXES APPLIED (Based on Test 11 Feedback)
- * ═══════════════════════════════════════════════════════════════════════
- *
- * FIX #1: MODAL_CLIP_URL Validation
- * - Added explicit check for undefined MODAL_CLIP_URL before fetch
- * - Prevents "Failed to parse URL from undefined" error
- * - Location: getClipImageEmbedding() function
- *
- * FIX #2: Material Filter Support
- * - Added 'material' parameter to tool schema and filter builder
- * - Enables filtering by fabric types: sateen, flannel, leather, denim, etc.
- * - Uses ILIKE for partial matches (e.g., "sateen blend")
- * - Location: buildPushDownFilters() function
- *
- * FIX #3: Detail Filter Support with Stemming
- * - Added 'detail' parameter to tool schema and filter builder
- * - Enables filtering by design details: studded, ribbed, cropped, etc.
- * - Implements simple stemming ("studded" -> "stud" to match "studs")
- * - Searches in both title and specs fields
- * - Location: buildPushDownFilters() function
- *
- * FIX #4: Improved Fashion RRF Ranking
- * - Changed from 60/40 (text/vector) to 50/50 balance
- * - Prevents generic text matches from burying specific vector matches
- * - Example: "studded t-shirt" vector match no longer buried by "black t-shirt" text match
- * - Location: reciprocalRankFusionFashion() function
- *
- * FIX #5: Enhanced Fashion Prompt Logic
- * - Updated FASHION_LOGIC to explicitly extract material and detail
- * - Added examples for: sateen, flannel, studded, ribbed, lace, etc.
- * - Marked material/detail as MANDATORY filters when mentioned
- * - Location: dynamicprompt.js FASHION_LOGIC section
- *
- * ═══════════════════════════════════════════════════════════════════════
- */
-
 // 🎨 DeepFashion Integration
 const DEEPFASHION_API_URL = process.env.DEEPFASHION_API_URL;
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const LLM_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const EXTRACTION_MODEL = process.env.EXTRACTION_MODEL || "gpt-4o"; // High-IQ for complex extraction
+const CONVERSATION_MODEL = process.env.CONVERSATION_MODEL || "gpt-4o-mini"; // Fast/cheap for chatting
+const LLM_MODEL = CONVERSATION_MODEL; // Keep for backward compatibility
 const VISION_MODEL = "gpt-4o-mini";
 const MODAL_CLIP_URL = process.env.MODAL_CLIP_URL;
 const MODAL_CLIP_BATCH_URL = process.env.MODAL_CLIP_BATCH_URL;
@@ -884,28 +848,6 @@ async function enhancedVisualSearchWithAttributes(
     console.log(`   🎨 Color filter: ${colorLower}`);
   }
 
-  // -------------------------------------------------------------------------
-  // 🛑 REMOVED FILTERS (Test 12 Fix):
-  // -------------------------------------------------------------------------
-  // We DO NOT filter by:
-  // - sleeveLength (too specific, often empty in specs)
-  // - neckline (too specific, often empty in specs)
-  // - pattern (too specific, let CLIP handle visual matching)
-  // - length (too specific, often empty in specs)
-  //
-  // WHY? These attributes are:
-  // 1. Often missing from product specs (67% empty)
-  // 2. Too specific for initial filtering
-  // 3. Better handled by CLIP visual similarity
-  // 4. Can still influence re-ranking (see below)
-  //
-  // Visual search philosophy: Cast a wide net with safe filters,
-  // then let image embeddings find visually similar items.
-  // -------------------------------------------------------------------------
-
-  // -------------------------------------------------------------------------
-  // 4. USER-PROVIDED FILTERS: Brand and Price
-  // -------------------------------------------------------------------------
   if (filters.brand) {
     whereConditions.push(
       `LOWER("brand") ILIKE '%${filters.brand.toLowerCase()}%'`
@@ -1030,13 +972,6 @@ async function enhancedVisualSearchWithAttributes(
         // Calculate normalized attribute score (0-1)
         const normalizedAttrScore =
           totalWeight > 0 ? attributeScore / totalWeight : 0;
-
-        // ═══════════════════════════════════════════════════════════════
-        // COMBINED SCORE: Visual (70%) + Attributes (30%)
-        // ═══════════════════════════════════════════════════════════════
-        // Visual similarity is more important than attribute matching
-        // because CLIP embeddings capture visual features better than
-        // sparse metadata attributes
 
         const visualSimilarity = parseFloat(product.similarity);
         const combinedScore =
@@ -2407,11 +2342,121 @@ app.post("/analyze-image", upload.single("image"), async (req, res) => {
   }
 });
 
+async function extractSearchParametersHighIQ(query, categoryHint = "general") {
+  console.log(
+    `\n🧠 [HIGH-IQ EXTRACTION] Using ${EXTRACTION_MODEL} for complex parameter extraction...`
+  );
+  console.log(`   Query: "${query}"`);
+  console.log(`   Domain hint: ${categoryHint}`);
+
+  try {
+    // Build domain-specific extraction guidance
+    let domainGuidance = "";
+
+    if (categoryHint === "fashion") {
+      domainGuidance = `
+FASHION EXTRACTION RULES:
+- AGGRESSIVELY extract 'material' (sateen, flannel, leather, denim, cotton, silk)
+- AGGRESSIVELY extract 'detail' (studded, ribbed, cropped, ripped, embroidered, lace)
+- Extract 'style' (t-shirt, jeans, dress, pants, shorts, hoodie)
+- Extract 'gender' (men, women, boys, girls, unisex)
+- Extract 'color' if mentioned
+- Extract 'size' if mentioned
+
+CRITICAL EXAMPLES:
+"flannel trousers" → material: "flannel", style: "trousers"
+"studded t-shirt" → detail: "studded", style: "t-shirt"
+"sateen lace top" → material: "sateen", detail: "lace", style: "top"
+"black ribbed sweater" → color: "black", detail: "ribbed", style: "sweater"
+`;
+    } else if (categoryHint === "electronics") {
+      domainGuidance = `
+ELECTRONICS EXTRACTION RULES:
+- Extract 'brand' (apple, samsung, sony, dell, hp)
+- Extract 'model_number' (full model string: "iphone 15", "galaxy s24")
+- Extract 'variant' (pro, pro_max, +, ultra, mini, air, base)
+- Extract 'storage' (256gb, 512gb, 1tb)
+- Extract 'ram' if query contains "RAM" or "memory"
+- Extract 'color' if mentioned
+
+CRITICAL EXAMPLES:
+"iPhone 15 Pro Max 256GB" → brand: "apple", model_number: "iphone 15", variant: "pro_max", storage: "256gb"
+"Samsung S24 Plus" → brand: "samsung", model_number: "galaxy s24+", variant: "+"
+`;
+    } else {
+      domainGuidance = `
+GENERAL EXTRACTION RULES:
+- Extract all mentioned attributes
+- Focus on specifics (materials, details, specs)
+- Ignore filler words ("I want", "show me", "looking for")
+`;
+    }
+
+    const response = await openai.chat.completions.create({
+      model: EXTRACTION_MODEL,
+      messages: [
+        {
+          role: "system",
+          content: `You are a precise SQL parameter extractor for an e-commerce search system.
+
+Your ONLY job is to extract structured search parameters from natural language queries.
+
+${domainGuidance}
+
+GENERAL RULES:
+1. Extract EVERY specific attribute mentioned (don't ignore materials, details, specs)
+2. Convert casual language: "men's" → gender: "men", "women's" → gender: "women"
+3. Ignore filler words: "I want", "show me", "find me", "looking for"
+4. Use lowercase for all values
+5. Be aggressive about extraction - if user mentions "flannel", extract it as material
+6. Be aggressive about extraction - if user mentions "studded", extract it as detail
+
+OUTPUT FORMAT:
+Return parameters that match the 'search_product_database' tool schema.
+Include the original query in the 'query' field.
+
+IMPORTANT:
+- If material is mentioned (flannel, sateen, leather, etc.), ALWAYS extract it
+- If detail is mentioned (studded, ribbed, cropped, etc.), ALWAYS extract it
+- These are MANDATORY filters, not optional suggestions`,
+        },
+        {
+          role: "user",
+          content: query,
+        },
+      ],
+      tools: [TOOLS[0]], // Use search_product_database tool schema
+      tool_choice: {
+        type: "function",
+        function: { name: "search_product_database" },
+      },
+      temperature: 0, // Deterministic extraction
+    });
+
+    const toolCall = response.choices[0].message.tool_calls[0];
+    const args = JSON.parse(toolCall.function.arguments);
+
+    console.log("   ✅ High-IQ extraction completed");
+    console.log("   📊 Extracted parameters:", JSON.stringify(args, null, 2));
+    console.log("   💰 Tokens used:", response.usage?.total_tokens);
+
+    return args;
+  } catch (error) {
+    console.error("   ❌ High-IQ extraction failed:", error.message);
+    console.log("   ⚠️  Falling back to basic query");
+
+    // Fallback: return minimal parameters
+    return {
+      query: query,
+    };
+  }
+}
+
 app.post("/chat", async (req, res) => {
   let { query: message, sessionId } = req.body;
 
   console.log("\n" + "█".repeat(80));
-  console.log("📨 NEW CHAT REQUEST");
+  console.log("📨 NEW CHAT REQUEST (SPECIALIST ARCHITECTURE)");
   console.log("█".repeat(80));
   console.log("User message:", message);
 
@@ -2429,66 +2474,167 @@ app.post("/chat", async (req, res) => {
   }
 
   try {
-    const history = await getMemory(sessionId);
-    console.log("📚 Chat history:", history.length, "messages");
+    // ═══════════════════════════════════════════════════════════════════
+    // PHASE 1: CLASSIFY INTENT (gpt-4o-mini - cheap & fast)
+    // ═══════════════════════════════════════════════════════════════════
+    console.log("\n🔍 [PHASE 1] Classifying query intent...");
 
-    // 🔥 FIX #5: USE DYNAMIC SYSTEM PROMPT WITH CURRENT DATE
+    const history = await getMemory(sessionId);
+    console.log("   📚 Chat history:", history.length, "messages");
+
+    // Import classifyQueryWithLLM from dynamicprompt.js
+    const { classifyQueryWithLLM } = await import("./dynamicPrompt.js");
+    const classification = await classifyQueryWithLLM(message);
+
+    console.log(
+      "   ✅ Classification:",
+      classification.domain,
+      "/",
+      classification.requestType
+    );
+
+    let products = [];
+    let categoryType = "unknown";
+    let searchExecuted = false;
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PHASE 2: HIGH-IQ EXTRACTION (gpt-4o - ONLY for product searches)
+    // ═══════════════════════════════════════════════════════════════════
+
+    if (classification.requestType === "product_search") {
+      console.log(
+        "\n🚀 [PHASE 2] Product search detected - Activating High-IQ Extractor"
+      );
+      console.log(
+        `   💰 Cost optimization: Using ${EXTRACTION_MODEL} for extraction only`
+      );
+
+      // A. Extract parameters using GPT-4o (stateless, focused)
+      const searchArgs = await extractSearchParametersHighIQ(
+        message,
+        classification.domain
+      );
+
+      // B. Execute database search immediately
+      console.log("\n🔍 [PHASE 2B] Executing database search...");
+      const searchResult = await executeSearchDatabase(searchArgs);
+
+      if (searchResult.success) {
+        products = searchResult.products || [];
+        categoryType = searchResult.categoryType || "unknown";
+        searchExecuted = true;
+
+        console.log("   ✅ Search completed:");
+        console.log("      Products found:", products.length);
+        console.log("      Category type:", categoryType);
+      } else {
+        console.log("   ⚠️  Search returned no results");
+      }
+
+      // C. Build conversation history with injected tool result
+      // This makes gpt-4o-mini think the tool was already called
+      // So it just has to write a friendly response about the results
+      history.push({ role: "user", content: message });
+
+      if (searchExecuted) {
+        const toolCallId = `call_highiq_${Date.now()}`;
+
+        // Add assistant message with tool call
+        history.push({
+          role: "assistant",
+          content: null,
+          tool_calls: [
+            {
+              id: toolCallId,
+              type: "function",
+              function: {
+                name: "search_product_database",
+                arguments: JSON.stringify(searchArgs),
+              },
+            },
+          ],
+        });
+
+        // Add tool result
+        history.push({
+          role: "tool",
+          tool_call_id: toolCallId,
+          content: JSON.stringify(searchResult),
+        });
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // PHASE 3: CONVERSATIONAL RESPONSE (gpt-4o-mini - cheap output)
+    // ═══════════════════════════════════════════════════════════════════
+    console.log("\n💬 [PHASE 3] Generating conversational response...");
+    console.log(
+      `   💰 Cost optimization: Using ${CONVERSATION_MODEL} for response generation`
+    );
+
+    // Get dynamic system prompt
     const dynamicPrompt = await getDynamicSystemPrompt(message);
 
+    // Build messages array
     const messages = [
       {
         role: "system",
         content: dynamicPrompt,
       },
-      ...history.map((m) => ({ role: m.role, content: m.content })),
-      { role: "user", content: message },
+      ...history.map((m) => ({
+        role: m.role,
+        content: m.content,
+        ...(m.tool_calls && { tool_calls: m.tool_calls }),
+        ...(m.tool_call_id && { tool_call_id: m.tool_call_id }),
+      })),
     ];
 
-    console.log("🤖 Calling OpenAI API...");
+    // If search wasn't executed, add user message normally
+    if (!searchExecuted) {
+      messages.push({ role: "user", content: message });
+    }
+
+    // Generate response with gpt-4o-mini
     const completion = await openai.chat.completions.create({
-      model: LLM_MODEL,
+      model: CONVERSATION_MODEL,
       messages,
-      tools: TOOLS,
+      tools: TOOLS, // Keep tools available for web search, greetings, etc.
       tool_choice: "auto",
-      temperature: 0.1,
+      temperature: 0.7,
     });
 
     const responseMessage = completion.choices[0].message;
     let finalResponse = responseMessage.content || "";
-    let products = [];
-    let categoryType = "unknown";
 
-    console.log("📥 OpenAI response received");
-    console.log(
-      "   Tool calls:",
-      responseMessage.tool_calls ? responseMessage.tool_calls.length : 0
-    );
+    console.log("   📥 Response generated");
+    console.log("   💰 Tokens used:", completion.usage?.total_tokens);
 
-    if (responseMessage.tool_calls) {
+    // ═══════════════════════════════════════════════════════════════════
+    // PHASE 4: HANDLE ANY ADDITIONAL TOOL CALLS (web search, etc.)
+    // ═══════════════════════════════════════════════════════════════════
+
+    if (responseMessage.tool_calls && !searchExecuted) {
+      console.log("\n🔧 [PHASE 4] Handling additional tool calls...");
+      console.log("   Tool calls:", responseMessage.tool_calls.length);
+
       const toolResults = [];
 
       for (const toolCall of responseMessage.tool_calls) {
         const functionName = toolCall.function.name;
         const args = JSON.parse(toolCall.function.arguments);
 
-        console.log("\n🔧 Executing tool:", functionName);
-        console.log("   Arguments:", JSON.stringify(args, null, 2));
+        console.log(`   Executing: ${functionName}`);
 
         let result;
         if (functionName === "search_product_database") {
           result = await executeSearchDatabase(args);
           if (result.success && result.products && result.products.length > 0) {
-            // 🔥 FIX: Merge products instead of overwriting
             products = [...products, ...result.products];
-            // Only update categoryType if it's currently unknown or handle mixed types
             if (categoryType === "unknown") {
               categoryType = result.categoryType;
             } else if (categoryType !== result.categoryType) {
-              // Handle mixed categories (e.g., iPhone + Headphones)
               categoryType = "mixed";
             }
-            console.log("✅ Products merged:", products.length);
-            console.log("✅ Category type:", categoryType);
           }
         } else if (functionName === "search_web") {
           result = await executeSearchWeb(args);
@@ -2501,41 +2647,38 @@ app.post("/chat", async (req, res) => {
         });
       }
 
+      // Generate final response with tool results
       const followUpMessages = [...messages, responseMessage, ...toolResults];
 
-      console.log("🤖 Generating final response...");
       const finalCompletion = await openai.chat.completions.create({
-        model: LLM_MODEL,
+        model: CONVERSATION_MODEL,
         messages: followUpMessages,
         temperature: 0.7,
       });
 
       finalResponse = finalCompletion.choices[0].message.content;
-
-      if (finalResponse) {
-        finalResponse = finalResponse
-          .replace(/\*\*/g, "")
-          .replace(/\*/g, "")
-          .replace(/###/g, "")
-          .trim();
-      }
-
-      console.log("✅ Final response generated");
     }
 
-    if (!responseMessage.tool_calls && finalResponse) {
+    // Clean up response formatting
+    if (finalResponse) {
       finalResponse = finalResponse
         .replace(/\*\*/g, "")
         .replace(/\*/g, "")
+        .replace(/###/g, "")
         .trim();
     }
 
+    // Save to memory
     await saveToMemory(sessionId, "user", message);
     await saveToMemory(sessionId, "assistant", finalResponse);
 
     console.log("\n📤 SENDING RESPONSE");
     console.log("   Products:", products.length);
     console.log("   Category type:", categoryType);
+    console.log(
+      "   Architecture:",
+      searchExecuted ? "High-IQ Extraction (GPT-4o)" : "Standard (GPT-4o-mini)"
+    );
     console.log("█".repeat(80) + "\n");
 
     return res.json({
@@ -2549,14 +2692,6 @@ app.post("/chat", async (req, res) => {
     console.error("❌ [Chat Error]", error);
     return res.status(500).json({ error: "Server error: " + error.message });
   }
-});
-
-app.get("/health", (req, res) => {
-  res.json({
-    status: "ok",
-    message:
-      "Omnia AI - Dual Pipeline + Intelligent Sorting + Smart Deduplication",
-  });
 });
 
 app.listen(PORT, () => {
