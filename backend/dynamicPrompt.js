@@ -3,13 +3,21 @@
  * LLM-POWERED DYNAMIC PROMPT SYSTEM FOR OMNIA AI
  * ═══════════════════════════════════════════════════════════════════════
  *
- * TEST 12 FIXES APPLIED:
- * - Enhanced material/detail extraction with concrete examples
- * - More explicit instructions for fashion-specific attributes
- * - Improved LLM guidance for mandatory filter extraction
+ * Purpose: Use GPT-4o-mini to intelligently classify queries instead of
+ * hardcoded keyword arrays. This handles curveball queries and scales
+ * automatically.
+ *
+ * Strategy:
+ * 1. Fast LLM call to classify query intent
+ * 2. Build appropriate prompt based on LLM analysis
+ * 3. Cache results to minimize API calls
  */
 
 import OpenAI from "openai";
+
+// ═══════════════════════════════════════════════════════════════════════
+// LLM CLASSIFIER (Smart Query Analysis)
+// ═══════════════════════════════════════════════════════════════════════
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -17,15 +25,17 @@ const openai = new OpenAI({
 
 // Cache for query classifications (reduces API calls)
 const classificationCache = new Map();
-const CACHE_SIZE = 1000;
+const CACHE_SIZE = 1000; // Keep last 1000 classifications
 
 /**
  * LLM-powered query classifier
+ * Returns structured analysis of user intent
  */
 async function classifyQueryWithLLM(query) {
   console.log("\n🤖 [LLM CLASSIFIER] Analyzing query with GPT-4o-mini");
   console.log("   Query:", query);
 
+  // Check cache first
   const cacheKey = query.toLowerCase().trim();
   if (classificationCache.has(cacheKey)) {
     console.log("   💾 Cache hit - returning cached classification");
@@ -91,7 +101,9 @@ Respond with ONLY valid JSON in this exact format:
     console.log("      Reasoning:", classification.reasoning);
     console.log("      Tokens used:", response.usage?.total_tokens);
 
+    // Cache the result
     if (classificationCache.size >= CACHE_SIZE) {
+      // Remove oldest entry (simple FIFO)
       const firstKey = classificationCache.keys().next().value;
       classificationCache.delete(firstKey);
     }
@@ -100,6 +112,7 @@ Respond with ONLY valid JSON in this exact format:
     return classification;
   } catch (error) {
     console.error("   ❌ LLM classification error:", error.message);
+    // Fallback to safe default
     return {
       domain: "none",
       requestType: "general",
@@ -109,7 +122,7 @@ Respond with ONLY valid JSON in this exact format:
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// CORE PROMPT SECTIONS
+// CORE PROMPT SECTIONS (Always Included)
 // ═══════════════════════════════════════════════════════════════════════
 
 const CORE_IDENTITY = `You are Omnia AI, a helpful shopping assistant for electronics and fashion in Kuwait.
@@ -127,7 +140,7 @@ YOU MUST CALL A TOOL FOR ALMOST EVERY USER MESSAGE.
 - Any product: phone, laptop, tablet, headphones, clothes, shoes, watch, etc.
 - Any brand: iPhone, Samsung, Apple, Nike, Adidas, Sony, H&M, Zara, etc.
 - Any action: "show me", "find me", "I want", "I need", "looking for", "buy"
-- Any spec: storage, RAM, screen size, color, price, material, detail, etc.
+- Any spec: storage, RAM, screen size, color, price, etc.
 
 **ALWAYS call search_web when user asks:**
 - "What is the best...", "Which is better...", "Compare..."
@@ -193,6 +206,41 @@ WORKFLOW:
 1. Infer specs from use-case
 2. Call search_product_database directly with filters
 
+**C. FOLLOW-UP QUERIES ABOUT SPECIFIC PRODUCTS → Extract + Filter**
+If user says: "I'm looking at iPhone 15 Pro. Do you have it in green color?"
+
+WORKFLOW:
+1. Extract the base product: "iPhone 15 Pro"
+2. Extract the new filter: "green" → color: "green"
+3. Call search_product_database with BOTH:
+   - model_number: "iphone 15"
+   - variant: "pro"
+   - color: "green"
+4. This returns ONLY green iPhone 15 Pro variants
+
+**CRITICAL EXAMPLES:**
+
+User: "I'm looking at iPhone 15 Pro. Do you have it in green color?"
+Extract: {
+  "model_number": "iphone 15",
+  "variant": "pro",
+  "color": "green"
+}
+
+User: "I'm looking at Samsung Galaxy S24. Show me the 512GB version."
+Extract: {
+  "model_number": "galaxy s24",
+  "storage": "512gb"
+}
+
+User: "I'm looking at Men's Black Jeans. Do you have slim fit?"
+Extract: {
+  "style": "jeans",
+  "gender": "men",
+  "color": "black",
+  "fit": "slim"
+}
+
 **3. LAW OF VOCABULARY STANDARDIZATION**
 - Store Names: "BEST_KW" → "Best Al-Yousifi", "XCITE" → "Xcite"
 - Gender: "girls"/"women" → "women", "boys"/"men" → "men"
@@ -216,6 +264,10 @@ If user asks for "iPhone case" and tool returns iPhones (not cases), say:
 "I don't have iPhone cases in Omnia right now."
 
 **ALWAYS verify the category matches what the user asked for!**`;
+
+// ═══════════════════════════════════════════════════════════════════════
+// DOMAIN-SPECIFIC SECTIONS (Conditionally Included)
+// ═══════════════════════════════════════════════════════════════════════
 
 const ELECTRONICS_LOGIC = `
 **═══════════════════════════════════════════════════════════════════════**
@@ -254,6 +306,13 @@ When user mentions a brand OR brand-specific product:
 - "Galaxy" → brand: "samsung"
 - "MacBook" → brand: "apple"
 - "Pixel" → brand: "google"
+
+**CRITICAL FILTERING RULES:**
+
+When user searches for actual products (headphones, laptops, phones), you MUST exclude accessories:
+- "headphones" → category: "AUDIO", **DO NOT include "adapter", "cable", "transmitter" in query**
+- "laptop" → category: "LAPTOPS", **DO NOT include "bag", "case", "stand" in query**
+- "phone" → category: "MOBILEPHONES", **DO NOT include "case", "charger", "cable" in query**
 
 **VARIANT EXTRACTION RULES:**
 
@@ -337,10 +396,9 @@ User: "wireless headphones"
   "category": "AUDIO"
 }`;
 
-// 🔥 FIX: Enhanced FASHION_LOGIC with explicit material/detail extraction
 const FASHION_LOGIC = `
 **═══════════════════════════════════════════════════════════════════════**
-**👗 FASHION-SPECIFIC RULES (TEST 12 FIXES APPLIED)**
+**👗 FASHION-SPECIFIC RULES**
 **═══════════════════════════════════════════════════════════════════════**
 
 **CATEGORY VOCABULARY:**
@@ -348,27 +406,7 @@ const FASHION_LOGIC = `
 - All Shoes (Sneakers/Boots/Sandals/Heels) → "FOOTWEAR"
 - Bags/Belts/Hats/Scarves/Jewelry/Sunglasses → "ACCESSORIES"
 
-**═══════════════════════════════════════════════════════════════════════**
-**🔥 CRITICAL: MATERIAL & DETAIL EXTRACTION (MANDATORY)**
-**═══════════════════════════════════════════════════════════════════════**
-
-When the user mentions MATERIALS or DETAILS, you MUST extract them as separate filters.
-These are NOT optional - they are HARD REQUIREMENTS.
-
-**MATERIALS (Always extract if mentioned):**
-- Fabrics: "sateen", "flannel", "denim", "cotton", "linen", "silk", "leather"
-- Blends: "cotton blend", "polyester", "wool", "cashmere"
-- Special: "faux leather", "vegan leather", "suede"
-
-**DETAILS (Always extract if mentioned):**
-- Decorative: "studded", "embroidered", "lace", "sequined", "printed"
-- Structure: "ribbed", "pleated", "ruched", "gathered"
-- Cut: "cropped", "ripped", "distressed", "frayed"
-- Pattern: "floral", "striped", "checked", "polka dot"
-
-**═══════════════════════════════════════════════════════════════════════**
-**EXTRACTION RULES WITH EXAMPLES**
-**═══════════════════════════════════════════════════════════════════════**
+**CRITICAL FASHION FILTERING RULES:**
 
 1. **Product Type (style):** Extract clothing type
    - "pants" → style: "pants"
@@ -391,7 +429,7 @@ These are NOT optional - they are HARD REQUIREMENTS.
    - "blue t-shirt" → color: "blue", style: "t-shirt"
    - "black jeans" → color: "black", style: "jeans"
 
-4. **Material (MANDATORY - DO NOT SKIP):**
+4. **Material (CRITICAL - ALWAYS EXTRACT if mentioned):**
    - "sateen top" → material: "sateen", style: "top"
    - "flannel trousers" → material: "flannel", style: "trousers"
    - "leather jacket" → material: "leather", style: "jacket"
@@ -399,7 +437,7 @@ These are NOT optional - they are HARD REQUIREMENTS.
    - "cotton shirt" → material: "cotton", style: "shirt"
    - "silk dress" → material: "silk", style: "dress"
 
-5. **Detail (MANDATORY - DO NOT SKIP):**
+5. **Detail (CRITICAL - ALWAYS EXTRACT if mentioned):**
    - "studded t-shirt" → detail: "studded", style: "t-shirt"
    - "ribbed sweater" → detail: "ribbed", style: "sweater"
    - "cropped top" → detail: "cropped", style: "top"
@@ -407,9 +445,51 @@ These are NOT optional - they are HARD REQUIREMENTS.
    - "embroidered dress" → detail: "embroidered", style: "dress"
    - "lace top" → detail: "lace", style: "top"
 
-**═══════════════════════════════════════════════════════════════════════**
-**COMPREHENSIVE TOOL CALL EXAMPLES (TEST 12 COMPLIANT)**
-**═══════════════════════════════════════════════════════════════════════**
+6. **Sleeve Length (CRITICAL - ALWAYS EXTRACT if mentioned):**
+   - "short sleeve shirt" → sleeveLength: "short", style: "shirt"
+   - "long sleeve dress" → sleeveLength: "long", style: "dress"
+   - "sleeveless top" → sleeveLength: "sleeveless", style: "top"
+   - "3/4 sleeve blouse" → sleeveLength: "3/4", style: "blouse"
+   - "half sleeve t-shirt" → sleeveLength: "short", style: "t-shirt"
+
+7. **Pattern (EXTRACT if mentioned):**
+   - "striped shirt" → pattern: "striped", style: "shirt"
+   - "floral dress" → pattern: "floral", style: "dress"
+   - "plaid jacket" → pattern: "plaid", style: "jacket"
+   - "solid t-shirt" → pattern: "solid", style: "t-shirt"
+   - "polka dot blouse" → pattern: "polka dot", style: "blouse"
+   - "checkered pants" → pattern: "checkered", style: "pants"
+
+8. **Neckline (EXTRACT if mentioned):**
+   - "v-neck t-shirt" → neckline: "v-neck", style: "t-shirt"
+   - "crew neck sweater" → neckline: "crew", style: "sweater"
+   - "scoop neck top" → neckline: "scoop", style: "top"
+   - "collar shirt" → neckline: "collar", style: "shirt"
+   - "round neck dress" → neckline: "round", style: "dress"
+
+9. **Length (EXTRACT if mentioned for dresses/skirts):**
+   - "mini dress" → length: "mini", style: "dress"
+   - "midi skirt" → length: "midi", style: "skirt"
+   - "maxi dress" → length: "maxi", style: "dress"
+   - "knee-length dress" → length: "knee-length", style: "dress"
+   - "ankle length pants" → length: "ankle", style: "pants"
+
+10. **Fit (EXTRACT if mentioned):**
+    - "slim fit jeans" → fit: "slim", style: "jeans"
+    - "oversized hoodie" → fit: "oversized", style: "hoodie"
+    - "regular fit shirt" → fit: "regular", style: "shirt"
+    - "loose pants" → fit: "loose", style: "pants"
+    - "tight dress" → fit: "tight", style: "dress"
+
+**GENDER NORMALIZATION:**
+- { "girl", "girls", "ladies", "female", "woman", "women's" } → "women"
+- { "boy", "boys", "guys", "male", "man", "men's" } → "men"
+
+**⚠️ MATERIAL & DETAIL ARE MANDATORY FILTERS:**
+If user mentions a material (sateen, flannel, leather) or detail (studded, ribbed, cropped),
+you MUST extract it. These are hard requirements, not optional suggestions.
+
+**TOOL CALL EXAMPLES:**
 
 User: "shorts for men"
 {
@@ -477,31 +557,55 @@ User: "ribbed sweater"
   "detail": "ribbed"
 }
 
-User: "cropped leather jacket"
+User: "short sleeve shirt"
 {
-  "query": "cropped leather jacket",
+  "query": "short sleeve shirt",
   "category": "CLOTHING",
-  "style": "jacket",
-  "material": "leather",
-  "detail": "cropped"
+  "style": "shirt",
+  "sleeveLength": "short"
 }
 
-User: "ripped denim jeans"
+User: "long sleeve black dress"
 {
-  "query": "ripped denim jeans",
-  "category": "CLOTHING",
-  "style": "jeans",
-  "material": "denim",
-  "detail": "ripped"
-}
-
-User: "embroidered silk dress"
-{
-  "query": "embroidered silk dress",
+  "query": "long sleeve black dress",
   "category": "CLOTHING",
   "style": "dress",
-  "material": "silk",
-  "detail": "embroidered"
+  "sleeveLength": "long",
+  "color": "black"
+}
+
+User: "striped v-neck t-shirt"
+{
+  "query": "striped v-neck t-shirt",
+  "category": "CLOTHING",
+  "style": "t-shirt",
+  "pattern": "striped",
+  "neckline": "v-neck"
+}
+
+User: "maxi floral dress"
+{
+  "query": "maxi floral dress",
+  "category": "CLOTHING",
+  "style": "dress",
+  "length": "maxi",
+  "pattern": "floral"
+}
+
+User: "slim fit jeans"
+{
+  "query": "slim fit jeans",
+  "category": "CLOTHING",
+  "style": "jeans",
+  "fit": "slim"
+}
+
+User: "oversized hoodie"
+{
+  "query": "oversized hoodie",
+  "category": "CLOTHING",
+  "style": "hoodie",
+  "fit": "oversized"
 }
 
 User: "women's sneakers size 38"
@@ -518,18 +622,7 @@ User: "backpack"
   "query": "backpack",
   "category": "ACCESSORIES",
   "style": "backpack"
-}
-
-**═══════════════════════════════════════════════════════════════════════**
-**GENDER NORMALIZATION**
-**═══════════════════════════════════════════════════════════════════════**
-- { "girl", "girls", "ladies", "female", "woman", "women's" } → "women"
-- { "boy", "boys", "guys", "male", "man", "men's" } → "men"
-
-**⚠️ CRITICAL REMINDER:**
-If a user mentions "flannel", "sateen", "studded", "ribbed", or ANY material/detail,
-you MUST extract it. These are NOT optional - they are mandatory filters that define
-what the user is searching for.`;
+}`;
 
 const TECH_ACCESSORIES_LOGIC = `
 **═══════════════════════════════════════════════════════════════════════**
@@ -603,6 +696,9 @@ When extracting 'store_name', use these EXACT database codes:
 // DYNAMIC PROMPT BUILDER
 // ═══════════════════════════════════════════════════════════════════════
 
+/**
+ * Build dynamic system prompt based on LLM classification
+ */
 async function buildDynamicPrompt(query, classification) {
   const currentDate = new Date().toLocaleDateString("en-US", {
     year: "numeric",
@@ -614,6 +710,7 @@ async function buildDynamicPrompt(query, classification) {
   console.log("   Domain:", classification.domain);
   console.log("   Request Type:", classification.requestType);
 
+  // Start with core sections (always included)
   const sections = [
     CORE_IDENTITY.replace("{{CURRENT_DATE}}", currentDate),
     MANDATORY_TOOL_RULES,
@@ -622,6 +719,7 @@ async function buildDynamicPrompt(query, classification) {
     NO_RESULTS_HANDLING,
   ];
 
+  // Add domain-specific sections based on LLM classification
   if (classification.domain === "electronics") {
     console.log("   📱 Adding: ELECTRONICS_LOGIC");
     sections.push(ELECTRONICS_LOGIC);
@@ -636,11 +734,13 @@ async function buildDynamicPrompt(query, classification) {
     sections.push(FASHION_LOGIC);
   }
 
+  // Add web search logic if needed
   if (classification.requestType === "web_search") {
     console.log("   🌐 Adding: WEB_SEARCH_LOGIC");
     sections.push(WEB_SEARCH_LOGIC);
   }
 
+  // Always add store vocabulary
   sections.push(STORE_VOCABULARY);
 
   const finalPrompt = sections.join("\n\n");
@@ -654,6 +754,7 @@ async function buildDynamicPrompt(query, classification) {
 
 /**
  * Main export - get dynamic system prompt for a query
+ * Uses LLM to classify query instead of hardcoded keywords
  */
 export async function getDynamicSystemPrompt(query) {
   console.log("\n" + "═".repeat(80));
@@ -661,7 +762,10 @@ export async function getDynamicSystemPrompt(query) {
   console.log("═".repeat(80));
 
   try {
+    // Step 1: Classify query using LLM
     const classification = await classifyQueryWithLLM(query);
+
+    // Step 2: Build appropriate prompt
     const prompt = await buildDynamicPrompt(query, classification);
 
     console.log("═".repeat(80) + "\n");
@@ -671,6 +775,7 @@ export async function getDynamicSystemPrompt(query) {
     console.error("❌ [Dynamic Prompt] Error:", error.message);
     console.log("   Using minimal safe prompt");
 
+    // Fallback: return minimal prompt
     const currentDate = new Date().toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
@@ -685,4 +790,5 @@ export async function getDynamicSystemPrompt(query) {
   }
 }
 
+// Export classification function for testing
 export { classifyQueryWithLLM };

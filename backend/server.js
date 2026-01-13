@@ -10,90 +10,60 @@ import fs from "fs/promises";
 import path from "path";
 import { getDynamicSystemPrompt } from "./dynamicPrompt.js";
 
-const ATTRIBUTE_STRATEGIES = {
-  // STRICT: High-confidence data (always use specific column)
-  // These fields are consistently populated in your database
-  brand: {
-    type: "strict",
-    fields: ["brand"],
-    operator: "ILIKE", // Partial match for brand names
-  },
-
-  category: {
-    type: "strict",
-    fields: ["category"],
-    operator: "=", // Exact match for categories
-  },
-
-  // HYBRID: Messy data (check specs OR title/description)
-  // These fields are ~67% empty in specs, need fallback to title
-  material: {
-    type: "hybrid",
-    fields: ["specs.material", "title", "description"],
-    operator: "ILIKE",
-    weight: "high", // Material is a critical filter
-  },
-
-  detail: {
-    type: "hybrid",
-    fields: ["specs.detail", "specs.pattern", "title"],
-    operator: "ILIKE",
-    weight: "high", // Details are critical (studded, ribbed, etc.)
-    stemming: true, // Enable simple stemming for details
-  },
-
-  color: {
-    type: "hybrid",
-    fields: ["specs.color", "title"],
-    operator: "ILIKE",
-    weight: "medium",
-  },
-
-  gender: {
-    type: "hybrid",
-    fields: ["specs.gender", "title"],
-    operator: "=", // Exact match preferred
-    weight: "high", // Gender is critical for fashion
-  },
-
-  style: {
-    type: "hybrid",
-    fields: ["specs.style", "specs.type", "title"],
-    operator: "ILIKE",
-    weight: "medium",
-  },
-
-  pattern: {
-    type: "hybrid",
-    fields: ["specs.pattern", "specs.detail", "title"],
-    operator: "ILIKE",
-    weight: "low",
-  },
-
-  // FLEXIBLE: Can be in specs or title
-  size: {
-    type: "hybrid",
-    fields: ["specs.size", "title"],
-    operator: "ILIKE",
-    weight: "medium",
-  },
-
-  type: {
-    type: "hybrid",
-    fields: ["specs.type", "specs.style", "title"],
-    operator: "ILIKE",
-    weight: "medium",
-  },
-};
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * CRITICAL FIXES APPLIED (Based on Test 11 Feedback + Fashion Enhancement)
+ * ═══════════════════════════════════════════════════════════════════════
+ *
+ * FIX #1: MODAL_CLIP_URL Validation
+ * - Added explicit check for undefined MODAL_CLIP_URL before fetch
+ * - Prevents "Failed to parse URL from undefined" error
+ * - Location: getClipImageEmbedding() function
+ *
+ * FIX #2: Material Filter Support
+ * - Added 'material' parameter to tool schema and filter builder
+ * - Enables filtering by fabric types: sateen, flannel, leather, denim, etc.
+ * - Uses ILIKE for partial matches (e.g., "sateen blend")
+ * - Location: buildPushDownFilters() function
+ *
+ * FIX #3: Detail Filter Support with Stemming
+ * - Added 'detail' parameter to tool schema and filter builder
+ * - Enables filtering by design details: studded, ribbed, cropped, etc.
+ * - Implements simple stemming ("studded" -> "stud" to match "studs")
+ * - Searches in both title and specs fields
+ * - Location: buildPushDownFilters() function
+ *
+ * FIX #4: Improved Fashion RRF Ranking
+ * - Changed from 60/40 (text/vector) to 50/50 balance
+ * - Prevents generic text matches from burying specific vector matches
+ * - Example: "studded t-shirt" vector match no longer buried by "black t-shirt" text match
+ * - Location: reciprocalRankFusionFashion() function
+ *
+ * FIX #5: Enhanced Fashion Prompt Logic
+ * - Updated FASHION_LOGIC to explicitly extract material and detail
+ * - Added examples for: sateen, flannel, studded, ribbed, lace, etc.
+ * - Marked material/detail as MANDATORY filters when mentioned
+ * - Location: dynamicprompt.js FASHION_LOGIC section
+ *
+ * FIX #6: Comprehensive Fashion Spec Support (NEW)
+ * - Added sleeveLength parameter: short, long, sleeveless, 3/4, half
+ * - Added pattern parameter: striped, floral, solid, plaid, polka dot, checkered
+ * - Added neckline parameter: v-neck, crew, scoop, collar, round
+ * - Added length parameter: mini, midi, maxi, knee-length, ankle
+ * - Added fit parameter: slim, regular, oversized, loose, tight, relaxed
+ * - All fashion specs use ILIKE for flexible matching in filter builder
+ * - Updated dynamicprompt.js with extraction rules and examples
+ * - Location: TOOLS schema, buildPushDownFilters(), dynamicprompt.js
+ *
+ * ═══════════════════════════════════════════════════════════════════════
+ */
 
 // 🎨 DeepFashion Integration
 const DEEPFASHION_API_URL = process.env.DEEPFASHION_API_URL;
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const EXTRACTION_MODEL = process.env.EXTRACTION_MODEL || "gpt-4o"; // High-IQ for complex extraction
-const CONVERSATION_MODEL = process.env.CONVERSATION_MODEL || "gpt-4o-mini"; // Fast/cheap for chatting
-const LLM_MODEL = CONVERSATION_MODEL; // Keep for backward compatibility
+const LLM_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
 const VISION_MODEL = "gpt-4o-mini";
 const MODAL_CLIP_URL = process.env.MODAL_CLIP_URL;
 const MODAL_CLIP_BATCH_URL = process.env.MODAL_CLIP_BATCH_URL;
@@ -389,6 +359,31 @@ const TOOLS = [
             type: "string",
             description:
               "Distinctive design details for fashion items (e.g., 'studded', 'ribbed', 'cropped', 'ripped', 'embroidered', 'lace'). Extract ONLY if user explicitly mentions detail.",
+          },
+          sleeveLength: {
+            type: "string",
+            description:
+              "Sleeve length for clothing (e.g., 'short', 'long', 'sleeveless', '3/4', 'half'). Extract ONLY if user explicitly mentions sleeve length.",
+          },
+          pattern: {
+            type: "string",
+            description:
+              "Pattern for clothing (e.g., 'striped', 'floral', 'solid', 'plaid', 'polka dot', 'checkered'). Extract if user mentions pattern.",
+          },
+          neckline: {
+            type: "string",
+            description:
+              "Neckline type for clothing (e.g., 'v-neck', 'crew', 'scoop', 'collar', 'round'). Extract if user mentions neckline.",
+          },
+          length: {
+            type: "string",
+            description:
+              "Garment length for dresses/skirts (e.g., 'mini', 'midi', 'maxi', 'knee-length', 'ankle'). Extract if user mentions length.",
+          },
+          fit: {
+            type: "string",
+            description:
+              "Fit style for clothing (e.g., 'slim', 'regular', 'oversized', 'loose', 'tight', 'relaxed'). Extract if user mentions fit.",
           },
           gender: {
             type: "string",
@@ -761,18 +756,13 @@ async function enhancedVisualSearchWithAttributes(
   const vectorLiteral =
     "[" + imageEmbedding.map((x) => x.toFixed(6)).join(",") + "]";
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // BUILD WHERE CLAUSE - RELAXED FILTERING (Test 12 Fix)
-  // ═══════════════════════════════════════════════════════════════════════
-
+  // Build WHERE clause with attribute filters
   let whereConditions = [
     `"stock" = 'IN_STOCK'`,
     `"imageEmbedding" IS NOT NULL`,
   ];
 
-  // -------------------------------------------------------------------------
-  // 1. CATEGORY FILTER: SAFE - Always apply
-  // -------------------------------------------------------------------------
+  // Apply category filter from attributes
   if (fashionAttributes.category) {
     const categoryMap = {
       dress: "CLOTHING",
@@ -793,8 +783,6 @@ async function enhancedVisualSearchWithAttributes(
       boots: "FOOTWEAR",
       sandals: "FOOTWEAR",
       heels: "FOOTWEAR",
-      bag: "ACCESSORIES",
-      backpack: "ACCESSORIES",
     };
     const dbCategory =
       categoryMap[fashionAttributes.category.toLowerCase()] || "CLOTHING";
@@ -804,57 +792,36 @@ async function enhancedVisualSearchWithAttributes(
     );
   }
 
-  // -------------------------------------------------------------------------
-  // 2. GENDER FILTER: PERMISSIVE - Ignore "Unisex" (🔥 TEST 12 FIX)
-  // -------------------------------------------------------------------------
+  // Apply gender filter (critical for fashion)
   if (fashionAttributes.gender) {
     const genderLower = fashionAttributes.gender.toLowerCase();
-
-    // 🔥 FIX: Skip "unisex" - it doesn't exist in your database
-    if (genderLower !== "unisex") {
-      // Only filter if gender is strictly 'men' or 'women'
-      if (
-        genderLower === "men" ||
-        genderLower === "women" ||
-        genderLower === "male" ||
-        genderLower === "female"
-      ) {
-        // Map 'male' → 'men', 'female' → 'women'
-        const mappedGender =
-          genderLower === "male"
-            ? "men"
-            : genderLower === "female"
-            ? "women"
-            : genderLower;
-
-        whereConditions.push(`LOWER("specs"->>'gender') = '${mappedGender}'`);
-        console.log(`   👤 Gender filter: ${mappedGender}`);
-      } else {
-        console.log(
-          `   👤 Gender: Skipping "${genderLower}" (ambiguous value)`
-        );
-      }
-    } else {
-      console.log(`   👤 Gender: Skipping "unisex" (not in database)`);
-    }
+    whereConditions.push(`LOWER("specs"->>'gender') = '${genderLower}'`);
+    console.log(`   👤 Gender filter: ${genderLower}`);
   }
 
-  // -------------------------------------------------------------------------
-  // 3. COLOR FILTER: SAFE - Apply if detected
-  // -------------------------------------------------------------------------
+  // Apply color filter
   if (fashionAttributes.color) {
     const colorLower = fashionAttributes.color.toLowerCase();
     whereConditions.push(`LOWER("specs"->>'color') ILIKE '%${colorLower}%'`);
     console.log(`   🎨 Color filter: ${colorLower}`);
   }
 
+  // Apply additional attribute filters
+  if (fashionAttributes.sleeveLength) {
+    const sleeveLower = fashionAttributes.sleeveLength.toLowerCase();
+    whereConditions.push(
+      `LOWER("specs"->>'sleeveLength') ILIKE '%${sleeveLower}%'`
+    );
+    console.log(`   👕 Sleeve filter: ${sleeveLower}`);
+  }
+
+  // Apply user-provided filters
   if (filters.brand) {
     whereConditions.push(
       `LOWER("brand") ILIKE '%${filters.brand.toLowerCase()}%'`
     );
     console.log("   🏷️ Brand filter:", filters.brand);
   }
-
   if (filters.maxPrice) {
     whereConditions.push(`"price" <= ${parseFloat(filters.maxPrice)}`);
     console.log("   💰 Max price filter:", filters.maxPrice);
@@ -862,11 +829,7 @@ async function enhancedVisualSearchWithAttributes(
 
   const whereClause = whereConditions.join(" AND ");
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // EXECUTE VISUAL SEARCH QUERY
-  // ═══════════════════════════════════════════════════════════════════════
-
-  // Get 3x results for re-ranking
+  // Get more results initially for re-ranking
   const query = `
     SELECT
       "title", "price", "storeName", "productUrl", "category",
@@ -883,45 +846,25 @@ async function enhancedVisualSearchWithAttributes(
     console.log("   ✅ Initial visual search completed");
     console.log("   📊 Results found:", results.length);
 
-    // ═══════════════════════════════════════════════════════════════════
-    // RE-RANKING: Combine CLIP similarity + DeepFashion attributes
-    // ═══════════════════════════════════════════════════════════════════
-
+    // Re-rank results based on attribute matching
     if (results.length > 0 && fashionAttributes.category) {
       console.log("\n   🎯 Re-ranking by attribute match scores...");
 
       const reranked = results.map((product) => {
+        // Calculate attribute match score
         let attributeScore = 0;
         let totalWeight = 0;
 
-        // Gender match (weight: 3) - High importance
+        // Gender match (weight: 3)
         if (fashionAttributes.gender && product.specs?.gender) {
-          // Normalize gender for comparison
-          const productGender = product.specs.gender.toLowerCase();
-          const searchGender = fashionAttributes.gender.toLowerCase();
-
-          // Handle gender variants
-          const normalizedProductGender =
-            productGender === "male" || productGender === "boys"
-              ? "men"
-              : productGender === "female" || productGender === "girls"
-              ? "women"
-              : productGender;
-
-          const normalizedSearchGender =
-            searchGender === "male" || searchGender === "boys"
-              ? "men"
-              : searchGender === "female" || searchGender === "girls"
-              ? "women"
-              : searchGender;
-
           const genderMatch =
-            normalizedProductGender === normalizedSearchGender;
+            product.specs.gender.toLowerCase() ===
+            fashionAttributes.gender.toLowerCase();
           if (genderMatch) attributeScore += 3;
           totalWeight += 3;
         }
 
-        // Color match (weight: 3) - High importance
+        // Color match (weight: 3)
         if (fashionAttributes.color && product.specs?.color) {
           const colorMatch = product.specs.color
             .toLowerCase()
@@ -930,7 +873,7 @@ async function enhancedVisualSearchWithAttributes(
           totalWeight += 3;
         }
 
-        // Style/Category match (weight: 2) - Medium importance
+        // Style match (weight: 2)
         if (fashionAttributes.category && product.specs?.type) {
           const styleMatch = product.specs.type
             .toLowerCase()
@@ -939,8 +882,7 @@ async function enhancedVisualSearchWithAttributes(
           totalWeight += 2;
         }
 
-        // Sleeve match (weight: 1.5) - Lower importance
-        // Only used for re-ranking, NOT filtering
+        // Sleeve match (weight: 1.5)
         if (fashionAttributes.sleeveLength && product.specs?.sleeveLength) {
           const sleeveMatch =
             product.specs.sleeveLength.toLowerCase() ===
@@ -949,8 +891,7 @@ async function enhancedVisualSearchWithAttributes(
           totalWeight += 1.5;
         }
 
-        // Pattern match (weight: 1) - Lowest importance
-        // Only used for re-ranking, NOT filtering
+        // Pattern match (weight: 1)
         if (fashionAttributes.pattern && product.specs?.pattern) {
           const patternMatch =
             product.specs.pattern.toLowerCase() ===
@@ -959,20 +900,11 @@ async function enhancedVisualSearchWithAttributes(
           totalWeight += 1;
         }
 
-        // Neckline match (weight: 1) - Lowest importance
-        // Only used for re-ranking, NOT filtering
-        if (fashionAttributes.neckline && product.specs?.neckline) {
-          const necklineMatch =
-            product.specs.neckline.toLowerCase() ===
-            fashionAttributes.neckline.toLowerCase();
-          if (necklineMatch) attributeScore += 1;
-          totalWeight += 1;
-        }
-
-        // Calculate normalized attribute score (0-1)
+        // Calculate normalized attribute score
         const normalizedAttrScore =
           totalWeight > 0 ? attributeScore / totalWeight : 0;
 
+        // Combine visual similarity (70%) + attribute matching (30%)
         const visualSimilarity = parseFloat(product.similarity);
         const combinedScore =
           visualSimilarity * 0.7 + normalizedAttrScore * 0.3;
@@ -984,7 +916,7 @@ async function enhancedVisualSearchWithAttributes(
         };
       });
 
-      // Sort by combined score (descending)
+      // Sort by combined score
       reranked.sort((a, b) => b.combinedScore - a.combinedScore);
 
       console.log("   📊 Top 3 re-ranked results:");
@@ -1002,7 +934,6 @@ async function enhancedVisualSearchWithAttributes(
       return reranked.slice(0, limit);
     }
 
-    // If no re-ranking needed, return top results
     return results.slice(0, limit);
   } catch (error) {
     console.error("   ❌ Enhanced visual search error:", error.message);
@@ -1203,40 +1134,57 @@ function buildModelNumberFilter(modelNumber) {
   return `(${conditions.join(" AND ")})`;
 }
 
-function stemFashionDetail(detail) {
-  if (!detail || typeof detail !== "string") return detail;
-
-  const lower = detail.toLowerCase().trim();
-
-  // Common fashion detail patterns
-  // "studded" → "stud" (matches "studs", "studded")
-  // "ribbed" → "rib" (matches "ribbed", "rib")
-  // "cropped" → "crop" (matches "cropped", "crop")
-  const stemmed = lower
-    .replace(/ded$/, "") // studded → stud
-    .replace(/ed$/, "") // ribbed → ribb, cropped → cropp
-    .replace(/ing$/, ""); // ripping → ripp
-
-  return stemmed;
-}
-
 async function buildPushDownFilters(filters = {}, rawQuery = "") {
-  console.log("\n🔍 [FILTER BUILDER] Building WHERE clause (Hybrid Strategy)");
+  console.log("\n🔍 [FILTER BUILDER] Building WHERE clause (Scalable Mode)");
   console.log("   📥 Input filters:", JSON.stringify(filters, null, 2));
 
   const conditions = [];
 
-  // Always filter by stock
   conditions.push(`"stock" = 'IN_STOCK'`);
   console.log("   📦 Stock filter: ENABLED");
+
+  // 🔥 FIX: Exclude accessories when searching for main products
+  const queryLower = rawQuery.toLowerCase();
+  const isHeadphoneSearch =
+    queryLower.includes("headphone") ||
+    queryLower.includes("earphone") ||
+    queryLower.includes("earbud");
+  const isLaptopSearch =
+    queryLower.includes("laptop") || queryLower.includes("notebook");
+  const isPhoneSearch =
+    queryLower.includes("phone") && !queryLower.includes("case");
+
+  if (isHeadphoneSearch && filters.category === "AUDIO") {
+    // Exclude adapters, cables, transmitters when searching for headphones
+    conditions.push(
+      `LOWER("title") NOT LIKE '%adapter%' AND LOWER("title") NOT LIKE '%cable%' AND LOWER("title") NOT LIKE '%transmitter%' AND LOWER("title") NOT LIKE '%connector%'`
+    );
+    console.log(
+      "   🎧 Headphone search: Excluding adapters, cables, and transmitters"
+    );
+  }
+
+  if (isLaptopSearch && filters.category === "LAPTOPS") {
+    // Exclude bags, cases, stands when searching for laptops
+    conditions.push(
+      `LOWER("title") NOT LIKE '%bag%' AND LOWER("title") NOT LIKE '%case%' AND LOWER("title") NOT LIKE '%stand%' AND LOWER("title") NOT LIKE '%sleeve%'`
+    );
+    console.log("   💻 Laptop search: Excluding bags, cases, and stands");
+  }
+
+  if (isPhoneSearch && filters.category === "MOBILEPHONES") {
+    // Exclude cases, chargers when searching for phones
+    conditions.push(
+      `LOWER("title") NOT LIKE '%case%' AND LOWER("title") NOT LIKE '%charger%' AND LOWER("title") NOT LIKE '%cable%' AND LOWER("title") NOT LIKE '%screen protector%'`
+    );
+    console.log("   📱 Phone search: Excluding cases, chargers, and cables");
+  }
 
   for (const key of Object.keys(filters)) {
     const value = filters[key];
 
-    // Skip null/undefined/empty values
     if (!value || value === null || value === undefined) continue;
 
-    // Handle price filters
     if (key === "minPrice" || key === "min_price") {
       const priceValue = parseFloat(value);
       if (priceValue > 0) {
@@ -1244,103 +1192,93 @@ async function buildPushDownFilters(filters = {}, rawQuery = "") {
         conditions.push(condition);
         console.log(`   💰 Min price: ${condition}`);
       }
-      continue;
-    }
-
-    if (key === "maxPrice" || key === "max_price") {
+    } else if (key === "maxPrice" || key === "max_price") {
       const priceValue = parseFloat(value);
       if (priceValue > 0 && priceValue < Infinity) {
         const condition = `"price" <= ${priceValue}`;
         conditions.push(condition);
         console.log(`   💰 Max price: ${condition}`);
       }
-      continue;
-    }
-
-    // Handle store name
-    if (key === "storeName" || key === "store_name") {
+    } else if (key === "category") {
+      const condition = `"category" = '${value.toUpperCase()}'`;
+      conditions.push(condition);
+      console.log(`   📂 Category: ${condition}`);
+    } else if (key === "brand") {
+      const brandLower = value.toLowerCase().replace(/'/g, "''");
+      const condition = `LOWER("brand") ILIKE '%${brandLower}%'`;
+      conditions.push(condition);
+      console.log(`   🏷️  Brand: ${condition}`);
+    } else if (key === "storeName" || key === "store_name") {
       const condition = `"storeName" = '${value.toUpperCase()}'`;
       conditions.push(condition);
       console.log(`   🏪 Store: ${condition}`);
-      continue;
-    }
-
-    // Handle model number with word-based matching
-    if (key === "modelNumber" || key === "model_number") {
+    } else if (key === "modelNumber" || key === "model_number") {
+      // 🔥 FIX: Use word-based matching for model numbers
       const modelFilter = buildModelNumberFilter(value);
       if (modelFilter) {
         conditions.push(modelFilter);
         console.log(`   🔢 Model (word-based): ${modelFilter}`);
       }
-      continue;
-    }
+    } else if (key !== "query" && key !== "sort") {
+      // All other keys are specs (ignore 'sort' here)
+      let specValue = value.toString().toLowerCase().replace(/'/g, "''");
 
-    // Skip query and sort (not filters)
-    if (key === "query" || key === "sort") continue;
-
-    // ═══════════════════════════════════════════════════════════════════
-    // 🔥 NEW: Configuration-Driven Hybrid Filtering
-    // ═══════════════════════════════════════════════════════════════════
-
-    const strategy = ATTRIBUTE_STRATEGIES[key];
-
-    if (strategy) {
-      const cleanValue = value.toString().toLowerCase().replace(/'/g, "''");
-
-      if (strategy.type === "strict") {
-        // STRICT: Use only the specified column
-        const field = strategy.fields[0];
-        const operator = strategy.operator || "=";
-
-        let condition;
-        if (operator === "ILIKE") {
-          condition = `LOWER("${field}") ILIKE '%${cleanValue}%'`;
-        } else {
-          condition = `LOWER("${field}") = '${cleanValue}'`;
-        }
-
+      if (key === "gender") {
+        const condition = `LOWER("specs"->>'gender') = '${specValue}'`;
         conditions.push(condition);
-        console.log(`   🎯 STRICT [${key}]: ${condition}`);
-      } else if (strategy.type === "hybrid") {
-        // HYBRID: Check multiple fields with OR logic
-
-        // Apply stemming if enabled (for details like "studded" → "stud")
-        const searchValue = strategy.stemming
-          ? stemFashionDetail(cleanValue)
-          : cleanValue;
-
-        const orConditions = strategy.fields.map((field) => {
-          // Handle nested JSON fields (specs.material)
-          if (field.includes(".")) {
-            const [col, keyName] = field.split(".");
-            if (strategy.operator === "=") {
-              return `LOWER("${col}"->>'${keyName}') = '${searchValue}'`;
-            } else {
-              return `LOWER("${col}"->>'${keyName}') ILIKE '%${searchValue}%'`;
-            }
-          } else {
-            // Handle regular columns (title, description)
-            return `LOWER("${field}") ILIKE '%${searchValue}%'`;
-          }
-        });
-
-        const condition = `(${orConditions.join(" OR ")})`;
+        console.log(`   👤 EXACT gender: ${condition}`);
+      } else if (key === "type" || key === "style") {
+        const condition = `LOWER("specs"->>'type') ILIKE '%${specValue}%'`;
         conditions.push(condition);
-
-        if (strategy.stemming) {
-          console.log(
-            `   🔄 HYBRID [${key}] (stemmed "${cleanValue}" → "${searchValue}"): ${condition}`
-          );
-        } else {
-          console.log(`   🔄 HYBRID [${key}]: ${condition}`);
-        }
+        console.log(`   👕 FLEXIBLE type [${key}]: ${condition}`);
+      } else if (key === "material") {
+        // 🔥 FIX #2: Add material filter with ILIKE for partial matches
+        const condition = `LOWER("specs"->>'material') ILIKE '%${specValue}%'`;
+        conditions.push(condition);
+        console.log(`   🧵 MATERIAL filter: ${condition}`);
+      } else if (key === "detail") {
+        // 🔥 FIX #3: Add detail filter with stemming support
+        // Simple stemmer: "studded" -> "stud", "ribbed" -> "rib"
+        const stemmed = specValue.replace(/ded$|ed$|ing$/, "");
+        const condition = `(LOWER("title") ILIKE '%${stemmed}%' OR LOWER("specs"->>'detail') ILIKE '%${stemmed}%')`;
+        conditions.push(condition);
+        console.log(
+          `   ✨ DETAIL filter (stemmed "${specValue}" -> "${stemmed}"): ${condition}`
+        );
+      } else if (key === "sleeveLength") {
+        // Fashion spec: sleeve length (critical for fashion queries)
+        const condition = `LOWER("specs"->>'sleeveLength') ILIKE '%${specValue}%'`;
+        conditions.push(condition);
+        console.log(`   👕 SLEEVE LENGTH filter: ${condition}`);
+      } else if (key === "pattern") {
+        // Fashion spec: pattern
+        const condition = `LOWER("specs"->>'pattern') ILIKE '%${specValue}%'`;
+        conditions.push(condition);
+        console.log(`   🔲 PATTERN filter: ${condition}`);
+      } else if (key === "neckline") {
+        // Fashion spec: neckline
+        const condition = `LOWER("specs"->>'neckline') ILIKE '%${specValue}%'`;
+        conditions.push(condition);
+        console.log(`   👔 NECKLINE filter: ${condition}`);
+      } else if (key === "length") {
+        // Fashion spec: garment length
+        const condition = `LOWER("specs"->>'length') ILIKE '%${specValue}%'`;
+        conditions.push(condition);
+        console.log(`   📏 LENGTH filter: ${condition}`);
+      } else if (key === "fit") {
+        // Fashion spec: fit style
+        const condition = `LOWER("specs"->>'fit') ILIKE '%${specValue}%'`;
+        conditions.push(condition);
+        console.log(`   👖 FIT filter: ${condition}`);
+      } else if (EXACT_MATCH_SPECS.includes(key)) {
+        const condition = `LOWER("specs"->>'${key}') = '${specValue}'`;
+        conditions.push(condition);
+        console.log(`   🎯 EXACT spec [${key}]: ${condition}`);
+      } else {
+        const condition = `LOWER("specs"->>'${key}') ILIKE '%${specValue}%'`;
+        conditions.push(condition);
+        console.log(`   🔄 FLEXIBLE spec [${key}]: ${condition}`);
       }
-    } else {
-      // Fallback for unknown attributes (specs)
-      const specValue = value.toString().toLowerCase().replace(/'/g, "''");
-      const condition = `LOWER("specs"->>'${key}') ILIKE '%${specValue}%'`;
-      conditions.push(condition);
-      console.log(`   📝 SPEC [${key}]: ${condition}`);
     }
   }
 
@@ -1981,14 +1919,22 @@ async function fashionHybridSearch(
     return finalResults;
   }
 
-  console.log("   🔄 Fashion Stage 2 (drop color)...");
+  console.log("   🔄 Fashion Stage 2 (drop only color + pattern)...");
 
+  // Stage 2: Drop only color and pattern (least critical specs)
+  // PRESERVE: sleeveLength, material, detail, neckline, length, fit (more critical)
   const stage2Filters = {
     category: filters.category,
     brand: filters.brand,
     gender: filters.gender,
     style: filters.style,
     size: filters.size,
+    sleeveLength: filters.sleeveLength, // PRESERVE
+    material: filters.material, // PRESERVE
+    detail: filters.detail, // PRESERVE
+    neckline: filters.neckline, // PRESERVE
+    length: filters.length, // PRESERVE
+    fit: filters.fit, // PRESERVE
     minPrice: filters.minPrice || filters.min_price,
     maxPrice: filters.maxPrice || filters.max_price,
     storeName: filters.storeName || filters.store_name,
@@ -2006,25 +1952,102 @@ async function fashionHybridSearch(
     );
     const finalResults = fusedResults.slice(0, limit);
     console.log(
-      "   ✅ Fashion Stage 2 (no color):",
+      "   ✅ Fashion Stage 2 (no color/pattern):",
       finalResults.length,
       "results"
     );
     return finalResults;
   }
 
-  console.log("   🔄 Fashion Stage 3 (vibe check - gender + category only)...");
+  console.log("   🔄 Fashion Stage 3 (drop detail + neckline + fit)...");
 
+  // Stage 3: Drop detail, neckline, and fit (moderate importance)
+  // PRESERVE: sleeveLength, material, length (most critical for fit)
   const stage3Filters = {
     category: filters.category,
+    brand: filters.brand,
     gender: filters.gender,
+    style: filters.style,
+    size: filters.size,
+    sleeveLength: filters.sleeveLength, // STILL PRESERVED
+    material: filters.material, // STILL PRESERVED
+    length: filters.length, // STILL PRESERVED
     minPrice: filters.minPrice || filters.min_price,
     maxPrice: filters.maxPrice || filters.max_price,
+    storeName: filters.storeName || filters.store_name,
   };
 
   [vectorResults, fulltextResults] = await Promise.all([
     vectorSearch(vectorLiteral, stage3Filters, limit * 4, searchQuery),
     fulltextSearchFashion(searchQuery, stage3Filters, limit * 4),
+  ]);
+
+  if (vectorResults.length >= 5 || fulltextResults.length >= 5) {
+    const fusedResults = reciprocalRankFusionFashion(
+      vectorResults,
+      fulltextResults
+    );
+    const finalResults = fusedResults.slice(0, limit);
+    console.log(
+      "   ✅ Fashion Stage 3 (no detail/neckline/fit):",
+      finalResults.length,
+      "results"
+    );
+    return finalResults;
+  }
+
+  console.log(
+    "   🔄 Fashion Stage 4 (drop material + length, keep sleeveLength)..."
+  );
+
+  // Stage 4: Drop material and length
+  // PRESERVE: sleeveLength (CRITICAL - user explicitly requested)
+  const stage4Filters = {
+    category: filters.category,
+    brand: filters.brand,
+    gender: filters.gender,
+    style: filters.style,
+    size: filters.size,
+    sleeveLength: filters.sleeveLength, // STILL PRESERVED
+    minPrice: filters.minPrice || filters.min_price,
+    maxPrice: filters.maxPrice || filters.max_price,
+    storeName: filters.storeName || filters.store_name,
+  };
+
+  [vectorResults, fulltextResults] = await Promise.all([
+    vectorSearch(vectorLiteral, stage4Filters, limit * 4, searchQuery),
+    fulltextSearchFashion(searchQuery, stage4Filters, limit * 4),
+  ]);
+
+  if (vectorResults.length >= 5 || fulltextResults.length >= 5) {
+    const fusedResults = reciprocalRankFusionFashion(
+      vectorResults,
+      fulltextResults
+    );
+    const finalResults = fusedResults.slice(0, limit);
+    console.log(
+      "   ✅ Fashion Stage 4 (keep sleeveLength):",
+      finalResults.length,
+      "results"
+    );
+    return finalResults;
+  }
+
+  console.log(
+    "   🔄 Fashion Stage 5 (final fallback - gender + category + style only)..."
+  );
+
+  const stage5Filters = {
+    category: filters.category,
+    gender: filters.gender,
+    style: filters.style,
+    minPrice: filters.minPrice || filters.min_price,
+    maxPrice: filters.maxPrice || filters.max_price,
+  };
+
+  [vectorResults, fulltextResults] = await Promise.all([
+    vectorSearch(vectorLiteral, stage5Filters, limit * 4, searchQuery),
+    fulltextSearchFashion(searchQuery, stage5Filters, limit * 4),
   ]);
 
   const fusedResults = reciprocalRankFusionFashion(
@@ -2033,7 +2056,7 @@ async function fashionHybridSearch(
   );
   const finalResults = fusedResults.slice(0, limit);
   console.log(
-    "   ✅ Fashion Stage 3 (vibe check):",
+    "   ✅ Fashion Stage 5 (final vibe check):",
     finalResults.length,
     "results"
   );
@@ -2342,121 +2365,11 @@ app.post("/analyze-image", upload.single("image"), async (req, res) => {
   }
 });
 
-async function extractSearchParametersHighIQ(query, categoryHint = "general") {
-  console.log(
-    `\n🧠 [HIGH-IQ EXTRACTION] Using ${EXTRACTION_MODEL} for complex parameter extraction...`
-  );
-  console.log(`   Query: "${query}"`);
-  console.log(`   Domain hint: ${categoryHint}`);
-
-  try {
-    // Build domain-specific extraction guidance
-    let domainGuidance = "";
-
-    if (categoryHint === "fashion") {
-      domainGuidance = `
-FASHION EXTRACTION RULES:
-- AGGRESSIVELY extract 'material' (sateen, flannel, leather, denim, cotton, silk)
-- AGGRESSIVELY extract 'detail' (studded, ribbed, cropped, ripped, embroidered, lace)
-- Extract 'style' (t-shirt, jeans, dress, pants, shorts, hoodie)
-- Extract 'gender' (men, women, boys, girls, unisex)
-- Extract 'color' if mentioned
-- Extract 'size' if mentioned
-
-CRITICAL EXAMPLES:
-"flannel trousers" → material: "flannel", style: "trousers"
-"studded t-shirt" → detail: "studded", style: "t-shirt"
-"sateen lace top" → material: "sateen", detail: "lace", style: "top"
-"black ribbed sweater" → color: "black", detail: "ribbed", style: "sweater"
-`;
-    } else if (categoryHint === "electronics") {
-      domainGuidance = `
-ELECTRONICS EXTRACTION RULES:
-- Extract 'brand' (apple, samsung, sony, dell, hp)
-- Extract 'model_number' (full model string: "iphone 15", "galaxy s24")
-- Extract 'variant' (pro, pro_max, +, ultra, mini, air, base)
-- Extract 'storage' (256gb, 512gb, 1tb)
-- Extract 'ram' if query contains "RAM" or "memory"
-- Extract 'color' if mentioned
-
-CRITICAL EXAMPLES:
-"iPhone 15 Pro Max 256GB" → brand: "apple", model_number: "iphone 15", variant: "pro_max", storage: "256gb"
-"Samsung S24 Plus" → brand: "samsung", model_number: "galaxy s24+", variant: "+"
-`;
-    } else {
-      domainGuidance = `
-GENERAL EXTRACTION RULES:
-- Extract all mentioned attributes
-- Focus on specifics (materials, details, specs)
-- Ignore filler words ("I want", "show me", "looking for")
-`;
-    }
-
-    const response = await openai.chat.completions.create({
-      model: EXTRACTION_MODEL,
-      messages: [
-        {
-          role: "system",
-          content: `You are a precise SQL parameter extractor for an e-commerce search system.
-
-Your ONLY job is to extract structured search parameters from natural language queries.
-
-${domainGuidance}
-
-GENERAL RULES:
-1. Extract EVERY specific attribute mentioned (don't ignore materials, details, specs)
-2. Convert casual language: "men's" → gender: "men", "women's" → gender: "women"
-3. Ignore filler words: "I want", "show me", "find me", "looking for"
-4. Use lowercase for all values
-5. Be aggressive about extraction - if user mentions "flannel", extract it as material
-6. Be aggressive about extraction - if user mentions "studded", extract it as detail
-
-OUTPUT FORMAT:
-Return parameters that match the 'search_product_database' tool schema.
-Include the original query in the 'query' field.
-
-IMPORTANT:
-- If material is mentioned (flannel, sateen, leather, etc.), ALWAYS extract it
-- If detail is mentioned (studded, ribbed, cropped, etc.), ALWAYS extract it
-- These are MANDATORY filters, not optional suggestions`,
-        },
-        {
-          role: "user",
-          content: query,
-        },
-      ],
-      tools: [TOOLS[0]], // Use search_product_database tool schema
-      tool_choice: {
-        type: "function",
-        function: { name: "search_product_database" },
-      },
-      temperature: 0, // Deterministic extraction
-    });
-
-    const toolCall = response.choices[0].message.tool_calls[0];
-    const args = JSON.parse(toolCall.function.arguments);
-
-    console.log("   ✅ High-IQ extraction completed");
-    console.log("   📊 Extracted parameters:", JSON.stringify(args, null, 2));
-    console.log("   💰 Tokens used:", response.usage?.total_tokens);
-
-    return args;
-  } catch (error) {
-    console.error("   ❌ High-IQ extraction failed:", error.message);
-    console.log("   ⚠️  Falling back to basic query");
-
-    // Fallback: return minimal parameters
-    return {
-      query: query,
-    };
-  }
-}
-
 app.post("/chat", async (req, res) => {
   let { query: message, sessionId } = req.body;
 
   console.log("\n" + "█".repeat(80));
-  console.log("📨 NEW CHAT REQUEST (SPECIALIST ARCHITECTURE)");
+  console.log("📨 NEW CHAT REQUEST");
   console.log("█".repeat(80));
   console.log("User message:", message);
 
@@ -2474,167 +2387,66 @@ app.post("/chat", async (req, res) => {
   }
 
   try {
-    // ═══════════════════════════════════════════════════════════════════
-    // PHASE 1: CLASSIFY INTENT (gpt-4o-mini - cheap & fast)
-    // ═══════════════════════════════════════════════════════════════════
-    console.log("\n🔍 [PHASE 1] Classifying query intent...");
-
     const history = await getMemory(sessionId);
-    console.log("   📚 Chat history:", history.length, "messages");
+    console.log("📚 Chat history:", history.length, "messages");
 
-    // Import classifyQueryWithLLM from dynamicprompt.js
-    const { classifyQueryWithLLM } = await import("./dynamicPrompt.js");
-    const classification = await classifyQueryWithLLM(message);
-
-    console.log(
-      "   ✅ Classification:",
-      classification.domain,
-      "/",
-      classification.requestType
-    );
-
-    let products = [];
-    let categoryType = "unknown";
-    let searchExecuted = false;
-
-    // ═══════════════════════════════════════════════════════════════════
-    // PHASE 2: HIGH-IQ EXTRACTION (gpt-4o - ONLY for product searches)
-    // ═══════════════════════════════════════════════════════════════════
-
-    if (classification.requestType === "product_search") {
-      console.log(
-        "\n🚀 [PHASE 2] Product search detected - Activating High-IQ Extractor"
-      );
-      console.log(
-        `   💰 Cost optimization: Using ${EXTRACTION_MODEL} for extraction only`
-      );
-
-      // A. Extract parameters using GPT-4o (stateless, focused)
-      const searchArgs = await extractSearchParametersHighIQ(
-        message,
-        classification.domain
-      );
-
-      // B. Execute database search immediately
-      console.log("\n🔍 [PHASE 2B] Executing database search...");
-      const searchResult = await executeSearchDatabase(searchArgs);
-
-      if (searchResult.success) {
-        products = searchResult.products || [];
-        categoryType = searchResult.categoryType || "unknown";
-        searchExecuted = true;
-
-        console.log("   ✅ Search completed:");
-        console.log("      Products found:", products.length);
-        console.log("      Category type:", categoryType);
-      } else {
-        console.log("   ⚠️  Search returned no results");
-      }
-
-      // C. Build conversation history with injected tool result
-      // This makes gpt-4o-mini think the tool was already called
-      // So it just has to write a friendly response about the results
-      history.push({ role: "user", content: message });
-
-      if (searchExecuted) {
-        const toolCallId = `call_highiq_${Date.now()}`;
-
-        // Add assistant message with tool call
-        history.push({
-          role: "assistant",
-          content: null,
-          tool_calls: [
-            {
-              id: toolCallId,
-              type: "function",
-              function: {
-                name: "search_product_database",
-                arguments: JSON.stringify(searchArgs),
-              },
-            },
-          ],
-        });
-
-        // Add tool result
-        history.push({
-          role: "tool",
-          tool_call_id: toolCallId,
-          content: JSON.stringify(searchResult),
-        });
-      }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════
-    // PHASE 3: CONVERSATIONAL RESPONSE (gpt-4o-mini - cheap output)
-    // ═══════════════════════════════════════════════════════════════════
-    console.log("\n💬 [PHASE 3] Generating conversational response...");
-    console.log(
-      `   💰 Cost optimization: Using ${CONVERSATION_MODEL} for response generation`
-    );
-
-    // Get dynamic system prompt
+    // 🔥 FIX #5: USE DYNAMIC SYSTEM PROMPT WITH CURRENT DATE
     const dynamicPrompt = await getDynamicSystemPrompt(message);
 
-    // Build messages array
     const messages = [
       {
         role: "system",
         content: dynamicPrompt,
       },
-      ...history.map((m) => ({
-        role: m.role,
-        content: m.content,
-        ...(m.tool_calls && { tool_calls: m.tool_calls }),
-        ...(m.tool_call_id && { tool_call_id: m.tool_call_id }),
-      })),
+      ...history.map((m) => ({ role: m.role, content: m.content })),
+      { role: "user", content: message },
     ];
 
-    // If search wasn't executed, add user message normally
-    if (!searchExecuted) {
-      messages.push({ role: "user", content: message });
-    }
-
-    // Generate response with gpt-4o-mini
+    console.log("🤖 Calling OpenAI API...");
     const completion = await openai.chat.completions.create({
-      model: CONVERSATION_MODEL,
+      model: LLM_MODEL,
       messages,
-      tools: TOOLS, // Keep tools available for web search, greetings, etc.
+      tools: TOOLS,
       tool_choice: "auto",
-      temperature: 0.7,
+      temperature: 0.1,
     });
 
     const responseMessage = completion.choices[0].message;
     let finalResponse = responseMessage.content || "";
+    let products = [];
+    let categoryType = "unknown";
 
-    console.log("   📥 Response generated");
-    console.log("   💰 Tokens used:", completion.usage?.total_tokens);
+    console.log("📥 OpenAI response received");
+    console.log(
+      "   Tool calls:",
+      responseMessage.tool_calls ? responseMessage.tool_calls.length : 0
+    );
 
-    // ═══════════════════════════════════════════════════════════════════
-    // PHASE 4: HANDLE ANY ADDITIONAL TOOL CALLS (web search, etc.)
-    // ═══════════════════════════════════════════════════════════════════
-
-    if (responseMessage.tool_calls && !searchExecuted) {
-      console.log("\n🔧 [PHASE 4] Handling additional tool calls...");
-      console.log("   Tool calls:", responseMessage.tool_calls.length);
-
+    if (responseMessage.tool_calls) {
       const toolResults = [];
 
       for (const toolCall of responseMessage.tool_calls) {
         const functionName = toolCall.function.name;
         const args = JSON.parse(toolCall.function.arguments);
 
-        console.log(`   Executing: ${functionName}`);
+        console.log("\n🔧 Executing tool:", functionName);
+        console.log("   Arguments:", JSON.stringify(args, null, 2));
 
         let result;
         if (functionName === "search_product_database") {
           result = await executeSearchDatabase(args);
           if (result.success && result.products && result.products.length > 0) {
+            // 🔥 FIX: Merge products instead of overwriting
             products = [...products, ...result.products];
+            // Only update categoryType if it's currently unknown or handle mixed types
             if (categoryType === "unknown") {
               categoryType = result.categoryType;
             } else if (categoryType !== result.categoryType) {
+              // Handle mixed categories (e.g., iPhone + Headphones)
               categoryType = "mixed";
             }
+            console.log("✅ Products merged:", products.length);
+            console.log("✅ Category type:", categoryType);
           }
         } else if (functionName === "search_web") {
           result = await executeSearchWeb(args);
@@ -2647,38 +2459,41 @@ app.post("/chat", async (req, res) => {
         });
       }
 
-      // Generate final response with tool results
       const followUpMessages = [...messages, responseMessage, ...toolResults];
 
+      console.log("🤖 Generating final response...");
       const finalCompletion = await openai.chat.completions.create({
-        model: CONVERSATION_MODEL,
+        model: LLM_MODEL,
         messages: followUpMessages,
         temperature: 0.7,
       });
 
       finalResponse = finalCompletion.choices[0].message.content;
+
+      if (finalResponse) {
+        finalResponse = finalResponse
+          .replace(/\*\*/g, "")
+          .replace(/\*/g, "")
+          .replace(/###/g, "")
+          .trim();
+      }
+
+      console.log("✅ Final response generated");
     }
 
-    // Clean up response formatting
-    if (finalResponse) {
+    if (!responseMessage.tool_calls && finalResponse) {
       finalResponse = finalResponse
         .replace(/\*\*/g, "")
         .replace(/\*/g, "")
-        .replace(/###/g, "")
         .trim();
     }
 
-    // Save to memory
     await saveToMemory(sessionId, "user", message);
     await saveToMemory(sessionId, "assistant", finalResponse);
 
     console.log("\n📤 SENDING RESPONSE");
     console.log("   Products:", products.length);
     console.log("   Category type:", categoryType);
-    console.log(
-      "   Architecture:",
-      searchExecuted ? "High-IQ Extraction (GPT-4o)" : "Standard (GPT-4o-mini)"
-    );
     console.log("█".repeat(80) + "\n");
 
     return res.json({
@@ -2692,6 +2507,14 @@ app.post("/chat", async (req, res) => {
     console.error("❌ [Chat Error]", error);
     return res.status(500).json({ error: "Server error: " + error.message });
   }
+});
+
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    message:
+      "Omnia AI - Dual Pipeline + Intelligent Sorting + Smart Deduplication",
+  });
 });
 
 app.listen(PORT, () => {

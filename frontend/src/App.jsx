@@ -726,7 +726,46 @@ function ProductModal({ product, onClose, onAsk }) {
   const handleSayMoreSubmit = (e) => {
     e.preventDefault();
     if (sayMoreInput.trim()) {
-      onAsk(`About ${product.title}: ${sayMoreInput}`);
+      // Build a context-rich query with product details
+      // This helps the AI understand what product the user is asking about
+      const productContext = {
+        title: product.title,
+        brand: product.brand,
+        category: product.category,
+        price: product.price,
+        specs: product.specs || {},
+      };
+
+      // Extract key identifiers for better filtering
+      const contextParts = [];
+
+      // Add brand + model for electronics
+      if (product.brand) {
+        contextParts.push(product.brand);
+      }
+
+      // Add category context
+      if (product.category === "MOBILEPHONES") {
+        contextParts.push("phone");
+      } else if (product.category === "LAPTOPS") {
+        contextParts.push("laptop");
+      } else if (product.category === "CLOTHING") {
+        contextParts.push("clothing");
+      } else if (product.category === "FOOTWEAR") {
+        contextParts.push("shoes");
+      }
+
+      // Add model number if available
+      if (product.specs?.model || product.specs?.variant) {
+        const modelPart = product.specs.model || product.specs.variant;
+        contextParts.push(modelPart);
+      }
+
+      // Build the enhanced query
+      const contextString = contextParts.join(" ");
+      const enhancedQuery = `I'm looking at ${product.title}. ${sayMoreInput}. Show me similar ${contextString} products.`;
+
+      onAsk(enhancedQuery);
       setSayMoreInput("");
       onClose();
     }
