@@ -1,3558 +1,2798 @@
 {
-  "typeNormalization": {},
-  "titleNormalization": {},
   "categoryDetection": {
-    "tapered 2030 d-krooley joggjeans_Men/Denim/JoggJeans": {
+    "tapered 2030 d-krooley joggjeans": {
       "category": "CLOTHING",
-      "core_name": "tapered 2030 d-krooley joggjeans",
       "specs": {
         "type": "joggjeans",
-        "size": "36",
-        "gender": "men",
-        "color": "medium blue",
-        "material": "",
         "fit": "relaxed fit",
+        "rise": "mid rise",
+        "material": "denim",
         "pattern": "solid",
-        "wash": "medium wash",
+        "wash": "medium blue wash",
+        "style": "casual",
+        "gender": "men",
         "sku": "8059038848766",
-        "currency": "KWD",
-        "param": "size:36|gender:male",
         "season": "aw25"
       }
     },
-    "slim 2060 d-strukt joggjeans_Men/Denim/JoggJeans": {
+    "slim 2060 d-strukt joggjeans": {
       "category": "CLOTHING",
-      "core_name": "slim 2060 d-strukt joggjeans",
       "specs": {
         "type": "joggjeans",
-        "size": "40",
-        "gender": "men",
-        "color": "dark blue",
-        "material": "",
         "fit": "slim fit",
-        "pattern": "",
-        "wash": "dark wash",
-        "sku": "8052105950690",
-        "currency": "KWD",
-        "param": "size:40|gender:male",
-        "season": "aw25"
-      }
-    },
-    "skinny jeans - 1984 slandy-high_Men/Denim": {
-      "category": "CLOTHING",
-      "core_name": "skinny jeans 1984 slandy-high",
-      "specs": {
-        "type": "jeans",
-        "size": "26",
-        "gender": "women",
-        "color": "black",
+        "rise": "mid rise",
         "material": "denim",
-        "fit": "skinny",
+        "pattern": "solid",
+        "wash": "dark wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8052105950690",
+        "season": "aw25"
+      }
+    },
+    "skinny jeans - 1984 slandy-high": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "skinny fit",
+        "rise": "high rise",
+        "material": "denim",
         "pattern": "solid",
         "wash": "black wash",
+        "style": "casual",
+        "gender": "women",
         "sku": "8051385444578",
-        "currency": "KWD",
-        "param": "size:26|gender:female",
         "season": "aw25"
       }
     },
-    "skinny jeans - 2017 slandy_Men/Denim": {
+    "skinny jeans - 2017 slandy": {
       "category": "CLOTHING",
-      "core_name": "skinny jeans slandy",
       "specs": {
         "type": "jeans",
-        "size": "27",
-        "gender": "women",
-        "color": "black",
-        "material": "stretch denim",
-        "fit": "skinny",
+        "fit": "skinny fit",
+        "rise": "mid rise",
+        "material": "denim",
         "pattern": "solid",
         "wash": "black wash",
+        "style": "casual",
+        "gender": "women",
         "sku": "8051385444943",
-        "currency": "KWD",
-        "param": "size:27|gender:female",
         "season": "aw25"
       }
     },
-    "bootcut jeans - 1969 d-ebbey_Men/Denim": {
+    "bootcut jeans - 1969 d-ebbey": {
       "category": "CLOTHING",
-      "core_name": "bootcut 1969 d-ebbey jeans",
       "specs": {
         "type": "jeans",
-        "size": "27",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "medium blue wash",
+        "style": "casual",
         "gender": "women",
-        "color": "medium blue",
-        "material": "stretch denim",
-        "fit": "bootcut",
-        "pattern": "solid",
-        "wash": "medium wash",
         "sku": "8058992623532",
-        "currency": "KWD",
-        "param": "size:27|gender:female",
         "season": "aw25"
       }
     },
-    "three-pack of v-neck t-shirts_women/New Arrivals/Loungewear": {
+    "three-pack of v-neck t-shirts": {
       "category": "CLOTHING",
-      "core_name": "v-neck t-shirt",
       "specs": {
         "type": "t-shirt",
-        "size": "xl",
-        "gender": "men",
-        "color": "not specified",
-        "material": "cotton",
         "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "not specified",
-        "sku": "8059038839474",
-        "currency": "KWD",
-        "param": "size:XL|gender:male",
-        "season": "aw25"
-      }
-    },
-    "three-pack crew-neck t-shirts_women/New Arrivals/Loungewear": {
-      "category": "CLOTHING",
-      "core_name": "three-pack crew-neck t-shirt",
-      "specs": {
-        "type": "t-shirt",
-        "size": "m",
-        "gender": "men",
-        "color": "white",
+        "rise": "",
         "material": "cotton",
-        "fit": "regular fit",
         "pattern": "solid",
         "wash": "",
-        "sku": "8059038790959",
-        "currency": "KWD",
-        "param": "size:M|gender:male",
-        "season": "aw25"
-      }
-    },
-    "regular 2030 d-krooley joggjeans_Men/Denim/JoggJeans": {
-      "category": "CLOTHING",
-      "core_name": "regular 2030 d-krooley joggjeans",
-      "specs": {
-        "type": "joggjeans",
-        "size": "32",
+        "style": "casual",
         "gender": "men",
-        "color": "gray",
-        "material": "",
-        "fit": "regular fit",
-        "pattern": "ripped",
-        "wash": "gray wash",
-        "sku": "8058992728022",
-        "currency": "KWD",
-        "param": "size:32|gender:male",
+        "sku": "8059038839443",
         "season": "aw25"
       }
     },
-    "cropped sweatshirt with cut-out logo_women/Apparel/Sweatshirts & Hoodies": {
+    "three-pack crew-neck t-shirts": {
       "category": "CLOTHING",
-      "core_name": "cropped sweatshirt with cut-out logo",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8059038790959",
+        "season": "aw25"
+      }
+    },
+    "cropped sweatshirt with cut-out logo": {
+      "category": "CLOTHING",
       "specs": {
         "type": "sweatshirt",
-        "size": "xs",
+        "fit": "slim fit",
+        "rise": "n/a",
+        "material": "organic cotton|recycled polyester",
+        "pattern": "solid",
+        "wash": "n/a",
+        "style": "casual",
         "gender": "women",
-        "color": "",
-        "material": "organic cotton, recycled polyester",
-        "fit": "regular fit",
-        "pattern": "",
-        "wash": "",
         "sku": "8059038588464",
-        "currency": "KWD",
-        "param": "size:XS|gender:female",
         "season": "aw25"
       }
     },
-    "faded cargo pants in stretch cotton_women/Apparel/Trousers and Shorts": {
+    "regular 2030 d-krooley joggjeans": {
       "category": "CLOTHING",
-      "core_name": "faded cargo pants",
+      "specs": {
+        "type": "joggjeans",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "distressed",
+        "wash": "grey wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8058992728022",
+        "season": "aw25"
+      }
+    },
+    "faded cargo pants in stretch cotton": {
+      "category": "CLOTHING",
       "specs": {
         "type": "cargo pants",
-        "size": "46",
-        "gender": "men",
-        "color": "faded",
-        "material": "stretch cotton",
         "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "faded",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "faded",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
         "sku": "8058992043446",
-        "currency": "KWD",
-        "param": "size:46|gender:male",
         "season": "aw25"
       }
     },
-    "sweatshirt with distressed flocked logo_women/New Arrivals/Sweatshirts": {
+    "sweatshirt with distressed flocked logo": {
       "category": "CLOTHING",
-      "core_name": "distressed sweatshirt",
       "specs": {
         "type": "sweatshirt",
-        "size": "xxl",
-        "gender": "men",
-        "color": "unknown",
-        "material": "cotton",
         "fit": "relaxed fit",
+        "rise": "",
+        "material": "cotton",
         "pattern": "distressed",
-        "wash": "unknown",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
         "sku": "8055055037190",
-        "currency": "KWD",
-        "param": "size:XXL|gender:male",
         "season": "aw25"
       }
     },
-    "sweat shorts with bleached logo_women/Apparel/Trousers and Shorts": {
+    "sweat shorts with bleached logo": {
       "category": "CLOTHING",
-      "core_name": "sweat shorts",
       "specs": {
         "type": "shorts",
-        "size": "m",
-        "gender": "men",
-        "color": "black",
-        "material": "cotton",
         "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
         "pattern": "solid",
         "wash": "",
+        "style": "casual",
+        "gender": "men",
         "sku": "8055055035806",
-        "currency": "KWD",
-        "param": "size:M|gender:male",
         "season": "aw25"
       }
     },
-    "bandeau top with oval d plaque_women/Apparel/T-shirts and Tops": {
+    "reverse-print cotton jumper": {
       "category": "CLOTHING",
-      "core_name": "bandeau top",
+      "specs": {
+        "type": "jumper",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8059038680571",
+        "season": "aw25"
+      }
+    },
+    "bandeau top with oval d plaque": {
+      "category": "CLOTHING",
       "specs": {
         "type": "bandeau top",
-        "size": "m",
-        "gender": "women",
-        "color": "",
-        "material": "viscose",
         "fit": "slim fit",
-        "pattern": "",
-        "wash": "",
-        "sku": "8059038802690",
-        "currency": "KWD",
-        "param": "size:M|gender:female",
-        "season": "aw25"
-      }
-    },
-    "reverse-print cotton jumper_women/New Arrivals/Sweatshirts": {
-      "category": "CLOTHING",
-      "core_name": "reverse-print cotton jumper",
-      "specs": {
-        "type": "sweater",
-        "size": "xl",
-        "gender": "men",
-        "color": "unknown",
-        "material": "cotton",
-        "fit": "regular fit",
+        "rise": "",
+        "material": "viscose blend",
         "pattern": "solid",
-        "wash": "unknown",
-        "sku": "8059038680571",
-        "currency": "KWD",
-        "param": "size:XL|gender:male",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8059038802690",
         "season": "aw25"
       }
     },
-    "dégradé padded bomber jacket_women/Apparel/Outerwear and Jackets": {
+    "dégradé padded bomber jacket": {
       "category": "CLOTHING",
-      "core_name": "degradé padded bomber jacket",
       "specs": {
         "type": "bomber jacket",
-        "size": "52",
-        "gender": "men",
-        "color": "n/a",
-        "material": "nylon",
         "fit": "oversized",
-        "pattern": "distressed",
-        "wash": "n/a",
-        "sku": "8058992340330",
-        "currency": "KWD",
-        "param": "size:52|gender:male",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with distressed flocked logo_women/Apparel/T-shirts": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with distressed flocked logo",
-      "specs": {
-        "type": "t-shirt",
-        "size": "s",
-        "gender": "men",
-        "color": "black",
-        "material": "cotton",
-        "fit": "relaxed fit",
+        "rise": "",
+        "material": "nylon",
         "pattern": "distressed",
         "wash": "",
-        "sku": "8055055037404",
-        "currency": "KWD",
-        "param": "size:S|gender:male",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8058992340330",
         "season": "aw25"
       }
     },
-    "long dress in ribbed knit_women/New Arrivals/Dresses": {
+    "t-shirt with distressed flocked logo": {
       "category": "CLOTHING",
-      "core_name": "long dress ribbed knit",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "relaxed fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "distressed",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055037404",
+        "season": "aw25"
+      }
+    },
+    "long dress in ribbed knit": {
+      "category": "CLOTHING",
       "specs": {
         "type": "dress",
-        "size": "l",
-        "gender": "women",
-        "color": "",
-        "material": "viscose",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8055055133922",
-        "currency": "KWD",
-        "param": "size:L|gender:female",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with blurry diesel logo_women/Apparel/T-shirts": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with blurry diesel logo",
-      "specs": {
-        "type": "t-shirt",
-        "size": "xl",
-        "gender": "men",
-        "color": "not specified",
-        "material": "organic cotton",
         "fit": "slim fit",
-        "pattern": "solid",
-        "wash": "not specified",
-        "sku": "8055055068491",
-        "currency": "KWD",
-        "param": "size:XL|gender:male",
-        "season": "aw25"
-      }
-    },
-    "3.9cm leather belt with star logo buckle_Men/Accessories/Belts": {
-      "category": "ACCESSORIES",
-      "core_name": "leather belt with star logo buckle",
-      "specs": {
-        "type": "belt",
-        "size": "90",
-        "gender": "men",
-        "color": "",
-        "material": "leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051385964786",
-        "currency": "KWD",
-        "param": "size:90|gender:male",
-        "season": "aw25"
-      }
-    },
-    "3.9cm leather belt with metal star logo buckle_Men/Accessories/Belts": {
-      "category": "ACCESSORIES",
-      "core_name": "leather belt",
-      "specs": {
-        "type": "belt",
-        "size": "90",
-        "gender": "men",
-        "color": "",
-        "material": "leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051385964861",
-        "currency": "KWD",
-        "param": "size:90|gender:male",
-        "season": "aw25"
-      }
-    },
-    "s-serendipity-sneakers in mesh and suede_women/Shoes/Sneakers": {
-      "category": "FOOTWEAR",
-      "core_name": "s-serendipity sneakers",
-      "specs": {
-        "type": "sneakers",
-        "size": "42",
-        "gender": "men",
-        "color": "unknown",
-        "material": "mesh and suede",
-        "fit": "unknown",
-        "pattern": "solid",
-        "wash": "unknown",
-        "sku": "8051385359100",
-        "currency": "KWD",
-        "param": "size:42|gender:male",
-        "season": "aw25"
-      }
-    },
-    "s-athene low-low-top leather sneakers with d patch_women/Shoes/Sneakers": {
-      "category": "FOOTWEAR",
-      "core_name": "s-athene low-top leather sneakers",
-      "specs": {
-        "type": "sneakers",
-        "size": "41",
-        "gender": "men",
-        "color": "white",
-        "material": "leather",
-        "fit": "regular fit",
+        "rise": "",
+        "material": "ribbed knit",
         "pattern": "solid",
         "wash": "",
-        "sku": "8051385360199",
-        "currency": "KWD",
-        "param": "size:41|gender:male",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055133922",
         "season": "aw25"
       }
     },
-    "d-airspeed low-striped sneakers in coated ripstop_women/Shoes/Sneakers": {
-      "category": "FOOTWEAR",
-      "core_name": "d-airspeed low-striped sneakers",
-      "specs": {
-        "type": "sneakers",
-        "size": "43",
-        "gender": "men",
-        "color": "not specified",
-        "material": "ripstop",
-        "fit": "not specified",
-        "pattern": "striped",
-        "wash": "not applicable",
-        "sku": "8055055264589",
-        "currency": "KWD",
-        "param": "size:43|gender:male",
-        "season": "aw25"
-      }
-    },
-    "s-d-runner x-slip-on sneakers with matte oval d instep_women/New Arrivals/Footwear": {
-      "category": "FOOTWEAR",
-      "core_name": "s-d-runner x-slip-on sneakers",
-      "specs": {
-        "type": "sneakers",
-        "size": "38.5",
-        "gender": "unisex",
-        "color": "matte",
-        "material": "",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8058992610174",
-        "currency": "KWD",
-        "param": "size:38.5|gender:unisex",
-        "season": "aw25"
-      }
-    },
-    "3.9cm treated leather belt with diesel logo_Men/Accessories/Belts": {
-      "category": "ACCESSORIES",
-      "core_name": "treated leather belt",
-      "specs": {
-        "type": "belt",
-        "size": "90",
-        "gender": "men",
-        "color": "",
-        "material": "leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8058981463781",
-        "currency": "KWD",
-        "param": "size:90|gender:male",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with maxi oval d embroidery_Sale/Non Sale Simples UAE": {
+    "t-shirt with blurry diesel logo": {
       "category": "CLOTHING",
-      "core_name": "t-shirt with maxi oval d embroidery",
       "specs": {
         "type": "t-shirt",
-        "size": "m",
-        "gender": "men",
-        "color": "not specified",
-        "material": "organic cotton",
-        "fit": "relaxed fit",
+        "fit": "slim fit",
+        "rise": "",
+        "material": "cotton",
         "pattern": "solid",
-        "wash": "washed",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055068491",
+        "season": "aw25"
+      }
+    },
+    "3.9cm leather belt with star logo buckle": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "belt",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051385964786",
+        "season": "aw25"
+      }
+    },
+    "3.9cm leather belt with metal star logo buckle": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "belt",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051385964861",
+        "season": "aw25"
+      }
+    },
+    "s-serendipity-sneakers in mesh and suede": {
+      "category": "FOOTWEAR",
+      "specs": {
+        "type": "sneakers",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "mesh|suede",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8051385358509",
+        "season": "aw25"
+      }
+    },
+    "s-athene low-low-top leather sneakers with d patch": {
+      "category": "FOOTWEAR",
+      "specs": {
+        "type": "sneakers",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051385360199",
+        "season": "aw25"
+      }
+    },
+    "d-airspeed low-striped sneakers in coated ripstop": {
+      "category": "FOOTWEAR",
+      "specs": {
+        "type": "sneakers",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "ripstop",
+        "pattern": "striped",
+        "wash": "",
+        "style": "sporty",
+        "gender": "men",
+        "sku": "8055055264565",
+        "season": "aw25"
+      }
+    },
+    "s-d-runner x-slip-on sneakers with matte oval d instep": {
+      "category": "FOOTWEAR",
+      "specs": {
+        "type": "sneakers",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "mesh|rubber",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "unisex",
+        "sku": "8058992610174",
+        "season": "aw25"
+      }
+    },
+    "3.9cm treated leather belt with diesel logo": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "belt",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8058981463781",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with maxi oval d embroidery": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "relaxed fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "washed finish",
+        "style": "casual",
+        "gender": "men",
         "sku": "8059038781773",
-        "currency": "KWD",
-        "param": "size:M|gender:male",
         "season": "aw24"
       }
     },
-    "regular jeans - 1985 larkee_Sale EGY/Non Sale Simples EGY": {
+    "regular jeans - 1985 larkee": {
       "category": "CLOTHING",
-      "core_name": "regular jeans 1985 larkee",
       "specs": {
         "type": "jeans",
-        "size": "29",
-        "gender": "men",
-        "color": "medium blue",
-        "material": "cotton",
         "fit": "regular fit",
-        "pattern": "washed",
-        "wash": "medium wash",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "medium blue wash",
+        "style": "casual",
+        "gender": "men",
         "sku": "8055055940155",
-        "currency": "KWD",
-        "param": "size:29|gender:male",
         "season": "aw25"
       }
     },
-    "regular jeans - 2023 d-finitive_Sale EGY/Non Sale Simples EGY": {
+    "regular jeans - 2023 d-finitive": {
       "category": "CLOTHING",
-      "core_name": "regular d-finitive jeans",
       "specs": {
         "type": "jeans",
-        "size": "33",
-        "gender": "men",
-        "color": "dark blue",
-        "material": "recycled cotton",
         "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
         "pattern": "solid",
         "wash": "dark wash",
+        "style": "casual",
+        "gender": "men",
         "sku": "8055055953957",
-        "currency": "KWD",
-        "param": "size:33|gender:male",
         "season": "aw25"
       }
     },
-    "regular jeans - 2024 d-macs_Sale EGY/Non Sale Simples EGY": {
+    "regular jeans - 2024 d-macs": {
       "category": "CLOTHING",
-      "core_name": "regular d-macs jeans",
       "specs": {
         "type": "jeans",
-        "size": "31",
-        "gender": "men",
-        "color": "dark blue",
-        "material": "denim",
         "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "denim",
         "pattern": "solid",
         "wash": "dark wash",
+        "style": "casual",
+        "gender": "men",
         "sku": "8051209114878",
-        "currency": "KWD",
-        "param": "size:31|gender:male",
         "season": "aw25"
       }
     },
-    "relaxed jeans - 1980 d-eeper_Sale EGY/Non Sale Simples EGY": {
+    "relaxed jeans - 1980 d-eeper": {
       "category": "CLOTHING",
-      "core_name": "relaxed jeans 1980 d-eeper",
       "specs": {
         "type": "jeans",
-        "size": "30",
-        "gender": "men",
-        "color": "light blue",
-        "material": "denim",
         "fit": "relaxed fit",
+        "rise": "mid rise",
+        "material": "denim",
         "pattern": "solid",
         "wash": "light wash",
+        "style": "casual",
+        "gender": "men",
         "sku": "8051209015137",
-        "currency": "KWD",
-        "param": "size:30|gender:male",
         "season": "aw25"
       }
     },
-    "platform mule in melflex_Sale EGY/Non Sale Simples EGY": {
-      "category": "FOOTWEAR",
-      "core_name": "platform mule",
-      "specs": {
-        "type": "shoes",
-        "size": "39",
-        "gender": "women",
-        "color": "",
-        "material": "melflex",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051209623530",
-        "currency": "KWD",
-        "param": "size:39|gender:female",
-        "season": "aw25"
-      }
-    },
-    "bowling shirt in contrast-effect denim_Sale EGY/Non Sale Simples EGY": {
+    "bowling shirt in contrast-effect denim": {
       "category": "CLOTHING",
-      "core_name": "bowling shirt in contrast-effect denim",
       "specs": {
-        "type": "shirt",
-        "size": "xl",
-        "gender": "men",
-        "color": "medium blue",
-        "material": "denim",
+        "type": "bowling shirt",
         "fit": "regular fit",
-        "pattern": "distressed",
-        "wash": "medium wash",
+        "rise": "",
+        "material": "denim",
+        "pattern": "patch-effect",
+        "wash": "medium blue wash",
+        "style": "casual",
+        "gender": "men",
         "sku": "8051209174186",
-        "currency": "KWD",
-        "param": "size:XL|gender:male",
         "season": "aw25"
       }
     },
-    "relaxed jeans - 2001 d-macro_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "relaxed jeans 2001 d-macro",
+    "platform mule in melflex": {
+      "category": "FOOTWEAR",
       "specs": {
-        "type": "jeans",
-        "size": "30",
-        "gender": "men",
-        "color": "light blue",
-        "material": "organic-cotton fix denim",
-        "fit": "relaxed fit",
-        "pattern": "distressed",
-        "wash": "light wash",
-        "sku": "8051209012020",
-        "currency": "KWD",
-        "param": "size:30|gender:male",
-        "season": "aw25"
-      }
-    },
-    "zip-up sweater in trompe loeil track denim_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "zip-up sweater in trompe loeil track denim",
-      "specs": {
-        "type": "sweater",
-        "size": "m",
-        "gender": "unisex",
-        "color": "denim",
-        "material": "denim",
+        "type": "platform mule",
         "fit": "regular fit",
+        "rise": "",
+        "material": "melflex",
         "pattern": "solid",
         "wash": "",
-        "sku": "8051209179525",
-        "currency": "KWD",
-        "param": "size:M|gender:unisex",
-        "season": "aw25"
-      }
-    },
-    "zipped hoodie in joggjeans_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "zipped hoodie joggjeans",
-      "specs": {
-        "type": "hoodie",
-        "size": "m",
+        "style": "streetwear",
         "gender": "women",
-        "color": "",
-        "material": "joggjeans",
-        "fit": "oversized",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051209178689",
-        "currency": "KWD",
-        "param": "size:M|gender:female",
+        "sku": "8051209623530",
         "season": "aw25"
       }
     },
-    "regular 2032 d-krooley joggjeans_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "regular 2032 d-krooley joggjeans",
+    "sculptural flip-flops in melflex": {
+      "category": "FOOTWEAR",
       "specs": {
-        "type": "joggjeans",
-        "size": "36",
-        "gender": "men",
-        "color": "dark blue",
-        "material": "",
-        "fit": "",
-        "pattern": "distressed",
-        "wash": "",
-        "sku": "8051209009051",
-        "currency": "KWD",
-        "param": "size:36|gender:male",
-        "season": "aw25"
-      }
-    },
-    "3.5cm leather belt with logo plaque_Sale EGY/Non Sale Simples EGY": {
-      "category": "ACCESSORIES",
-      "core_name": "leather belt",
-      "specs": {
-        "type": "belt",
-        "size": "100",
-        "gender": "men",
-        "color": "black",
-        "material": "leather",
-        "fit": "",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8058992255443",
-        "currency": "KWD",
-        "param": "size:100|gender:male",
-        "season": "aw25"
-      }
-    },
-    "slim jeans - 1993 d-vyl_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "slim jeans 1993 d-vyl",
-      "specs": {
-        "type": "jeans",
-        "size": "33",
-        "gender": "men",
-        "color": "black",
-        "material": "regenerative cotton",
-        "fit": "slim fit",
-        "pattern": "ripped",
-        "wash": "distressed",
-        "sku": "8051209166563",
-        "currency": "KWD",
-        "param": "size:33|gender:male",
-        "season": "aw25"
-      }
-    },
-    "chino shorts in joggjeans_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "chino shorts joggjeans",
-      "specs": {
-        "type": "shorts",
-        "size": "36",
-        "gender": "men",
-        "color": "",
-        "material": "joggjeans",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8058992821549",
-        "currency": "KWD",
-        "param": "size:36|gender:male",
-        "season": "aw25"
-      }
-    },
-    "mid-length trompe loeil-denim swim shorts_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "trompe loeil-denim swim shorts",
-      "specs": {
-        "type": "swim shorts",
-        "size": "s",
-        "gender": "men",
-        "color": "denim",
-        "material": "recycled shell",
+        "type": "flip-flops",
         "fit": "regular fit",
+        "rise": "low rise",
+        "material": "melflex",
         "pattern": "solid",
         "wash": "",
-        "sku": "8051209228339",
-        "currency": "KWD",
-        "param": "size:S|gender:male",
-        "season": "aw25"
-      }
-    },
-    "regular jeans-1989 d-mine_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "regular jeans d-mine",
-      "specs": {
-        "type": "jeans",
-        "size": "28",
+        "style": "casual",
         "gender": "women",
-        "color": "medium blue",
-        "material": "cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "medium wash",
-        "sku": "8055055965165",
-        "currency": "KWD",
-        "param": "size:28|gender:female",
+        "sku": "8051209623226",
         "season": "aw25"
       }
     },
-    "regular jeans-1985 larkee_Sale EGY/Non Sale Simples EGY": {
+    "t-shirt with tonal medieval print": {
       "category": "CLOTHING",
-      "core_name": "regular jeans-1985 larkee",
-      "specs": {
-        "type": "jeans",
-        "size": "32",
-        "gender": "men",
-        "color": "black",
-        "material": "denim",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "black wash",
-        "sku": "8055055989246",
-        "currency": "KWD",
-        "param": "size:32|gender:male",
-        "season": "aw25"
-      }
-    },
-    "slim jeans-1993 d-vyl_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "slim jeans 1993 d-vyl",
-      "specs": {
-        "type": "jeans",
-        "size": "28",
-        "gender": "men",
-        "color": "dark blue",
-        "material": "cotton",
-        "fit": "slim fit",
-        "pattern": "distressed",
-        "wash": "dark wash",
-        "sku": "8051209164040",
-        "currency": "KWD",
-        "param": "size:28|gender:male",
-        "season": "aw25"
-      }
-    },
-    "slim d-labb track denim_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "slim d-labb track denim",
-      "specs": {
-        "type": "denim",
-        "size": "xl",
-        "gender": "unisex",
-        "color": "light blue",
-        "material": "",
-        "fit": "slim fit",
-        "pattern": "",
-        "wash": "light wash",
-        "sku": "8051209182754",
-        "currency": "KWD",
-        "param": "size:XL|gender:unisex",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with planet logo print_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with planet logo print",
       "specs": {
         "type": "t-shirt",
-        "size": "3xl",
-        "gender": "men",
-        "color": "not specified",
+        "fit": "relaxed fit",
+        "rise": "",
         "material": "cotton",
-        "fit": "loose fit",
         "pattern": "solid",
-        "wash": "not specified",
-        "sku": "8059038633195",
-        "currency": "KWD",
-        "param": "size:3XL|gender:male",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209129810",
         "season": "aw25"
       }
     },
-    "card case in grained leather_Sale/Non Sale Simples UAE": {
+    "relaxed jeans - 2001 d-macro": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "relaxed fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "distressed",
+        "wash": "light wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209012020",
+        "season": "aw25"
+      }
+    },
+    "zip-up sweater in trompe loeil track denim": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "sweater",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "",
+        "style": "streetwear",
+        "gender": "unisex",
+        "sku": "8051209179525",
+        "season": "aw25"
+      }
+    },
+    "zipped hoodie in joggjeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "hoodie",
+        "fit": "oversized",
+        "rise": "",
+        "material": "joggjeans",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8051209178689",
+        "season": "aw25"
+      }
+    },
+    "regular 2032 d-krooley joggjeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "joggjeans",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "distressed",
+        "wash": "dark wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209009051",
+        "season": "aw25"
+      }
+    },
+    "3.5cm leather belt with logo plaque": {
       "category": "ACCESSORIES",
-      "core_name": "card case",
+      "specs": {
+        "type": "belt",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8058992255443",
+        "season": "aw25"
+      }
+    },
+    "slim jeans - 1993 d-vyl": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "slim fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "distressed",
+        "wash": "black wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209166563",
+        "season": "aw25"
+      }
+    },
+    "chino shorts in joggjeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "chino shorts",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "joggjeans",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8058992821549",
+        "season": "aw25"
+      }
+    },
+    "mid-length trompe loeil-denim swim shorts": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "swim shorts",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "recycled shell",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209228339",
+        "season": "aw25"
+      }
+    },
+    "regular jeans-1985 larkee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "black wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055989246",
+        "season": "aw25"
+      }
+    },
+    "regular jeans-1989 d-mine": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "distressed",
+        "wash": "medium blue wash",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055965165",
+        "season": "aw25"
+      }
+    },
+    "slim jeans-1993 d-vyl": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "slim fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "light wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209166198",
+        "season": "aw25"
+      }
+    },
+    "slim d-labb track denim": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jogging pants",
+        "fit": "slim fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "light wash",
+        "style": "casual",
+        "gender": "unisex",
+        "sku": "8051209182754",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with planet logo print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "loose fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8059038633195",
+        "season": "aw25"
+      }
+    },
+    "card case in grained leather": {
+      "category": "ACCESSORIES",
       "specs": {
         "type": "card holder",
-        "size": "uni",
-        "gender": "men",
-        "color": "black",
+        "fit": "",
+        "rise": "",
         "material": "leather",
-        "fit": "",
         "pattern": "solid",
         "wash": "",
+        "style": "casual",
+        "gender": "men",
         "sku": "8058992861590",
-        "currency": "KWD",
-        "param": "size:UNI|gender:male",
         "season": "aw25"
       }
     },
-    "belt bag in trompe l'oeil denim_women/Bags/Bags New In": {
+    "multipocket bag in trompe l'oeil denim": {
       "category": "ACCESSORIES",
-      "core_name": "belt bag in trompe l'oeil denim",
-      "specs": {
-        "type": "belt bag",
-        "size": "uni",
-        "gender": "unisex",
-        "color": "denim",
-        "material": "",
-        "fit": "",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051209326356",
-        "currency": "KWD",
-        "param": "size:UNI|gender:unisex",
-        "season": "aw25"
-      }
-    },
-    "multipocket bag in trompe l'oeil denim_women/Bags/Bags New In": {
-      "category": "ACCESSORIES",
-      "core_name": "multipocket bag",
       "specs": {
         "type": "bag",
-        "size": "uni",
-        "gender": "unisex",
-        "color": "denim",
-        "material": "technical shell",
         "fit": "",
+        "rise": "",
+        "material": "technical shell",
         "pattern": "trompe l'oeil",
         "wash": "",
+        "style": "casual",
+        "gender": "unisex",
         "sku": "8051209326349",
-        "currency": "KWD",
-        "param": "size:UNI|gender:unisex",
         "season": "aw25"
       }
     },
-    "backpack in trompe l'oeil denim_women/Bags/Bags New In": {
+    "belt bag in trompe l'oeil denim": {
       "category": "ACCESSORIES",
-      "core_name": "backpack in trompe l'oeil denim",
       "specs": {
-        "type": "bag",
-        "size": "uni",
-        "gender": "unisex",
-        "color": "denim",
-        "material": "shell",
+        "type": "belt bag",
         "fit": "",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051209326387",
-        "currency": "KWD",
-        "param": "size:UNI|gender:unisex",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with embossed oval d_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with embossed oval d",
-      "specs": {
-        "type": "t-shirt",
-        "size": "3xl",
-        "gender": "men",
-        "color": "white",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051209117152",
-        "currency": "KWD",
-        "param": "size:3XL|gender:male",
-        "season": "aw25"
-      }
-    },
-    "three-pack of plain long boxer briefs_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "plain long boxer briefs",
-      "specs": {
-        "type": "boxer briefs",
-        "size": "xxl",
-        "gender": "men",
-        "color": "plain",
-        "material": "stretch cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051385413680",
-        "currency": "KWD",
-        "param": "size:XXL|gender:male"
-      }
-    },
-    "t-shirt with metallic oval d_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with metallic oval d",
-      "specs": {
-        "type": "t-shirt",
-        "size": "3xl",
-        "gender": "men",
-        "color": "unknown",
-        "material": "organic jersey cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "unknown",
-        "sku": "8055055803290",
-        "currency": "KWD",
-        "param": "size:3XL|gender:male",
-        "season": "aw25"
-      }
-    },
-    "tapered jeans - 2023 d-finitive_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "tapered d-finitive jeans",
-      "specs": {
-        "type": "jeans",
-        "size": "36",
-        "gender": "men",
-        "color": "light blue",
+        "rise": "",
         "material": "denim",
-        "fit": "tapered",
-        "pattern": "solid",
-        "wash": "light wash",
-        "sku": "8058992754786",
-        "currency": "KWD",
-        "param": "size:36|gender:male",
-        "season": "aw24"
-      }
-    },
-    "mid-length swim shorts with maxi logo_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "mid-length swim shorts",
-      "specs": {
-        "type": "swim shorts",
-        "size": "m",
-        "gender": "men",
-        "color": "",
-        "material": "recycled materials",
-        "fit": "",
-        "pattern": "solid",
+        "pattern": "trompe l'oeil",
         "wash": "",
-        "sku": "8055055768384",
-        "currency": "KWD",
-        "param": "size:M|gender:male",
-        "season": "ss25"
-      }
-    },
-    "denim-look polo shirt_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "denim-look polo shirt",
-      "specs": {
-        "type": "polo",
-        "size": "xl",
-        "gender": "men",
-        "color": "denim",
-        "material": "cotton",
-        "fit": "slim fit",
-        "pattern": "faded",
-        "wash": "marble-wash",
-        "sku": "8055055572455",
-        "currency": "KWD",
-        "param": "size:XL|gender:male",
-        "season": "ss25"
-      }
-    },
-    "stretch-viscose shirt with heraldic print_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "stretch-viscose shirt heraldic print",
-      "specs": {
-        "type": "shirt",
-        "size": "m",
-        "gender": "women",
-        "color": "multi",
-        "material": "viscose",
-        "fit": "slim fit",
-        "pattern": "heraldic",
-        "wash": "",
-        "sku": "8051209243219",
-        "currency": "KWD",
-        "param": "size:42|gender:female",
-        "season": "aw25"
-      }
-    },
-    "chino shorts in joggjeans_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "chino shorts joggjeans",
-      "specs": {
-        "type": "shorts",
-        "size": "32",
-        "gender": "men",
-        "color": "",
-        "material": "joggjeans",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055510051",
-        "currency": "KWD",
-        "param": "size:32|gender:male",
-        "season": "ss25"
-      }
-    },
-    "t-shirt dress with tie front_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt dress",
-      "specs": {
-        "type": "t-shirt dress",
-        "size": "m",
-        "gender": "women",
-        "color": "",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051209194504",
-        "currency": "KWD",
-        "param": "size:M|gender:female",
-        "season": "aw25"
-      }
-    },
-    "shorts in waxed jersey_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "shorts in waxed jersey",
-      "specs": {
-        "type": "shorts",
-        "size": "xl",
-        "gender": "men",
-        "color": "gray",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "worn-in",
-        "sku": "8051209121036",
-        "currency": "KWD",
-        "param": "size:XL|gender:male",
-        "season": "aw25"
-      }
-    },
-    "3-pack low-cut logo instep socks_Sale KSA/Non Sale Simples KSA": {
-      "category": "ACCESSORIES",
-      "core_name": "low-cut logo instep socks",
-      "specs": {
-        "type": "socks",
-        "size": "l",
-        "gender": "men",
-        "color": "",
-        "material": "organic cotton",
-        "fit": "low-cut",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8055055272805",
-        "currency": "KWD",
-        "param": "size:L|gender:male",
-        "season": "aw25"
-      }
-    },
-    "faded sweatshirt with devore phoenix logo_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "faded sweatshirt with devore phoenix logo",
-      "specs": {
-        "type": "sweatshirt",
-        "size": "l",
-        "gender": "men",
-        "color": "faded",
-        "material": "organic cotton",
-        "fit": "relaxed fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051209169632",
-        "currency": "KWD",
-        "param": "size:L|gender:male",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with cut-out oval d_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with cut-out oval d",
-      "specs": {
-        "type": "t-shirt",
-        "size": "xs",
-        "gender": "men",
-        "color": "",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051209172717",
-        "currency": "KWD",
-        "param": "size:XS|gender:male",
-        "season": "aw25"
-      }
-    },
-    "3-pack of maxi logo socks_Sale KSA/Non Sale Simples KSA": {
-      "category": "ACCESSORIES",
-      "core_name": "maxi logo socks",
-      "specs": {
-        "type": "socks",
-        "size": "m",
-        "gender": "men",
-        "color": "red, black, white",
-        "material": "cotton",
-        "fit": "stretch",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8055055282002",
-        "currency": "KWD",
-        "param": "size:M|gender:male",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with bleached oval d logo_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "bleached oval d t-shirt",
-      "specs": {
-        "type": "t-shirt",
-        "size": "3xl",
-        "gender": "men",
-        "color": "black",
-        "material": "organic cotton",
-        "fit": "relaxed fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051209135118",
-        "currency": "KWD",
-        "param": "size:3XL|gender:male",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with red oval d_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with red oval d",
-      "specs": {
-        "type": "t-shirt",
-        "size": "m",
-        "gender": "men",
-        "color": "red",
-        "material": "organic cotton",
-        "fit": "relaxed fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051209161483",
-        "currency": "KWD",
-        "param": "size:M|gender:male",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with small logo_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with small logo",
-      "specs": {
-        "type": "t-shirt",
-        "size": "3xl",
-        "gender": "men",
-        "color": "not specified",
-        "material": "organic cotton",
-        "fit": "boxy",
-        "pattern": "solid",
-        "wash": "not specified",
-        "sku": "8055055595775",
-        "currency": "KWD",
-        "param": "size:3XL|gender:male",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with wrap ties_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with wrap ties",
-      "specs": {
-        "type": "t-shirt",
-        "size": "xs",
-        "gender": "women",
-        "color": "white",
-        "material": "organic cotton",
-        "fit": "close fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051209164668",
-        "currency": "KWD",
-        "param": "size:XS|gender:female",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with oval d patch_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with oval d patch",
-      "specs": {
-        "type": "t-shirt",
-        "size": "l",
-        "gender": "men",
-        "color": "not specified",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "not specified",
-        "sku": "8058992968329",
-        "currency": "KWD",
-        "param": "size:L|gender:male",
-        "season": "aw24"
-      }
-    },
-    "cargo pants in cotton twill_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "cargo pants",
-      "specs": {
-        "type": "pants",
-        "size": "44",
-        "gender": "men",
-        "color": "",
-        "material": "cotton",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055879752",
-        "currency": "KWD",
-        "param": "size:44|gender:male",
-        "season": "ss25"
-      }
-    },
-    "boxer briefs with faded logo print_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "boxer briefs faded logo print",
-      "specs": {
-        "type": "boxer briefs",
-        "size": "l",
-        "gender": "men",
-        "color": "not specified",
-        "material": "stretch cotton",
-        "fit": "not specified",
-        "pattern": "faded",
-        "wash": "not specified",
-        "sku": "8051209336201",
-        "currency": "KWD",
-        "param": "size:L|gender:male",
-        "season": "aw25"
-      }
-    },
-    "reverse-print short-sleeve polo jumper_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "reverse-print polo jumper",
-      "specs": {
-        "type": "polo",
-        "size": "m",
-        "gender": "men",
-        "color": "irregular",
-        "material": "organic cotton",
-        "fit": "relaxed fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051209265679",
-        "currency": "KWD",
-        "param": "size:M|gender:male",
-        "season": "aw25"
-      }
-    },
-    "mid-length swim shorts in camo ripstop_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "mid-length swim shorts",
-      "specs": {
-        "type": "swim shorts",
-        "size": "l",
-        "gender": "men",
-        "color": "camo",
-        "material": "ripstop",
-        "fit": "regular fit",
-        "pattern": "camo",
-        "wash": "",
-        "sku": "8051209232909",
-        "currency": "KWD",
-        "param": "size:L|gender:male",
-        "season": "aw25"
-      }
-    },
-    "cracked-effect sweatshirt with micro logo_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "cracked-effect sweatshirt",
-      "specs": {
-        "type": "sweatshirt",
-        "size": "s",
-        "gender": "men",
-        "color": "tonal",
-        "material": "organic cotton",
-        "fit": "relaxed fit",
-        "pattern": "distressed",
-        "wash": "",
-        "sku": "8051209123108",
-        "currency": "KWD",
-        "param": "size:S|gender:male",
-        "season": "aw25"
-      }
-    },
-    "3-pack of socks with logo cuffs_Sale KSA/Non Sale Simples KSA": {
-      "category": "ACCESSORIES",
-      "core_name": "socks with logo cuffs",
-      "specs": {
-        "type": "socks",
-        "size": "l",
-        "gender": "men",
-        "color": "",
-        "material": "organic cotton",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055775146",
-        "currency": "KWD",
-        "param": "size:L|gender:male",
-        "season": "aw25"
-      }
-    },
-    "tencel shirt with medieval print_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "tencel shirt medieval print",
-      "specs": {
-        "type": "shirt",
-        "size": "50",
-        "gender": "men",
-        "color": "black and grey",
-        "material": "tencel",
-        "fit": "regular fit",
-        "pattern": "printed",
-        "wash": "",
-        "sku": "8051209215636",
-        "currency": "KWD",
-        "param": "size:50|gender:male",
-        "season": "aw25"
-      }
-    },
-    "leather belt with d buckle_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "leather belt with d buckle",
-      "specs": {
-        "type": "belt",
-        "size": "90",
+        "style": "casual",
         "gender": "unisex",
-        "color": "",
-        "material": "leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051385174413",
-        "currency": "KWD",
-        "param": "size:90|gender:male",
-        "season": "aw24"
-      }
-    },
-    "viscose midi skirt with heraldic print_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "viscose midi skirt",
-      "specs": {
-        "type": "skirt",
-        "size": "40",
-        "gender": "women",
-        "color": "heraldic print",
-        "material": "viscose",
-        "fit": "regular fit",
-        "pattern": "heraldic",
-        "wash": "",
-        "sku": "8051209234323",
-        "currency": "KWD",
-        "param": "size:40|gender:female",
+        "sku": "8051209326356",
         "season": "aw25"
       }
     },
-    "slogan t-shirt with burnout wash_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "slogan t-shirt",
-      "specs": {
-        "type": "t-shirt",
-        "size": "xl",
-        "gender": "men",
-        "color": "not specified",
-        "material": "jersey",
-        "fit": "regular fit",
-        "pattern": "burnout",
-        "wash": "burnout",
-        "sku": "8051209152108",
-        "currency": "KWD",
-        "param": "size:XL|gender:male",
-        "season": "aw25"
-      }
-    },
-    "three-pack of solid-colour briefs_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "three-pack solid-colour briefs",
-      "specs": {
-        "type": "briefs",
-        "size": "l",
-        "gender": "men",
-        "color": "solid",
-        "material": "stretch cotton",
-        "fit": "",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8055055781000",
-        "currency": "KWD",
-        "param": "size:L|gender:male",
-        "season": "aw25"
-      }
-    },
-    "3-pack low-cut logo socks_Sale KSA/Non Sale Simples KSA": {
+    "backpack in trompe l'oeil denim": {
       "category": "ACCESSORIES",
-      "core_name": "low-cut logo socks",
-      "specs": {
-        "type": "socks",
-        "size": "l",
-        "gender": "men",
-        "color": "",
-        "material": "stretch cotton",
-        "fit": "low-cut",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8055055795304",
-        "currency": "KWD",
-        "param": "size:L|gender:male",
-        "season": "aw25"
-      }
-    },
-    "3-pack of logo cuff socks_Sale KSA/Non Sale Simples KSA": {
-      "category": "ACCESSORIES",
-      "core_name": "logo cuff socks",
-      "specs": {
-        "type": "socks",
-        "size": "l",
-        "gender": "men",
-        "color": "unknown",
-        "material": "stretch organic cotton",
-        "fit": "unknown",
-        "pattern": "solid",
-        "wash": "unknown",
-        "sku": "8055055272928",
-        "currency": "KWD",
-        "param": "size:L|gender:male",
-        "season": "aw25"
-      }
-    },
-    "denim slip-on sneakers_Sale/Non Sale Simples UAE": {
-      "category": "FOOTWEAR",
-      "core_name": "denim slip-on sneakers",
-      "specs": {
-        "type": "sneakers",
-        "size": "42",
-        "gender": "men",
-        "color": "denim",
-        "material": "denim",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "faded",
-        "sku": "8055055819505",
-        "currency": "KWD",
-        "param": "size:42.5|gender:male",
-        "season": "ss25"
-      }
-    },
-    "jersey polo shirt with logo embroidery_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "jersey polo shirt",
-      "specs": {
-        "type": "polo",
-        "size": "xl",
-        "gender": "men",
-        "color": "unknown",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "unknown",
-        "sku": "8055055584519",
-        "currency": "KWD",
-        "param": "size:XL|gender:male",
-        "season": "ss25"
-      }
-    },
-    "mid-length swim shorts with maxi logo_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "mid-length swim shorts",
-      "specs": {
-        "type": "swim shorts",
-        "size": "l",
-        "gender": "men",
-        "color": "not specified",
-        "material": "recycled quick-dry fabric",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "not applicable",
-        "sku": "8055055769350",
-        "currency": "KWD",
-        "param": "size:L|gender:male",
-        "season": "aw25"
-      }
-    },
-    "three-pack boxer briefs in stretch cotton_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "three-pack boxer briefs",
-      "specs": {
-        "type": "boxer briefs",
-        "size": "m",
-        "gender": "men",
-        "color": "",
-        "material": "stretch cotton",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055142689",
-        "currency": "KWD",
-        "param": "size:M|gender:male",
-        "season": "aw25"
-      }
-    },
-    "denim-look jersey t-shirt_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "denim-look jersey t-shirt",
-      "specs": {
-        "type": "t-shirt",
-        "size": "l",
-        "gender": "men",
-        "color": "denim",
-        "material": "cotton",
-        "fit": "regular fit",
-        "pattern": "distressed",
-        "wash": "marble washed",
-        "sku": "8055055572660",
-        "currency": "KWD",
-        "param": "size:L|gender:male",
-        "season": "ss25"
-      }
-    },
-    "jacket in recycled nylon taslan_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "jacket in recycled nylon taslan",
-      "specs": {
-        "type": "jacket",
-        "size": "48",
-        "gender": "men",
-        "color": "not specified",
-        "material": "recycled nylon taslan",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "acid-washed",
-        "sku": "8051209143564",
-        "currency": "KWD",
-        "param": "size:48|gender:male",
-        "season": "aw25"
-      }
-    },
-    "three-pack no-show socks_Sale KSA/Non Sale Simples KSA": {
-      "category": "ACCESSORIES",
-      "core_name": "no-show socks",
-      "specs": {
-        "type": "socks",
-        "size": "m",
-        "gender": "men",
-        "color": "",
-        "material": "cotton",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055805829",
-        "currency": "KWD",
-        "param": "size:M|gender:male",
-        "season": "aw25"
-      }
-    },
-    "three-pack of all-over logo waist boxers_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "all-over logo waist boxers",
-      "specs": {
-        "type": "boxers",
-        "size": "m",
-        "gender": "men",
-        "color": "assorted",
-        "material": "cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051385295514",
-        "currency": "KWD",
-        "param": "size:M|gender:male"
-      }
-    },
-    "three-pack of plain boxer_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "plain boxer",
-      "specs": {
-        "type": "boxer briefs",
-        "size": "xxl",
-        "gender": "men",
-        "color": "plain",
-        "material": "stretch cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051209240300",
-        "currency": "KWD",
-        "param": "size:XXL|gender:male",
-        "season": "aw25"
-      }
-    },
-    "baseball cap with fishnet mesh_Sale KSA/Non Sale Simples KSA": {
-      "category": "ACCESSORIES",
-      "core_name": "baseball cap",
-      "specs": {
-        "type": "cap",
-        "size": "02",
-        "gender": "men",
-        "color": "black",
-        "material": "cotton",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051209192531",
-        "currency": "KWD",
-        "param": "size:02|gender:male",
-        "season": "aw25"
-      }
-    },
-    "untitled product_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "untitled product",
-      "specs": {
-        "type": "unknown",
-        "size": "02",
-        "gender": "men",
-        "color": "unknown",
-        "material": "unknown",
-        "fit": "unknown",
-        "pattern": "unknown",
-        "wash": "unknown",
-        "sku": "8051209174469",
-        "currency": "KWD",
-        "param": "size:02|gender:male",
-        "season": "aw25"
-      }
-    },
-    "baseball cap in cotton gabardine_Sale KSA/Non Sale Simples KSA": {
-      "category": "ACCESSORIES",
-      "core_name": "baseball cap",
-      "specs": {
-        "type": "cap",
-        "size": "02",
-        "gender": "men",
-        "color": "unknown",
-        "material": "cotton",
-        "fit": "unknown",
-        "pattern": "solid",
-        "wash": "washed",
-        "sku": "8051209174384",
-        "currency": "KWD",
-        "param": "size:02|gender:male",
-        "season": "aw25"
-      }
-    },
-    "flare jeans - 1978 d-akemi_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "flare jeans 1978 d-akemi",
-      "specs": {
-        "type": "jeans",
-        "size": "26",
-        "gender": "women",
-        "color": "light blue",
-        "material": "organic cotton, tencel lyocell",
-        "fit": "",
-        "pattern": "",
-        "wash": "light wash",
-        "sku": "8055055957146",
-        "currency": "KWD",
-        "param": "size:26|gender:female",
-        "season": "aw25"
-      }
-    },
-    "bootcut jeans - d-hush_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "bootcut jeans d-hush",
-      "specs": {
-        "type": "jeans",
-        "size": "26",
-        "gender": "women",
-        "color": "",
-        "material": "",
-        "fit": "slim fit",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055956088",
-        "currency": "KWD",
-        "param": "size:26|gender:female",
-        "season": "aw25"
-      }
-    },
-    "distressed baseball cap with phoenix print_Sale KSA/Non Sale Simples KSA": {
-      "category": "ACCESSORIES",
-      "core_name": "distressed baseball cap",
-      "specs": {
-        "type": "cap",
-        "size": "02",
-        "gender": "men",
-        "color": "not specified",
-        "material": "cotton",
-        "fit": "not specified",
-        "pattern": "distressed",
-        "wash": "not applicable",
-        "sku": "8051209174445",
-        "currency": "KWD",
-        "param": "size:02|gender:male",
-        "season": "aw25"
-      }
-    },
-    "s-ukiyo v2 low - low-top sneakers in leather and nylon_Sale/Non Sale Simples UAE": {
-      "category": "FOOTWEAR",
-      "core_name": "s-ukiyo v2 low low-top sneakers",
-      "specs": {
-        "type": "sneakers",
-        "size": "40",
-        "gender": "men",
-        "color": "",
-        "material": "leather, nylon",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8058992526970",
-        "currency": "KWD",
-        "param": "size:40|gender:male",
-        "season": "aw24"
-      }
-    },
-    "tapered pants in faded twill_Sale KSA/Sale Simples": {
-      "category": "CLOTHING",
-      "core_name": "tapered pants",
-      "specs": {
-        "type": "pants",
-        "size": "54",
-        "gender": "men",
-        "color": "faded",
-        "material": "cotton",
-        "fit": "tapered",
-        "pattern": "solid",
-        "wash": "faded",
-        "sku": "8055055116437",
-        "currency": "KWD",
-        "param": "size:54|gender:male"
-      }
-    },
-    "s-athene-retro sneakers in perforated leather_Sale KSA/Sale Simples": {
-      "category": "FOOTWEAR",
-      "core_name": "s-athene-retro sneakers",
-      "specs": {
-        "type": "sneakers",
-        "size": "42",
-        "gender": "men",
-        "color": "white",
-        "material": "leather",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8055055227065",
-        "currency": "KWD",
-        "param": "size:42|gender:male"
-      }
-    },
-    "t-shirt in sprayed cotton jersey_Sale KSA/Sale Simples": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt in sprayed cotton jersey",
-      "specs": {
-        "type": "t-shirt",
-        "size": "xxl",
-        "gender": "men",
-        "color": "unknown",
-        "material": "cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "unknown",
-        "sku": "8055055042422",
-        "currency": "KWD",
-        "param": "size:XXL|gender:male"
-      }
-    },
-    "faded t-shirt with micro logo embroidery_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "faded t-shirt",
-      "specs": {
-        "type": "t-shirt",
-        "size": "s",
-        "gender": "men",
-        "color": "faded",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "faded",
-        "sku": "8055055643018",
-        "currency": "KWD",
-        "param": "size:S|gender:male",
-        "season": "ss25"
-      }
-    },
-    "t-shirt with charm necklace print_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with charm necklace print",
-      "specs": {
-        "type": "t-shirt",
-        "size": "xs",
-        "gender": "unisex",
-        "color": "gray",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051209412226",
-        "currency": "KWD",
-        "param": "size:XS|gender:unisex",
-        "season": "ss25"
-      }
-    },
-    "denim baseball cap with oval d hardware_Sale EGY/Non Sale Simples EGY": {
-      "category": "ACCESSORIES",
-      "core_name": "denim baseball cap",
-      "specs": {
-        "type": "cap",
-        "size": "01",
-        "gender": "men",
-        "color": "black",
-        "material": "stretch denim",
-        "fit": "",
-        "pattern": "washed",
-        "wash": "",
-        "sku": "8051209417955",
-        "currency": "KWD",
-        "param": "size:01|gender:male",
-        "season": "ss25"
-      }
-    },
-    "hoodie with charm necklace print_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "hoodie with charm necklace print",
-      "specs": {
-        "type": "hoodie",
-        "size": "m",
-        "gender": "unisex",
-        "color": "monochromatic",
-        "material": "organic cotton",
-        "fit": "relaxed fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051209412356",
-        "currency": "KWD",
-        "param": "size:M|gender:unisex",
-        "season": "ss25"
-      }
-    },
-    "d-havanna-heeled mules in crystal denim_Sale EGY/Non Sale Simples EGY": {
-      "category": "FOOTWEAR",
-      "core_name": "d-havanna heeled mules",
-      "specs": {
-        "type": "mules",
-        "size": "38",
-        "gender": "women",
-        "color": "denim",
-        "material": "denim",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8055055836854",
-        "currency": "KWD",
-        "param": "size:38|gender:female",
-        "season": "ss25"
-      }
-    },
-    "zip-up hoodie in marbled track denim_Sale EGY/Non Sale Simples EGY": {
-      "category": "CLOTHING",
-      "core_name": "zip-up hoodie",
-      "specs": {
-        "type": "hoodie",
-        "size": "s",
-        "gender": "unisex",
-        "color": "black marbled",
-        "material": "track denim",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "washed",
-        "sku": "8051209445835",
-        "currency": "KWD",
-        "param": "size:S|gender:unisex",
-        "season": "ss25"
-      }
-    },
-    "iconic oval sunglasses_Sale EGY/Non Sale Simples EGY": {
-      "category": "ACCESSORIES",
-      "core_name": "iconic oval sunglasses",
-      "specs": {
-        "type": "sunglasses",
-        "size": "uni",
-        "gender": "unisex",
-        "color": "",
-        "material": "",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055565723",
-        "currency": "KWD",
-        "param": "size:UNI|gender:unisex",
-        "season": "aw24"
-      }
-    },
-    "mid-length swim shorts with logo print_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "mid-length swim shorts",
-      "specs": {
-        "type": "swim shorts",
-        "size": "m",
-        "gender": "men",
-        "color": "unknown",
-        "material": "recycled materials",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "unknown",
-        "sku": "8055055767820",
-        "currency": "KWD",
-        "param": "size:M|gender:male",
-        "season": "ss25"
-      }
-    },
-    "shorts in rinse-wash denim_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "shorts in rinse-wash denim",
-      "specs": {
-        "type": "shorts",
-        "size": "34",
-        "gender": "men",
-        "color": "black",
-        "material": "denim",
-        "fit": "relaxed fit",
-        "pattern": "solid",
-        "wash": "black wash",
-        "sku": "8051209173813",
-        "currency": "KWD",
-        "param": "size:34|gender:male",
-        "season": "aw25"
-      }
-    },
-    "skinny jeans - 1979 sleenker_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "skinny jeans 1979 sleenker",
-      "specs": {
-        "type": "jeans",
-        "size": "30",
-        "gender": "men",
-        "color": "medium blue",
-        "material": "regenerative cotton",
-        "fit": "skinny",
-        "pattern": "solid",
-        "wash": "medium wash",
-        "sku": "8051209059728",
-        "currency": "KWD",
-        "param": "size:30|gender:male",
-        "season": "aw25"
-      }
-    },
-    "slim d-lab joggjeans_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "slim d-lab joggjeans",
-      "specs": {
-        "type": "joggjeans",
-        "size": "xl",
-        "gender": "unisex",
-        "color": "dark blue",
-        "material": "regenerative cotton",
-        "fit": "slim fit",
-        "pattern": "solid",
-        "wash": "clean",
-        "sku": "8051209180200",
-        "currency": "KWD",
-        "param": "size:XL|gender:unisex",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with spray-effect print_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with spray-effect print",
-      "specs": {
-        "type": "t-shirt",
-        "size": "xs",
-        "gender": "men",
-        "color": "not specified",
-        "material": "cotton",
-        "fit": "relaxed fit",
-        "pattern": "solid",
-        "wash": "not specified",
-        "sku": "8051209215216",
-        "currency": "KWD",
-        "param": "size:XS|gender:male",
-        "season": "aw25"
-      }
-    },
-    "tank top with metallic oval d_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "tank top with metallic oval d",
-      "specs": {
-        "type": "tank top",
-        "size": "xl",
-        "gender": "men",
-        "color": "unknown",
-        "material": "organic cotton",
-        "fit": "slim fit",
-        "pattern": "solid",
-        "wash": "unknown",
-        "sku": "8055055560339",
-        "currency": "KWD",
-        "param": "size:XL|gender:male",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with phoenix devore_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with phoenix devore",
-      "specs": {
-        "type": "t-shirt",
-        "size": "l",
-        "gender": "men",
-        "color": "not specified",
-        "material": "organic cotton",
-        "fit": "relaxed fit",
-        "pattern": "solid",
-        "wash": "faded",
-        "sku": "8051209169472",
-        "currency": "KWD",
-        "param": "size:L|gender:male",
-        "season": "aw25"
-      }
-    },
-    "bootcut jeans - 1969 d-ebbey_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "bootcut 1969 d-ebbey jeans",
-      "specs": {
-        "type": "jeans",
-        "size": "29",
-        "gender": "women",
-        "color": "black",
-        "material": "stretch denim",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "black wash",
-        "sku": "8051209025761",
-        "currency": "KWD",
-        "param": "size:29|gender:female",
-        "season": "aw25"
-      }
-    },
-    "polo midi dress in denim-effect knit_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "polo midi dress",
-      "specs": {
-        "type": "dress",
-        "size": "l",
-        "gender": "women",
-        "color": "blue",
-        "material": "organic cotton",
-        "fit": "close-fitting",
-        "pattern": "solid",
-        "wash": "stonewashed",
-        "sku": "8051209185823",
-        "currency": "KWD",
-        "param": "size:L|gender:female",
-        "season": "aw25"
-      }
-    },
-    "sweatpants with metal-effect oval d logo_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "sweatpants with metal-effect oval d logo",
-      "specs": {
-        "type": "sweatpants",
-        "size": "xl",
-        "gender": "men",
-        "color": "black",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051209120596",
-        "currency": "KWD",
-        "param": "size:XL|gender:male",
-        "season": "aw25"
-      }
-    },
-    "sweat shorts with phoenix devore_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "sweat shorts with phoenix devore",
-      "specs": {
-        "type": "shorts",
-        "size": "m",
-        "gender": "men",
-        "color": "faded",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "faded",
-        "sku": "8051209211461",
-        "currency": "KWD",
-        "param": "size:M|gender:male",
-        "season": "aw25"
-      }
-    },
-    "regular 2030 d-krooley joggjeans_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "regular 2030 d-krooley joggjeans",
-      "specs": {
-        "type": "joggjeans",
-        "size": "28",
-        "gender": "men",
-        "color": "dark gray",
-        "material": "",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "dark wash",
-        "sku": "8055055980335",
-        "currency": "KWD",
-        "param": "size:28|gender:male",
-        "season": "aw25"
-      }
-    },
-    "denim shorts_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "denim shorts",
-      "specs": {
-        "type": "denim shorts",
-        "size": "32",
-        "gender": "men",
-        "color": "medium blue",
-        "material": "denim",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "medium wash",
-        "sku": "8051209099359",
-        "currency": "KWD",
-        "param": "size:32|gender:male",
-        "season": "aw25"
-      }
-    },
-    "relaxed 2080 d-reel joggjeans_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "relaxed 2080 d-reel joggjeans",
-      "specs": {
-        "type": "joggjeans",
-        "size": "28",
-        "gender": "men",
-        "color": "black",
-        "material": "",
-        "fit": "relaxed fit",
-        "pattern": "solid",
-        "wash": "black wash",
-        "sku": "8051209008856",
-        "currency": "KWD",
-        "param": "size:28|gender:male",
-        "season": "aw25"
-      }
-    },
-    "sweat shorts with silver oval d_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "sweat shorts with silver oval d",
-      "specs": {
-        "type": "shorts",
-        "size": "m",
-        "gender": "men",
-        "color": "not specified",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "not applicable",
-        "sku": "8055055558589",
-        "currency": "KWD",
-        "param": "size:M|gender:male",
-        "season": "aw25"
-      }
-    },
-    "indigo shirt-cardigan with phoenix logo_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "indigo shirt-cardigan",
-      "specs": {
-        "type": "cardigan",
-        "size": "s",
-        "gender": "women",
-        "color": "blue",
-        "material": "organic cotton",
-        "fit": "close fit",
-        "pattern": "solid",
-        "wash": "stonewash",
-        "sku": "8051209185786",
-        "currency": "KWD",
-        "param": "size:S|gender:female",
-        "season": "aw25"
-      }
-    },
-    "flare jeans - d-akii_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "flare jeans d-akii",
-      "specs": {
-        "type": "jeans",
-        "size": "23",
-        "gender": "women",
-        "color": "medium blue",
-        "material": "partially recycled cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "clean",
-        "sku": "8051209010422",
-        "currency": "KWD",
-        "param": "size:23|gender:female",
-        "season": "aw25"
-      }
-    },
-    "regular jeans - 2023 d-finitive_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "regular d-finitive jeans",
-      "specs": {
-        "type": "jeans",
-        "size": "34",
-        "gender": "men",
-        "color": "medium blue",
-        "material": "cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "medium wash",
-        "sku": "8055055944320",
-        "currency": "KWD",
-        "param": "size:34|gender:male",
-        "season": "aw25"
-      }
-    },
-    "regular jeans - 1985 larkee_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "regular jeans 1985 larkee",
-      "specs": {
-        "type": "jeans",
-        "size": "40",
-        "gender": "men",
-        "color": "dark blue",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "dark wash",
-        "sku": "8051209057977",
-        "currency": "KWD",
-        "param": "size:40|gender:male",
-        "season": "aw25"
-      }
-    },
-    "relaxed jeans - 1980 d-eeper_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "relaxed jeans 1980 d-eeper",
-      "specs": {
-        "type": "jeans",
-        "size": "38",
-        "gender": "men",
-        "color": "medium blue",
-        "material": "cotton",
-        "fit": "relaxed fit",
-        "pattern": "solid",
-        "wash": "medium wash",
-        "sku": "8051209014246",
-        "currency": "KWD",
-        "param": "size:38|gender:male",
-        "season": "aw25"
-      }
-    },
-    "slim jeans - 1993 d-vyl_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "slim 1993 d-vyl jeans",
-      "specs": {
-        "type": "jeans",
-        "size": "32",
-        "gender": "men",
-        "color": "black",
-        "material": "stretch denim",
-        "fit": "slim fit",
-        "pattern": "solid",
-        "wash": "black wash",
-        "sku": "8051209166914",
-        "currency": "KWD",
-        "param": "size:32|gender:male",
-        "season": "aw25"
-      }
-    },
-    "slim jeans - 2019 d-strukt_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "d-strukt slim jeans",
-      "specs": {
-        "type": "jeans",
-        "size": "31",
-        "gender": "men",
-        "color": "dark blue",
-        "material": "recycled cotton",
-        "fit": "slim fit",
-        "pattern": "ripped",
-        "wash": "dark wash",
-        "sku": "8055055952851",
-        "currency": "KWD",
-        "param": "size:31|gender:male",
-        "season": "aw25"
-      }
-    },
-    "relaxed jeans - 1996 d-sire_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "relaxed jeans 1996 d-sire",
-      "specs": {
-        "type": "jeans",
-        "size": "29",
-        "gender": "women",
-        "color": "light blue",
-        "material": "organic-cotton fix denim",
-        "fit": "relaxed fit",
-        "pattern": "distressed",
-        "wash": "light wash",
-        "sku": "8051209007965",
-        "currency": "KWD",
-        "param": "size:29|gender:female",
-        "season": "aw25"
-      }
-    },
-    "regular jeans - 1989 d-mine_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "regular jeans 1989 d-mine",
-      "specs": {
-        "type": "jeans",
-        "size": "29",
-        "gender": "women",
-        "color": "light blue",
-        "material": "cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "light wash",
-        "sku": "8055055965530",
-        "currency": "KWD",
-        "param": "size:29|gender:female",
-        "season": "aw25"
-      }
-    },
-    "t-shirt with tonal logo embroidery_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "tonal logo t-shirt",
-      "specs": {
-        "type": "t-shirt",
-        "size": "3xl",
-        "gender": "men",
-        "color": "not specified",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "not specified",
-        "sku": "8055055571052",
-        "currency": "KWD",
-        "param": "size:3XL|gender:male",
-        "season": "ss25"
-      }
-    },
-    "tapered - krooley joggjeans_Sale KSA/Non Sale Simples KSA": {
-      "category": "CLOTHING",
-      "core_name": "tapered krooley joggjeans",
-      "specs": {
-        "type": "joggjeans",
-        "size": "28",
-        "gender": "men",
-        "color": "unknown",
-        "material": "cotton",
-        "fit": "tapered",
-        "pattern": "solid",
-        "wash": "stone washed",
-        "sku": "8056594924026",
-        "currency": "KWD",
-        "param": "size:28|gender:male",
-        "season": "aw24"
-      }
-    },
-    "mini bag with d plaque_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "mini bag with d plaque",
-      "specs": {
-        "type": "bag",
-        "size": "uni",
-        "gender": "women",
-        "color": "",
-        "material": "calfskin nappa leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051385514493",
-        "currency": "KWD",
-        "param": "size:UNI|gender:female",
-        "season": "aw24"
-      }
-    },
-    "straight jeans - 1996 d-sire_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "1996 d-sire straight jeans",
-      "specs": {
-        "type": "jeans",
-        "size": "28",
-        "gender": "women",
-        "color": "black",
-        "material": "cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "black wash",
-        "sku": "8058992787753",
-        "currency": "KWD",
-        "param": "size:28|gender:female",
-        "season": "aw24"
-      }
-    },
-    "slim jeans - 2019 d-strukt_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "d-strukt slim jeans",
-      "specs": {
-        "type": "jeans",
-        "size": "34",
-        "gender": "men",
-        "color": "",
-        "material": "",
-        "fit": "slim fit",
-        "pattern": "",
-        "wash": "",
-        "sku": "8058992420360",
-        "currency": "KWD",
-        "param": "size:34|gender:male",
-        "season": "aw24"
-      }
-    },
-    "t-shirt in mercerised cotton_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt",
-      "specs": {
-        "type": "t-shirt",
-        "size": "xl",
-        "gender": "men",
-        "color": "not specified",
-        "material": "cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "not specified",
-        "sku": "8055055013385",
-        "currency": "KWD",
-        "param": "size:XL|gender:male",
-        "season": "aw24"
-      }
-    },
-    "ribbed-knit turtleneck top_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "ribbed-knit turtleneck top",
-      "specs": {
-        "type": "top",
-        "size": "xs",
-        "gender": "women",
-        "color": "",
-        "material": "knit",
-        "fit": "body-contouring",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8055055102966",
-        "currency": "KWD",
-        "param": "size:XS|gender:female",
-        "season": "aw24"
-      }
-    },
-    "straight jeans - 2001 d-macro_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "straight 2001 d-macro jeans",
-      "specs": {
-        "type": "jeans",
-        "size": "33",
-        "gender": "men",
-        "color": "light blue",
-        "material": "recycled cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "light wash",
-        "sku": "8058992784592",
-        "currency": "KWD",
-        "param": "size:33|gender:male",
-        "season": "aw24"
-      }
-    },
-    "utility pants in overdyed nylon_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "utility pants",
-      "specs": {
-        "type": "pants",
-        "size": "46",
-        "gender": "men",
-        "color": "overdyed",
-        "material": "nylon",
-        "fit": "relaxed fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8055055628107",
-        "currency": "KWD",
-        "param": "size:46|gender:male",
-        "season": "ss25"
-      }
-    },
-    "bootcut jeans - 2007 zatiny_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "2007 zatiny bootcut jeans",
-      "specs": {
-        "type": "jeans",
-        "size": "33",
-        "gender": "men",
-        "color": "dark blue",
-        "material": "stretch denim",
-        "fit": "bootcut",
-        "pattern": "solid",
-        "wash": "dark wash",
-        "sku": "8055055601032",
-        "currency": "KWD",
-        "param": "size:33|gender:male",
-        "season": "ss25"
-      }
-    },
-    "three-pack of plain boxer briefs_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "plain boxer briefs",
-      "specs": {
-        "type": "boxer briefs",
-        "size": "s",
-        "gender": "men",
-        "color": "plain",
-        "material": "stretch cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051385413833",
-        "currency": "KWD",
-        "param": "size:S|gender:male"
-      }
-    },
-    "shiny leather belt with logo loop_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "shiny leather belt",
-      "specs": {
-        "type": "belt",
-        "size": "95",
-        "gender": "men",
-        "color": "black",
-        "material": "leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8052105667895",
-        "currency": "KWD",
-        "param": "size:95|gender:male",
-        "season": "aw24"
-      }
-    },
-    "ribbed t-shirt with mock neck_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "ribbed t-shirt mock neck",
-      "specs": {
-        "type": "t-shirt",
-        "size": "m",
-        "gender": "women",
-        "color": "",
-        "material": "viscose",
-        "fit": "skinny fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8059038625114",
-        "currency": "KWD",
-        "param": "size:M|gender:female",
-        "season": "aw24"
-      }
-    },
-    "tapered jeans - krooley_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "tapered krooley jeans",
-      "specs": {
-        "type": "jeans",
-        "size": "10y",
-        "gender": "boys",
-        "color": "medium blue",
-        "material": "joggjeans",
-        "fit": "tapered",
-        "pattern": "solid",
-        "wash": "medium wash",
-        "sku": "8059380006074",
-        "currency": "KWD",
-        "param": "size:10Y|gender:male",
-        "season": "aw24"
-      }
-    },
-    "1dr-iconic shoulder bag in canvas and leather_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "1dr-iconic shoulder bag",
-      "specs": {
-        "type": "bag",
-        "size": "uni",
-        "gender": "women",
-        "color": "distressed",
-        "material": "canvas, leather",
-        "fit": "",
-        "pattern": "distressed",
-        "wash": "",
-        "sku": "8058992243990",
-        "currency": "KWD",
-        "param": "size:UNI|gender:female",
-        "season": "aw24"
-      }
-    },
-    "t-shirt with peekaboo logo_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "peekaboo logo t-shirt",
-      "specs": {
-        "type": "t-shirt",
-        "size": "xs",
-        "gender": "women",
-        "color": "red",
-        "material": "organic cotton",
-        "fit": "slim fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8059038579318",
-        "currency": "KWD",
-        "param": "size:XS|gender:female",
-        "season": "aw24"
-      }
-    },
-    "slim leather belt with crystal buckle_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "slim leather belt",
-      "specs": {
-        "type": "belt",
-        "size": "85",
-        "gender": "women",
-        "color": "black",
-        "material": "leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8058992872060",
-        "currency": "KWD",
-        "param": "size:85|gender:female",
-        "season": "aw24"
-      }
-    },
-    "sneakers in coated mesh_Sale/Non Sale Simples UAE": {
-      "category": "FOOTWEAR",
-      "core_name": "sneakers in coated mesh",
-      "specs": {
-        "type": "sneakers",
-        "size": "40",
-        "gender": "men",
-        "color": "",
-        "material": "mesh",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055811578",
-        "currency": "KWD",
-        "param": "size:40|gender:male",
-        "season": "ss25"
-      }
-    },
-    "leather sneakers with perforated logo_Sale/Non Sale Simples UAE": {
-      "category": "FOOTWEAR",
-      "core_name": "leather sneakers",
-      "specs": {
-        "type": "sneakers",
-        "size": "42",
-        "gender": "men",
-        "color": "white",
-        "material": "leather",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8055055848154",
-        "currency": "KWD",
-        "param": "size:42|gender:male",
-        "season": "ss25"
-      }
-    },
-    "t-shirt with embroidered oval d_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with embroidered oval d",
-      "specs": {
-        "type": "t-shirt",
-        "size": "xl",
-        "gender": "unisex",
-        "color": "",
-        "material": "organic cotton",
-        "fit": "relaxed fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8058992968275",
-        "currency": "KWD",
-        "param": "size:XL|gender:unisex",
-        "season": "ss25"
-      }
-    },
-    "tank top with cut-out oval d logo_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "tank top with cut-out oval d logo",
-      "specs": {
-        "type": "tank top",
-        "size": "xs",
-        "gender": "women",
-        "color": "not specified",
-        "material": "organic cotton",
-        "fit": "close-fitting",
-        "pattern": "solid",
-        "wash": "not specified",
-        "sku": "8055055210388",
-        "currency": "KWD",
-        "param": "size:XS|gender:female",
-        "season": "aw24"
-      }
-    },
-    "d red 100ml eau de parfum_Sale EGY/Non Sale Simples EGY": {
-      "category": "ACCESSORIES",
-      "core_name": "d red eau de parfum",
-      "specs": {
-        "type": "fragrance",
-        "size": "uni",
-        "gender": "men",
-        "color": "",
-        "material": "",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "3614273924450",
-        "currency": "KWD",
-        "param": "size:UNI|gender:male"
-      }
-    },
-    "logo-plaque wrinkled leather belt_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "logo-plaque leather belt",
-      "specs": {
-        "type": "belt",
-        "size": "95",
-        "gender": "unisex",
-        "color": "brown",
-        "material": "leather",
-        "fit": "",
-        "pattern": "wrinkled",
-        "wash": "",
-        "sku": "8055055603050",
-        "currency": "KWD",
-        "param": "size:95|gender:unisex",
-        "season": "ss25"
-      }
-    },
-    "leather crossbody bag with tonal metal d_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "leather crossbody bag",
-      "specs": {
-        "type": "bag",
-        "size": "uni",
-        "gender": "unisex",
-        "color": "black",
-        "material": "leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055598424",
-        "currency": "KWD",
-        "param": "size:UNI|gender:male",
-        "season": "ss25"
-      }
-    },
-    "mesh sneakers with oval d logo_Sale/Non Sale Simples UAE": {
-      "category": "FOOTWEAR",
-      "core_name": "mesh sneakers oval d logo",
-      "specs": {
-        "type": "sneakers",
-        "size": "40",
-        "gender": "men",
-        "color": "",
-        "material": "mesh",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055821003",
-        "currency": "KWD",
-        "param": "size:40|gender:male",
-        "season": "ss25"
-      }
-    },
-    "backpack in satin-touch fabric_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "backpack",
       "specs": {
         "type": "backpack",
-        "size": "uni",
+        "fit": "",
+        "rise": "",
+        "material": "shell",
+        "pattern": "trompe l'oeil",
+        "wash": "",
+        "style": "streetwear",
         "gender": "unisex",
-        "color": "satin-touch",
-        "material": "satin-touch fabric",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055877987",
-        "currency": "KWD",
-        "param": "size:UNI|gender:male",
-        "season": "ss25"
+        "sku": "8051209326387",
+        "season": "aw25"
       }
     },
-    "belt bag in satin-touch fabric_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "belt bag",
-      "specs": {
-        "type": "bag",
-        "size": "uni",
-        "gender": "unisex",
-        "color": "satin-touch",
-        "material": "satin-touch fabric",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055878021",
-        "currency": "KWD",
-        "param": "size:UNI|gender:male",
-        "season": "ss25"
-      }
-    },
-    "flare jeans - 1978 d-akemi_Sale/Non Sale Simples UAE": {
+    "t-shirt with embossed oval d": {
       "category": "CLOTHING",
-      "core_name": "flare jeans 1978 d-akemi",
       "specs": {
-        "type": "jeans",
-        "size": "28",
-        "gender": "women",
-        "color": "dark blue",
-        "material": "recycled cotton",
+        "type": "t-shirt",
         "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "dark wash",
-        "sku": "8055055400918",
-        "currency": "KWD",
-        "param": "size:28|gender:female",
-        "season": "ss25"
-      }
-    },
-    "d red 50ml eau de parfum_Sale EGY/Non Sale Simples EGY": {
-      "category": "ACCESSORIES",
-      "core_name": "d red eau de parfum",
-      "specs": {
-        "type": "fragrance",
-        "size": "uni",
-        "gender": "men",
-        "color": "",
-        "material": "",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "3614273924443",
-        "currency": "KWD",
-        "param": "size:UNI|gender:male"
-      }
-    },
-    "rib-knit viscose-blend top with oval d_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "rib-knit viscose-blend top",
-      "specs": {
-        "type": "top",
-        "size": "l",
-        "gender": "women",
-        "color": "unknown",
-        "material": "viscose",
-        "fit": "close fit",
-        "pattern": "solid",
-        "wash": "unknown",
-        "sku": "8055055038111",
-        "currency": "KWD",
-        "param": "size:L|gender:female",
-        "season": "ss25"
-      }
-    },
-    "iconic shoulder bag in washed denim_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "iconic shoulder bag",
-      "specs": {
-        "type": "bag",
-        "size": "uni",
-        "gender": "women",
-        "color": "black",
-        "material": "denim",
-        "fit": "",
-        "pattern": "washed",
-        "wash": "",
-        "sku": "8055055576279",
-        "currency": "KWD",
-        "param": "size:UNI|gender:female",
-        "season": "ss25"
-      }
-    },
-    "zip-up sweatshirt with cut-out logo_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "zip-up sweatshirt",
-      "specs": {
-        "type": "sweatshirt",
-        "size": "m",
-        "gender": "women",
-        "color": "",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055560544",
-        "currency": "KWD",
-        "param": "size:M|gender:female",
-        "season": "ss25"
-      }
-    },
-    "cargo shorts in cotton twill_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "cargo shorts",
-      "specs": {
-        "type": "shorts",
-        "size": "52",
-        "gender": "men",
-        "color": "unknown",
+        "rise": "",
         "material": "cotton",
-        "fit": "regular fit",
         "pattern": "solid",
-        "wash": "unknown",
-        "sku": "8055055798176",
-        "currency": "KWD",
-        "param": "size:52|gender:male",
-        "season": "ss25"
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209117152",
+        "season": "aw25"
       }
     },
-    "iconic shoulder bag in solarised denim_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "iconic shoulder bag",
+    "t-shirt with metallic oval d": {
+      "category": "CLOTHING",
       "specs": {
-        "type": "bag",
-        "size": "uni",
-        "gender": "women",
-        "color": "blue",
+        "type": "t-shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055803290",
+        "season": "aw25"
+      }
+    },
+    "three-pack of plain long boxer briefs": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "boxer briefs",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "none",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051385413680"
+      }
+    },
+    "tapered jeans - 2023 d-finitive": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "tapered fit",
+        "rise": "mid rise",
         "material": "denim",
-        "fit": "",
-        "pattern": "solarised",
-        "wash": "",
-        "sku": "8055055576170",
-        "currency": "KWD",
-        "param": "size:UNI|gender:female",
-        "season": "ss25"
+        "pattern": "solid",
+        "wash": "light wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8058992754779",
+        "season": "aw24"
       }
     },
-    "fabric-panelled leather sneakers_Sale/Non Sale Simples UAE": {
-      "category": "FOOTWEAR",
-      "core_name": "fabric-panelled leather sneakers",
+    "mid-length swim shorts with maxi logo": {
+      "category": "CLOTHING",
       "specs": {
-        "type": "sneakers",
-        "size": "41",
-        "gender": "men",
-        "color": "monochrome",
-        "material": "leather",
+        "type": "swim shorts",
         "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "recycled materials",
         "pattern": "solid",
         "wash": "",
-        "sku": "8055055840974",
-        "currency": "KWD",
-        "param": "size:41|gender:male",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055768384",
         "season": "ss25"
       }
     },
-    "t-shirt with micro-embroidered logo_Sale/Non Sale Simples UAE": {
+    "denim-look polo shirt": {
       "category": "CLOTHING",
-      "core_name": "t-shirt with micro-embroidered logo",
       "specs": {
-        "type": "t-shirt",
-        "size": "m",
-        "gender": "unisex",
-        "color": "",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8058992969050",
-        "currency": "KWD",
-        "param": "size:M|gender:unisex",
-        "season": "ss25"
-      }
-    },
-    "t-shirt with small oval d_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "t-shirt with small oval d",
-      "specs": {
-        "type": "t-shirt",
-        "size": "m",
-        "gender": "women",
-        "color": "",
-        "material": "organic jersey cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8055055827715",
-        "currency": "KWD",
-        "param": "size:M|gender:female",
-        "season": "ss25"
-      }
-    },
-    "iconic medium shoulder bag in leather_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "iconic shoulder bag",
-      "specs": {
-        "type": "bag",
-        "size": "uni",
-        "gender": "women",
-        "color": "",
-        "material": "leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8059038349379",
-        "currency": "KWD",
-        "param": "size:UNI|gender:female",
-        "season": "aw24"
-      }
-    },
-    "three-pack jockstraps with front logo_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "three-pack jockstraps",
-      "specs": {
-        "type": "jockstrap",
-        "size": "l",
-        "gender": "men",
-        "color": "plain",
-        "material": "stretch cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8051385413512",
-        "currency": "KWD",
-        "param": "size:L|gender:male"
-      }
-    },
-    "shoulder bag in nappa leather_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "shoulder bag nappa leather",
-      "specs": {
-        "type": "bag",
-        "size": "uni",
-        "gender": "women",
-        "color": "",
-        "material": "nappa leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051385139528",
-        "currency": "KWD",
-        "param": "size:UNI|gender:female",
-        "season": "aw24"
-      }
-    },
-    "small shoulder bag in mirrored leather_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "small shoulder bag",
-      "specs": {
-        "type": "bag",
-        "size": "uni",
-        "gender": "women",
-        "color": "mirrored",
-        "material": "leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051385514271",
-        "currency": "KWD",
-        "param": "size:UNI|gender:female",
-        "season": "aw24"
-      }
-    },
-    "ribbed beanie with d embroidery_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "ribbed beanie",
-      "specs": {
-        "type": "beanie",
-        "size": "uni",
-        "gender": "unisex",
-        "color": "",
-        "material": "wool-blend",
-        "fit": "",
-        "pattern": "ribbed",
-        "wash": "",
-        "sku": "8051385055750",
-        "currency": "KWD",
-        "param": "size:UNI|gender:unisex",
-        "season": "aw24"
-      }
-    },
-    "50ml eau de toilette_Sale EGY/Non Sale Simples EGY": {
-      "category": "ACCESSORIES",
-      "core_name": "eau de toilette",
-      "specs": {
-        "type": "fragrance",
-        "size": "uni",
-        "gender": "men",
-        "color": "",
-        "material": "",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "3614273694766",
-        "currency": "KWD",
-        "param": "size:UNI|gender:male"
-      }
-    },
-    "100ml eau de toilette_Sale EGY/Non Sale Simples EGY": {
-      "category": "ACCESSORIES",
-      "core_name": "eau de toilette",
-      "specs": {
-        "type": "fragrance",
-        "size": "uni",
-        "gender": "men",
-        "color": "",
-        "material": "",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "3614273693509",
-        "currency": "KWD",
-        "param": "size:UNI|gender:male"
-      }
-    },
-    "wool jumper with cut-out logo_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "wool jumper",
-      "specs": {
-        "type": "sweater",
-        "size": "s",
-        "gender": "men",
-        "color": "",
-        "material": "wool",
-        "fit": "regular fit",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055712639",
-        "currency": "KWD",
-        "param": "size:S|gender:male",
-        "season": "ss25"
-      }
-    },
-    "short-sleeve jumper in wool_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "short-sleeve jumper",
-      "specs": {
-        "type": "sweater",
-        "size": "xs",
-        "gender": "women",
-        "color": "",
-        "material": "wool",
-        "fit": "regular fit",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055711939",
-        "currency": "KWD",
-        "param": "size:XS|gender:female",
-        "season": "ss25"
-      }
-    },
-    "rib-knit top with small logo plaque_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "rib-knit top",
-      "specs": {
-        "type": "tank top",
-        "size": "l",
-        "gender": "women",
-        "color": "",
-        "material": "viscose",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8055055706829",
-        "currency": "KWD",
-        "param": "size:L|gender:female",
-        "season": "ss25"
-      }
-    },
-    "logo-plaque embellished leather belt_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "logo-plaque embellished leather belt",
-      "specs": {
-        "type": "belt",
-        "size": "85",
-        "gender": "unisex",
-        "color": "black",
-        "material": "leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8058992873289",
-        "currency": "KWD",
-        "param": "size:85|gender:unisex",
-        "season": "aw24"
-      }
-    },
-    "straight jeans - 1985 larkee_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "straight jeans 1985 larkee",
-      "specs": {
-        "type": "jeans",
-        "size": "33",
-        "gender": "men",
-        "color": "",
-        "material": "",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8058992426331",
-        "currency": "KWD",
-        "param": "size:33|gender:male",
-        "season": "aw24"
-      }
-    },
-    "slim - 2019 d-strukt_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "d-strukt slim",
-      "specs": {
-        "type": "jeans",
-        "size": "38",
-        "gender": "men",
-        "color": "",
-        "material": "",
+        "type": "polo shirt",
         "fit": "slim fit",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051385444288",
-        "currency": "KWD",
-        "param": "size:38|gender:male",
-        "season": "aw24"
-      }
-    },
-    "leather belt with burnished hardware_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "leather belt",
-      "specs": {
-        "type": "belt",
-        "size": "90",
-        "gender": "men",
-        "color": "black",
-        "material": "leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051385176677",
-        "currency": "KWD",
-        "param": "size:90|gender:male",
-        "season": "aw24"
-      }
-    },
-    "leather belt with star logo buckle_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "leather belt",
-      "specs": {
-        "type": "belt",
-        "size": "85",
-        "gender": "men",
-        "color": "black",
-        "material": "leather",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051385964618",
-        "currency": "KWD",
-        "param": "size:85|gender:male",
-        "season": "aw24"
-      }
-    },
-    "ribbed beanie with logo patch_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "ribbed beanie",
-      "specs": {
-        "type": "beanie",
-        "size": "uni",
-        "gender": "unisex",
-        "color": "",
-        "material": "wool and cotton blend",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8052105859757",
-        "currency": "KWD",
-        "param": "size:UNI|gender:unisex",
-        "season": "aw24"
-      }
-    },
-    "baseball cap in washed cotton twill_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "baseball cap",
-      "specs": {
-        "type": "cap",
-        "size": "2",
-        "gender": "men",
-        "color": "",
+        "rise": "",
         "material": "cotton",
-        "fit": "",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8059038594595",
-        "currency": "KWD",
-        "param": "size:2|gender:male",
-        "season": "aw24"
-      }
-    },
-    "untitled product_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "untitled product",
-      "specs": {
-        "type": "unknown",
-        "size": "2",
+        "pattern": "faded",
+        "wash": "marble-wash",
+        "style": "casual",
         "gender": "men",
-        "color": "unknown",
-        "material": "unknown",
-        "fit": "unknown",
-        "pattern": "unknown",
-        "wash": "unknown",
-        "sku": "8059038593789",
-        "currency": "KWD",
-        "param": "size:2|gender:male",
-        "season": "aw24"
+        "sku": "8055055572455",
+        "season": "ss25"
       }
     },
-    "ribbed wool-blend scarf_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "ribbed wool-blend scarf",
-      "specs": {
-        "type": "scarf",
-        "size": "uni",
-        "gender": "unisex",
-        "color": "",
-        "material": "wool blend",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8051385066060",
-        "currency": "KWD",
-        "param": "size:UNI|gender:unisex"
-      }
-    },
-    "hoodie with logo embroidery_Sale/Non Sale Simples UAE": {
+    "stretch-viscose shirt with heraldic print": {
       "category": "CLOTHING",
-      "core_name": "hoodie with logo embroidery",
-      "specs": {
-        "type": "hoodie",
-        "size": "l",
-        "gender": "men",
-        "color": "",
-        "material": "organic cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8059038623028",
-        "currency": "KWD",
-        "param": "size:L|gender:male",
-        "season": "aw24"
-      }
-    },
-    "moto jacket in clean-wash denim_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "moto jacket",
-      "specs": {
-        "type": "jacket",
-        "size": "xl",
-        "gender": "men",
-        "color": "denim",
-        "material": "cotton",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "clean",
-        "sku": "8058992207152",
-        "currency": "KWD",
-        "param": "size:XL|gender:male",
-        "season": "aw24"
-      }
-    },
-    "tube top with logo plaque_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "tube top with logo plaque",
-      "specs": {
-        "type": "tube top",
-        "size": "m",
-        "gender": "women",
-        "color": "",
-        "material": "jersey",
-        "fit": "snug fit",
-        "pattern": "solid",
-        "wash": "",
-        "sku": "8058992465651",
-        "currency": "KWD",
-        "param": "size:M|gender:female",
-        "season": "aw24"
-      }
-    },
-    "baseball cap with oval d plaque_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "baseball cap",
-      "specs": {
-        "type": "cap",
-        "size": "02",
-        "gender": "men",
-        "color": "washed",
-        "material": "cotton",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8059038593802",
-        "currency": "KWD",
-        "param": "size:02|gender:male",
-        "season": "aw24"
-      }
-    },
-    "charm-d shoulder m - shoulder bag in quilted denim_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "charm-d shoulder bag",
-      "specs": {
-        "type": "shoulder bag",
-        "size": "uni",
-        "gender": "women",
-        "color": "black",
-        "material": "denim",
-        "fit": "",
-        "pattern": "quilted",
-        "wash": "",
-        "sku": "8058992244508",
-        "currency": "KWD",
-        "param": "size:UNI|gender:female",
-        "season": "aw24"
-      }
-    },
-    "fluid shirt with logo embroidery_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "fluid shirt",
       "specs": {
         "type": "shirt",
-        "size": "m",
-        "gender": "men",
-        "color": "unknown",
-        "material": "tencel lyocell",
-        "fit": "regular fit",
-        "pattern": "solid",
-        "wash": "unknown",
-        "sku": "8055055169532",
-        "currency": "KWD",
-        "param": "size:48|gender:male",
-        "season": "aw24"
-      }
-    },
-    "off-the-shoulder top in ribbed knit_Sale/Non Sale Simples UAE": {
-      "category": "CLOTHING",
-      "core_name": "off-the-shoulder top",
-      "specs": {
-        "type": "top",
-        "size": "xl",
-        "gender": "women",
-        "color": "",
-        "material": "viscose",
         "fit": "slim fit",
-        "pattern": "",
+        "rise": "",
+        "material": "viscose",
+        "pattern": "heraldic print",
         "wash": "",
-        "sku": "8055055151087",
-        "currency": "KWD",
-        "param": "size:XL|gender:female",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8051209243219",
+        "season": "aw25"
+      }
+    },
+    "t-shirt dress with tie front": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt dress",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8051209194504",
+        "season": "aw25"
+      }
+    },
+    "shorts in waxed jersey": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shorts",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209121036",
+        "season": "aw25"
+      }
+    },
+    "faded sweatshirt with devore phoenix logo": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "sweatshirt",
+        "fit": "relaxed fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209169632",
+        "season": "aw25"
+      }
+    },
+    "3-pack low-cut logo instep socks": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "socks",
+        "fit": "low-cut",
+        "rise": "",
+        "material": "organic cotton blend",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055272805",
+        "season": "aw25"
+      }
+    },
+    "3-pack of maxi logo socks": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "socks",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055282002",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with cut-out oval d": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209172717",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with bleached oval d logo": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "relaxed fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209135118",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with small logo": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "boxy fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055595775",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with red oval d": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "relaxed fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209161483",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with wrap ties": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "slim fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8051209164668",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with oval d patch": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8058992968367",
         "season": "aw24"
       }
     },
-    "leather belt with enamelled buckle_Sale/Non Sale Simples UAE": {
+    "cargo pants in cotton twill": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "cargo pants",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055879752",
+        "season": "ss25"
+      }
+    },
+    "boxer briefs with faded logo print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "boxer briefs",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "faded",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209336201",
+        "season": "aw25"
+      }
+    },
+    "reverse-print short-sleeve polo jumper": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "polo",
+        "fit": "relaxed fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209265679",
+        "season": "aw25"
+      }
+    },
+    "mid-length swim shorts in camo ripstop": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "swim shorts",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "ripstop",
+        "pattern": "camo",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209232909",
+        "season": "aw25"
+      }
+    },
+    "cracked-effect sweatshirt with micro logo": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "sweatshirt",
+        "fit": "relaxed fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "distressed",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209123108",
+        "season": "aw25"
+      }
+    },
+    "3-pack of socks with logo cuffs": {
       "category": "ACCESSORIES",
-      "core_name": "leather belt",
+      "specs": {
+        "type": "socks",
+        "fit": "regular fit",
+        "rise": "crew",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055272690",
+        "season": "aw25"
+      }
+    },
+    "tencel shirt with medieval print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "tencel",
+        "pattern": "medieval print",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209215636",
+        "season": "aw25"
+      }
+    },
+    "leather belt with d buckle": {
+      "category": "ACCESSORIES",
       "specs": {
         "type": "belt",
-        "size": "80",
-        "gender": "women",
-        "color": "tonal",
+        "fit": "",
+        "rise": "",
         "material": "leather",
-        "fit": "",
         "pattern": "",
         "wash": "",
-        "sku": "8059038358029",
-        "currency": "KWD",
-        "param": "size:80|gender:female",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051385174413",
         "season": "aw24"
       }
     },
-    "bi-fold wallet in bonded neoprene_Sale/Non Sale Simples UAE": {
-      "category": "ACCESSORIES",
-      "core_name": "bi-fold wallet",
-      "specs": {
-        "type": "wallet",
-        "size": "uni",
-        "gender": "unisex",
-        "color": "black",
-        "material": "neoprene",
-        "fit": "",
-        "pattern": "",
-        "wash": "",
-        "sku": "8058992873210",
-        "currency": "KWD",
-        "param": "size:UNI|gender:unisex",
-        "season": "aw24"
-      }
-    },
-    "tapered 2030 d-krooley joggjeans_Sale/Non Sale Simples UAE": {
+    "viscose midi skirt with heraldic print": {
       "category": "CLOTHING",
-      "core_name": "tapered 2030 d-krooley joggjeans",
+      "specs": {
+        "type": "skirt",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "viscose",
+        "pattern": "heraldic print",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8051209234323",
+        "season": "aw25"
+      }
+    },
+    "slogan t-shirt with burnout wash": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "jersey",
+        "pattern": "solid",
+        "wash": "burnout wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209152108",
+        "season": "aw25"
+      }
+    },
+    "three-pack of solid-colour briefs": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "briefs",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055781017",
+        "season": "aw25"
+      }
+    },
+    "3-pack low-cut logo socks": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "socks",
+        "fit": "low-cut",
+        "rise": "",
+        "material": "cotton blend",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055795304",
+        "season": "aw25"
+      }
+    },
+    "3-pack of logo cuff socks": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "socks",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055272928",
+        "season": "aw25"
+      }
+    },
+    "denim slip-on sneakers": {
+      "category": "FOOTWEAR",
+      "specs": {
+        "type": "sneakers",
+        "fit": "regular fit",
+        "rise": "n/a",
+        "material": "denim",
+        "pattern": "faded",
+        "wash": "n/a",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055819505",
+        "season": "ss25"
+      }
+    },
+    "jersey polo shirt with logo embroidery": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "polo shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "degrade fade",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055584519",
+        "season": "ss25"
+      }
+    },
+    "three-pack boxer briefs in stretch cotton": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "boxer briefs",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055142689",
+        "season": "aw25"
+      }
+    },
+    "denim-look jersey t-shirt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "distressed",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055572660",
+        "season": "ss25"
+      }
+    },
+    "jacket in recycled nylon taslan": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "recycled nylon taslan",
+        "pattern": "acid-washed",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209143564",
+        "season": "aw25"
+      }
+    },
+    "three-pack no-show socks": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "socks",
+        "fit": "regular fit",
+        "rise": "low rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055805829",
+        "season": "aw25"
+      }
+    },
+    "three-pack of all-over logo waist boxers": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "boxers",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "none",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051385295514"
+      }
+    },
+    "three-pack of plain boxer": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "boxer briefs",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209240256",
+        "season": "aw25"
+      }
+    },
+    "baseball cap with fishnet mesh": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "baseball cap",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209192531",
+        "season": "aw25"
+      }
+    },
+    "baseball cap in cotton gabardine": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "baseball cap",
+        "fit": "",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209174384",
+        "season": "aw25"
+      }
+    },
+    "flare jeans - 1978 d-akemi": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "light wash",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055957146",
+        "season": "aw25"
+      }
+    },
+    "bootcut jeans - d-hush": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "slim fit",
+        "rise": "low rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055956088",
+        "season": "aw25"
+      }
+    },
+    "distressed baseball cap with phoenix print": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "baseball cap",
+        "fit": "",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "distressed",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209174445",
+        "season": "aw25"
+      }
+    },
+    "s-ukiyo v2 low - low-top sneakers in leather and nylon": {
+      "category": "FOOTWEAR",
+      "specs": {
+        "type": "sneakers",
+        "fit": "regular fit",
+        "rise": "low rise",
+        "material": "leather|nylon",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8058992526970",
+        "season": "aw24"
+      }
+    },
+    "tapered pants in faded twill": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "tapered pants",
+        "fit": "slim fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "faded",
+        "wash": "none",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055116437"
+      }
+    },
+    "s-athene-retro sneakers in perforated leather": {
+      "category": "FOOTWEAR",
+      "specs": {
+        "type": "sneakers",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055227065"
+      }
+    },
+    "t-shirt in sprayed cotton jersey": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055042361"
+      }
+    },
+    "t-shirt with charm necklace print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "unisex",
+        "sku": "8051209412226",
+        "season": "ss25"
+      }
+    },
+    "faded t-shirt with micro logo embroidery": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "faded",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055643018",
+        "season": "ss25"
+      }
+    },
+    "denim baseball cap with oval d hardware": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "baseball cap",
+        "fit": "adjustable",
+        "rise": "",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "black wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209417955",
+        "season": "ss25"
+      }
+    },
+    "hoodie with charm necklace print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "hoodie",
+        "fit": "relaxed fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "unisex",
+        "sku": "8051209412356",
+        "season": "ss25"
+      }
+    },
+    "d-havanna-heeled mules in crystal denim": {
+      "category": "FOOTWEAR",
+      "specs": {
+        "type": "heeled mules",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "denim|leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055836854",
+        "season": "ss25"
+      }
+    },
+    "zip-up hoodie in marbled track denim": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "hoodie",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "denim",
+        "pattern": "marbled",
+        "wash": "",
+        "style": "streetwear",
+        "gender": "unisex",
+        "sku": "8051209445835",
+        "season": "ss25"
+      }
+    },
+    "iconic oval sunglasses": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "sunglasses",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "wash": "",
+        "style": "",
+        "gender": "unisex",
+        "sku": "8055055565723",
+        "season": "aw24"
+      }
+    },
+    "mid-length swim shorts with logo print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "swim shorts",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "recycled materials",
+        "pattern": "logo print",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055767820",
+        "season": "ss25"
+      }
+    },
+    "shorts in rinse-wash denim": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shorts",
+        "fit": "relaxed fit",
+        "rise": "low rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "black rinse wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209173813",
+        "season": "aw25"
+      }
+    },
+    "skinny jeans - 1979 sleenker": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "slim fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "medium wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209059728",
+        "season": "aw25"
+      }
+    },
+    "slim d-lab joggjeans": {
+      "category": "CLOTHING",
       "specs": {
         "type": "joggjeans",
-        "size": "40",
+        "fit": "slim fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "dark wash",
+        "style": "casual",
+        "gender": "unisex",
+        "sku": "8051209180200",
+        "season": "aw25"
+      }
+    },
+    "tank top with metallic oval d": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "tank top",
+        "fit": "slim fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
         "gender": "men",
-        "color": "white",
-        "material": "",
-        "fit": "",
-        "pattern": "",
-        "wash": "white wash",
-        "sku": "8058992979196",
-        "currency": "KWD",
-        "param": "size:40|gender:male",
+        "sku": "8055055560339",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with spray-effect print": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "relaxed fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209215216",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with phoenix devore": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "relaxed fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "faded",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209169472",
+        "season": "aw25"
+      }
+    },
+    "polo midi dress in denim-effect knit": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "dress",
+        "fit": "close-fitting",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "stonewashed",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8051209185823",
+        "season": "aw25"
+      }
+    },
+    "sweat shorts with phoenix devore": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "sweat shorts",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "organic cotton",
+        "pattern": "faded",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209211461",
+        "season": "aw25"
+      }
+    },
+    "sweatpants with metal-effect oval d logo": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "sweatpants",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209120596",
+        "season": "aw25"
+      }
+    },
+    "denim shorts": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "denim shorts",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "medium blue wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209099359",
+        "season": "aw25"
+      }
+    },
+    "relaxed 2080 d-reel joggjeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "joggjeans",
+        "fit": "relaxed fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "black wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051209008856",
+        "season": "aw25"
+      }
+    },
+    "sweat shorts with silver oval d": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "sweat shorts",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055558589",
+        "season": "aw25"
+      }
+    },
+    "indigo shirt-cardigan with phoenix logo": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "cardigan",
+        "fit": "close fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "stonewash",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8051209185786",
+        "season": "aw25"
+      }
+    },
+    "flare jeans - d-akii": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "medium wash",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8051209010422",
+        "season": "aw25"
+      }
+    },
+    "slim jeans - 2019 d-strukt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "slim fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "distressed",
+        "wash": "dark wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055952851",
+        "season": "aw25"
+      }
+    },
+    "relaxed jeans - 1996 d-sire": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "relaxed fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "distressed",
+        "wash": "light wash",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8051209007910",
+        "season": "aw25"
+      }
+    },
+    "regular jeans - 1989 d-mine": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "light wash",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055965530",
+        "season": "aw25"
+      }
+    },
+    "t-shirt with tonal logo embroidery": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055571007",
+        "season": "ss25"
+      }
+    },
+    "tapered - krooley joggjeans": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "joggjeans",
+        "fit": "slim fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "stone wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8056594924057",
         "season": "aw24"
       }
     },
-    "leather belt with matte buckle_Sale/Non Sale Simples UAE": {
+    "mini bag with d plaque": {
       "category": "ACCESSORIES",
-      "core_name": "leather belt",
       "specs": {
-        "type": "belt",
-        "size": "85",
-        "gender": "unisex",
-        "color": "textured",
-        "material": "leather",
+        "type": "mini bag",
         "fit": "",
+        "rise": "",
+        "material": "leather",
         "pattern": "",
         "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8051385514493",
+        "season": "aw24"
+      }
+    },
+    "straight jeans - 1996 d-sire": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "black wash",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8058992787753",
+        "season": "aw24"
+      }
+    },
+    "t-shirt in mercerised cotton": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055013385",
+        "season": "aw24"
+      }
+    },
+    "ribbed-knit turtleneck top": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "slim fit",
+        "rise": "n/a",
+        "material": "knit",
+        "pattern": "solid",
+        "wash": "n/a",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055102966",
+        "season": "aw24"
+      }
+    },
+    "straight jeans - 2001 d-macro": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "light wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8058992784592",
+        "season": "aw24"
+      }
+    },
+    "utility pants in overdyed nylon": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "pants",
+        "fit": "relaxed fit",
+        "rise": "mid rise",
+        "material": "nylon",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055628107",
+        "season": "ss25"
+      }
+    },
+    "bootcut jeans - 2007 zatiny": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "dark wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055601032",
+        "season": "ss25"
+      }
+    },
+    "three-pack of plain boxer briefs": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "boxer briefs",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "none",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051385413833"
+      }
+    },
+    "shiny leather belt with logo loop": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "belt",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8052105667895",
+        "season": "aw24"
+      }
+    },
+    "ribbed t-shirt with mock neck": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "skinny fit",
+        "rise": "",
+        "material": "viscose",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8059038625114",
+        "season": "aw24"
+      }
+    },
+    "tapered jeans - krooley": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "joggjeans",
+        "fit": "relaxed fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "medium blue wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8059380006098",
+        "season": "aw24"
+      }
+    },
+    "1dr-iconic shoulder bag in canvas and leather": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "shoulder bag",
+        "fit": "",
+        "rise": "",
+        "material": "canvas|leather",
+        "pattern": "distressed",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8058992243990",
+        "season": "aw24"
+      }
+    },
+    "t-shirt with peekaboo logo": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "slim fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8059038579318",
+        "season": "aw24"
+      }
+    },
+    "slim leather belt with crystal buckle": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "belt",
+        "fit": "slim fit",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8058992872060",
+        "season": "aw24"
+      }
+    },
+    "sneakers in coated mesh": {
+      "category": "FOOTWEAR",
+      "specs": {
+        "type": "sneakers",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "mesh",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055811578",
+        "season": "ss25"
+      }
+    },
+    "leather sneakers with perforated logo": {
+      "category": "FOOTWEAR",
+      "specs": {
+        "type": "sneakers",
+        "fit": "regular fit",
+        "rise": "low rise",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055848154",
+        "season": "ss25"
+      }
+    },
+    "t-shirt with embroidered oval d": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "relaxed fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "unisex",
+        "sku": "8058992968275",
+        "season": "ss25"
+      }
+    },
+    "tank top with cut-out oval d logo": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "tank top",
+        "fit": "close-fitting",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055210388",
+        "season": "aw24"
+      }
+    },
+    "d red 100ml eau de parfum": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "fragrance",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "wash": "",
+        "style": "",
+        "gender": "men",
+        "sku": "3614273924450"
+      }
+    },
+    "logo-plaque wrinkled leather belt": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "belt",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "unisex",
+        "sku": "8055055603050",
+        "season": "ss25"
+      }
+    },
+    "leather crossbody bag with tonal metal d": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "crossbody bag",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055598424",
+        "season": "ss25"
+      }
+    },
+    "mesh sneakers with oval d logo": {
+      "category": "FOOTWEAR",
+      "specs": {
+        "type": "sneakers",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "mesh|pu",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055821003",
+        "season": "ss25"
+      }
+    },
+    "backpack in satin-touch fabric": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "backpack",
+        "fit": "",
+        "rise": "",
+        "material": "satin-touch fabric",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055877987",
+        "season": "ss25"
+      }
+    },
+    "belt bag in satin-touch fabric": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "belt bag",
+        "fit": "",
+        "rise": "",
+        "material": "satin-touch fabric",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055878021",
+        "season": "ss25"
+      }
+    },
+    "d red 50ml eau de parfum": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "fragrance",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "wash": "",
+        "style": "",
+        "gender": "men",
+        "sku": "3614273924443"
+      }
+    },
+    "rib-knit viscose-blend top with oval d": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "fit": "close fit",
+        "rise": "",
+        "material": "viscose",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055038111",
+        "season": "ss25"
+      }
+    },
+    "iconic shoulder bag in washed denim": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "shoulder bag",
+        "fit": "",
+        "rise": "",
+        "material": "denim|leather",
+        "pattern": "solid",
+        "wash": "washed black",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055576279",
+        "season": "ss25"
+      }
+    },
+    "zip-up sweatshirt with cut-out logo": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "sweatshirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055560544",
+        "season": "ss25"
+      }
+    },
+    "cargo shorts in cotton twill": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shorts",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055798176",
+        "season": "ss25"
+      }
+    },
+    "iconic shoulder bag in solarised denim": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "shoulder bag",
+        "fit": "",
+        "rise": "",
+        "material": "denim|leather",
+        "pattern": "solid|sun-faded",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055576170",
+        "season": "ss25"
+      }
+    },
+    "fabric-panelled leather sneakers": {
+      "category": "FOOTWEAR",
+      "specs": {
+        "type": "sneakers",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "leather|fabric",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055840974",
+        "season": "ss25"
+      }
+    },
+    "t-shirt with micro-embroidered logo": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "unisex",
+        "sku": "8058992969050",
+        "season": "ss25"
+      }
+    },
+    "t-shirt with small oval d": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "t-shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055827715",
+        "season": "ss25"
+      }
+    },
+    "iconic medium shoulder bag in leather": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "shoulder bag",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8059038349379",
+        "season": "aw24"
+      }
+    },
+    "three-pack jockstraps with front logo": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jockstrap",
+        "fit": "regular fit",
+        "rise": "low rise",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "none",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051385413512"
+      }
+    },
+    "shoulder bag in nappa leather": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "shoulder bag",
+        "fit": "",
+        "rise": "",
+        "material": "nappa leather",
+        "pattern": "",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8051385139528",
+        "season": "aw24"
+      }
+    },
+    "small shoulder bag in mirrored leather": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "shoulder bag",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8051385514271",
+        "season": "aw24"
+      }
+    },
+    "ribbed beanie with d embroidery": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "beanie",
+        "fit": "n/a",
+        "rise": "n/a",
+        "material": "wool-blend",
+        "pattern": "solid",
+        "wash": "n/a",
+        "style": "casual",
+        "gender": "unisex",
+        "sku": "8051385055750",
+        "season": "aw24"
+      }
+    },
+    "100ml eau de toilette": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "eau de toilette",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "wash": "",
+        "style": "",
+        "gender": "men",
+        "sku": "3614273693509"
+      }
+    },
+    "50ml eau de toilette": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "eau de toilette",
+        "fit": "",
+        "rise": "",
+        "material": "",
+        "pattern": "",
+        "wash": "",
+        "style": "",
+        "gender": "men",
+        "sku": "3614273694766"
+      }
+    },
+    "wool jumper with cut-out logo": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "sweater",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "wool",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055712639",
+        "season": "ss25"
+      }
+    },
+    "short-sleeve jumper in wool": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "sweater",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "wool",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055711939",
+        "season": "ss25"
+      }
+    },
+    "rib-knit top with small logo plaque": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "tank top",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "viscose",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055706829",
+        "season": "ss25"
+      }
+    },
+    "logo-plaque embellished leather belt": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "belt",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "unisex",
+        "sku": "8058992873289",
+        "season": "aw24"
+      }
+    },
+    "straight jeans - 1985 larkee": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "regular fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8058992426331",
+        "season": "aw24"
+      }
+    },
+    "slim - 2019 d-strukt": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jeans",
+        "fit": "slim fit",
+        "rise": "mid rise",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051385444288",
+        "season": "aw24"
+      }
+    },
+    "leather belt with burnished hardware": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "belt",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051385176677",
+        "season": "aw24"
+      }
+    },
+    "leather belt with star logo buckle": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "belt",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8051385964618",
+        "season": "aw24"
+      }
+    },
+    "ribbed beanie with logo patch": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "beanie",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "wool and cotton blend",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "unisex",
+        "sku": "8052105859757",
+        "season": "aw24"
+      }
+    },
+    "baseball cap in washed cotton twill": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "baseball cap",
+        "fit": "",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8059038594595",
+        "season": "aw24"
+      }
+    },
+    "ribbed wool-blend scarf": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "scarf",
+        "fit": "",
+        "rise": "",
+        "material": "wool blend",
+        "pattern": "ribbed",
+        "wash": "",
+        "style": "",
+        "gender": "unisex",
+        "sku": "8051385066060"
+      }
+    },
+    "hoodie with logo embroidery": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "hoodie",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "organic cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8059038623028",
+        "season": "aw24"
+      }
+    },
+    "moto jacket in clean-wash denim": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "jacket",
+        "fit": "slim fit",
+        "rise": "",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "clean wash",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8058992207152",
+        "season": "aw24"
+      }
+    },
+    "tube top with logo plaque": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "tube top",
+        "fit": "slim fit",
+        "rise": "",
+        "material": "jersey",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8058992465682",
+        "season": "aw24"
+      }
+    },
+    "baseball cap with oval d plaque": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "baseball cap",
+        "fit": "",
+        "rise": "",
+        "material": "cotton",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8059038593802",
+        "season": "aw24"
+      }
+    },
+    "charm-d shoulder m - shoulder bag in quilted denim": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "shoulder bag",
+        "fit": "",
+        "rise": "",
+        "material": "denim",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8058992244508",
+        "season": "aw24"
+      }
+    },
+    "fluid shirt with logo embroidery": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "shirt",
+        "fit": "regular fit",
+        "rise": "",
+        "material": "tencel lyocell",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "men",
+        "sku": "8055055169532",
+        "season": "aw24"
+      }
+    },
+    "off-the-shoulder top in ribbed knit": {
+      "category": "CLOTHING",
+      "specs": {
+        "type": "top",
+        "fit": "slim fit",
+        "rise": "",
+        "material": "ribbed knit",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "women",
+        "sku": "8055055151087",
+        "season": "aw24"
+      }
+    },
+    "leather belt with enamelled buckle": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "belt",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "",
+        "wash": "",
+        "style": "",
+        "gender": "women",
+        "sku": "8059038358029",
+        "season": "aw24"
+      }
+    },
+    "bi-fold wallet in bonded neoprene": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "wallet",
+        "fit": "",
+        "rise": "",
+        "material": "neoprene",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "unisex",
+        "sku": "8058992873210",
+        "season": "aw24"
+      }
+    },
+    "leather belt with matte buckle": {
+      "category": "ACCESSORIES",
+      "specs": {
+        "type": "belt",
+        "fit": "",
+        "rise": "",
+        "material": "leather",
+        "pattern": "solid",
+        "wash": "",
+        "style": "casual",
+        "gender": "unisex",
         "sku": "8058992894840",
-        "currency": "KWD",
-        "param": "size:85|gender:unisex",
         "season": "aw24"
       }
     }
-  }
+  },
+  "productVariants": {}
 }

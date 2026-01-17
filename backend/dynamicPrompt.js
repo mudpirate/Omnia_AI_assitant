@@ -274,6 +274,79 @@ const ELECTRONICS_LOGIC = `
 **📱 ELECTRONICS-SPECIFIC RULES**
 **═══════════════════════════════════════════════════════════════════════**
 
+**🚫 LLM-DRIVEN NEGATIVE FILTERING FOR ELECTRONICS**
+
+Use the \`exclude\` parameter to prevent accessories from polluting main product searches.
+
+**CRITICAL EXCLUSION PATTERNS:**
+
+1. **Searching for main devices? Exclude accessories:**
+   - "iPhone" → exclude: ["case", "charger", "cable", "screen protector"]
+   - "laptop" → exclude: ["bag", "case", "stand", "sleeve", "mouse"]
+   - "headphones" → exclude: ["adapter", "cable", "transmitter", "case"]
+   - "phone" → exclude: ["case", "charger", "cable", "holder", "mount"]
+
+2. **Searching for accessories? NO exclusion:**
+   - "iPhone case" → NO exclude (user wants the case)
+   - "laptop bag" → NO exclude (user wants the bag)
+   - "headphone case" → NO exclude (user wants the case)
+
+**DECISION LOGIC:**
+
+If query mentions ONLY the device → exclude accessories
+If query mentions device + accessory → NO exclude
+
+**EXAMPLES:**
+
+User: "iPhone 15"
+THINK: User wants the phone itself, not cases/chargers
+{
+  "query": "iPhone 15",
+  "category": "MOBILEPHONES",
+  "brand": "apple",
+  "model_number": "iphone 15",
+  "exclude": ["case", "charger", "cable", "screen protector"]
+}
+
+User: "iPhone 15 case"
+THINK: User specifically wants a case. Don't exclude it!
+{
+  "query": "iPhone 15 case",
+  "category": "ACCESSORIES",
+  "brand": "apple",
+  "model_number": "iphone 15",
+  "style": "case"
+  // NO exclude parameter!
+}
+
+User: "MacBook Air"
+THINK: User wants the laptop, not bags/stands
+{
+  "query": "MacBook Air",
+  "category": "LAPTOPS",
+  "brand": "apple",
+  "model_number": "macbook air",
+  "exclude": ["bag", "case", "stand", "sleeve"]
+}
+
+User: "wireless headphones"
+THINK: User wants headphones, not cables/adapters
+{
+  "query": "wireless headphones",
+  "category": "AUDIO",
+  "exclude": ["adapter", "cable", "transmitter", "connector"]
+}
+
+User: "Samsung Galaxy S24"
+THINK: User wants the phone itself
+{
+  "query": "Samsung Galaxy S24",
+  "category": "MOBILEPHONES",
+  "brand": "samsung",
+  "model_number": "galaxy s24",
+  "exclude": ["case", "charger", "cable", "screen protector"]
+}
+
 **CATEGORY VOCABULARY:**
 - Smartphones/Phones → "MOBILEPHONES"
 - Laptops/Notebooks → "LAPTOPS"
@@ -359,7 +432,8 @@ User: "iPhone 15"
   "category": "MOBILEPHONES",
   "brand": "apple",
   "model_number": "iphone 15",
-  "variant": "base"
+  "variant": "base",
+  "exclude": ["case", "charger", "cable", "screen protector"]
 }
 
 User: "Samsung S24 Plus 512GB"
@@ -369,7 +443,8 @@ User: "Samsung S24 Plus 512GB"
   "brand": "samsung",
   "model_number": "galaxy s24+",
   "variant": "+",
-  "storage": "512gb"
+  "storage": "512gb",
+  "exclude": ["case", "charger", "cable"]
 }
 
 User: "MacBook Air M2"
@@ -379,7 +454,8 @@ User: "MacBook Air M2"
   "brand": "apple",
   "model_number": "macbook air m2",
   "variant": "air",
-  "processor": "m2"
+  "processor": "m2",
+  "exclude": ["bag", "case", "stand", "sleeve"]
 }
 
 User: "laptop for video editing"
@@ -387,13 +463,25 @@ User: "laptop for video editing"
   "query": "laptop for video editing",
   "category": "LAPTOPS",
   "ram": "16gb",
-  "gpu": "nvidia"
+  "gpu": "nvidia",
+  "exclude": ["bag", "case", "stand"]
 }
 
 User: "wireless headphones"
 {
   "query": "wireless headphones",
-  "category": "AUDIO"
+  "category": "AUDIO",
+  "exclude": ["adapter", "cable", "transmitter"]
+}
+
+User: "iPhone 15 case"
+{
+  "query": "iPhone 15 case",
+  "category": "ACCESSORIES",
+  "brand": "apple",
+  "model_number": "iphone 15",
+  "style": "case"
+  // NO exclude - user wants the accessory!
 }`;
 
 const FASHION_LOGIC = `
@@ -401,10 +489,140 @@ const FASHION_LOGIC = `
 **👗 FASHION-SPECIFIC RULES**
 **═══════════════════════════════════════════════════════════════════════**
 
+**🚫 CRITICAL: LLM-DRIVEN NEGATIVE FILTERING (INTELLIGENT EXCLUSION)**
+
+You have access to an \`exclude\` parameter that lets you EXCLUDE unwanted product types from results.
+This is CRITICAL for avoiding confusion when product names overlap.
+
+**WHEN TO USE EXCLUDE:**
+
+1. **When "shirt" ≠ "t-shirt":**
+   - User asks for "shirts" → exclude: ["t-shirt"]
+   - User asks for "dress shirts" → exclude: ["t-shirt"]
+   - User asks for "formal shirts" → exclude: ["t-shirt", "polo"]
+   - BUT if user asks for "t-shirts" → NO exclude needed
+
+2. **When searching specific clothing items:**
+   - "dress" but not "dress shoes" → exclude: ["shoes"]
+   - "jacket" but not "vest" → exclude: ["vest"]
+   - "pants" but not "shorts" → exclude: ["shorts"]
+
+3. **When brand/material clarifies intent:**
+   - "leather jacket" → exclude: ["faux leather", "pleather"]
+   - "cotton shirt" → exclude: ["polyester", "synthetic"]
+
+**EXCLUSION DECISION TREE:**
+
+Ask yourself: "Could the database return items that match the keyword but are NOT what the user wants?"
+- YES → Use exclude parameter
+- NO → Skip exclude parameter
+
+**EXAMPLES:**
+
+User: "shirts"
+THINK: Database has "shirt" AND "t-shirt". User wants dress/formal shirts, NOT t-shirts.
+{
+  "query": "shirts",
+  "category": "CLOTHING",
+  "style": "shirt",
+  "exclude": ["t-shirt"]  ← CRITICAL!
+}
+
+User: "men's formal shirts"
+THINK: "Formal" implies dress shirts. Exclude casual items.
+{
+  "query": "men's formal shirts",
+  "category": "CLOTHING",
+  "style": "shirt",
+  "gender": "men",
+  "exclude": ["t-shirt", "polo"]  ← Exclude casual!
+}
+
+User: "t-shirts"
+THINK: User specifically wants t-shirts. No exclusion needed.
+{
+  "query": "t-shirts",
+  "category": "CLOTHING",
+  "style": "t-shirt"
+  // NO exclude parameter!
+}
+
+User: "black dress"
+THINK: Could match "dress shoes" or "dress shirt". Exclude those.
+{
+  "query": "black dress",
+  "category": "CLOTHING",
+  "style": "dress",
+  "color": "black",
+  "exclude": ["shoes", "shirt"]
+}
+
+User: "jeans"
+THINK: Clear intent. No overlapping product types.
+{
+  "query": "jeans",
+  "category": "CLOTHING",
+  "style": "jeans"
+  // NO exclude needed
+}
+
 **CATEGORY VOCABULARY:**
 - All Wearables (Jeans/Pants/Shirts/Dresses/Jackets/Swimwear/Underwear) → "CLOTHING"
 - All Shoes (Sneakers/Boots/Sandals/Heels) → "FOOTWEAR"
 - Bags/Belts/Hats/Scarves/Jewelry/Sunglasses → "ACCESSORIES"
+
+**📚 COMPREHENSIVE FASHION VOCABULARY REFERENCE**
+
+**STYLE-TO-CATEGORY MAPPING:**
+When user mentions a style, map it to the correct database category:
+
+CLOTHING category includes:
+- dress, top, shirt, blouse, t-shirt, sweater, hoodie
+- jacket, coat, pants, jeans, shorts, skirt
+
+FOOTWEAR category includes:
+- shoes, sneakers, boots, sandals, heels
+
+ACCESSORIES category includes:
+- bag, backpack, hat, scarf, belt, sunglasses
+
+**Example mappings:**
+- "dress" → category: "CLOTHING", style: "dress"
+- "sneakers" → category: "FOOTWEAR", style: "sneakers"
+- "backpack" → category: "ACCESSORIES", style: "backpack"
+
+**STYLE TYPES (Complete List):**
+Clothing: dress, top, shirt, blouse, t-shirt, sweater, hoodie, jacket, coat, pants, jeans, shorts, skirt
+Footwear: shoes, sneakers, boots, sandals, heels
+Accessories: bag, backpack, hat, scarf, belt, sunglasses
+
+**SLEEVE LENGTHS (Complete List):**
+sleeveless, short, long, three-quarter (also accept: 3/4, half)
+
+**COLORS (Complete List):**
+black, white, gray, red, blue, green, yellow, orange, pink, purple, brown, beige, navy, burgundy, cream
+
+**PATTERNS (Complete List):**
+solid, striped, plaid, floral, geometric, dots, polka dot, animal, checkered
+
+**NECKLINES (Complete List):**
+round, v-neck, crew, collar, turtleneck, scoop, square, off-shoulder
+
+**LENGTHS (For dresses/skirts):**
+mini, knee, knee-length, midi, maxi, ankle
+
+**GENDER OPTIONS:**
+men, women, boys, girls, unisex
+(Also accept: male → men, female → women, kids → kids)
+
+**FIT TYPES:**
+slim, regular, oversized, loose, tight, relaxed
+
+**COMMON MATERIALS:**
+sateen, flannel, leather, denim, cotton, silk, wool, polyester, linen, cashmere, suede, velvet
+
+**COMMON DETAILS:**
+studded, ribbed, cropped, ripped, embroidered, lace, pleated, ruched, sequined, distressed
 
 **CRITICAL FASHION FILTERING RULES:**
 
@@ -481,15 +699,82 @@ const FASHION_LOGIC = `
     - "loose pants" → fit: "loose", style: "pants"
     - "tight dress" → fit: "tight", style: "dress"
 
+**🎯 CONDITIONAL ATTRIBUTE EXTRACTION:**
+
+**Sleeve Length - ONLY extract for these styles:**
+dress, top, shirt, blouse, t-shirt, sweater, hoodie, jacket, coat
+- Example: "short sleeve shirt" ✅ Extract sleeveLength
+- Example: "short jeans" ❌ Don't extract sleeveLength (jeans don't have sleeves)
+
+**Neckline - ONLY extract for these styles:**
+dress, top, shirt, blouse, t-shirt, sweater
+- Example: "v-neck t-shirt" ✅ Extract neckline
+- Example: "v-neck pants" ❌ Don't extract neckline (pants don't have necklines)
+
+**Length - ONLY extract for these styles:**
+dress, skirt
+- Example: "maxi dress" ✅ Extract length
+- Example: "maxi shirt" ❌ Don't extract length (shirts don't have this attribute)
+
 **GENDER NORMALIZATION:**
 - { "girl", "girls", "ladies", "female", "woman", "women's" } → "women"
 - { "boy", "boys", "guys", "male", "man", "men's" } → "men"
+
+**🎯 EXACT MATCH vs FLEXIBLE MATCH:**
+
+These attributes require EXACT matching (case-insensitive):
+- **gender**: Must match exactly (men, women, boys, girls, unisex)
+- **variant**: Must match exactly for electronics (base, pro, pro_max, +, ultra, etc.)
+- **storage**: Must match exactly for electronics (256gb, 512gb, 1tb, etc.)
+
+All other fashion attributes use flexible matching (ILIKE):
+- style, color, material, detail, sleeveLength, pattern, neckline, length, fit
 
 **⚠️ MATERIAL & DETAIL ARE MANDATORY FILTERS:**
 If user mentions a material (sateen, flannel, leather) or detail (studded, ribbed, cropped),
 you MUST extract it. These are hard requirements, not optional suggestions.
 
+**📖 QUICK REFERENCE GUIDE:**
+
+**How to extract attributes step-by-step:**
+1. Identify the product type → set category (CLOTHING/FOOTWEAR/ACCESSORIES) and style
+2. Check for gender keywords → set gender (men/women/boys/girls)
+3. Look for color words → set color
+4. Check if style can have sleeves → extract sleeveLength if mentioned
+5. Check if style can have neckline → extract neckline if mentioned
+6. Check if style is dress/skirt → extract length if mentioned
+7. Look for pattern keywords → set pattern
+8. Look for material keywords → set material (MANDATORY if mentioned)
+9. Look for detail keywords → set detail (MANDATORY if mentioned)
+10. Look for fit keywords → set fit
+11. Consider exclusions → set exclude array to filter out unwanted items
+
 **TOOL CALL EXAMPLES:**
+
+User: "shirts"
+{
+  "query": "shirts",
+  "category": "CLOTHING",
+  "style": "shirt",
+  "exclude": ["t-shirt"]
+}
+
+User: "men's formal shirts"
+{
+  "query": "men's formal shirts",
+  "category": "CLOTHING",
+  "style": "shirt",
+  "gender": "men",
+  "exclude": ["t-shirt", "polo"]
+}
+
+User: "t-shirts"
+{
+  "query": "t-shirts",
+  "category": "CLOTHING",
+  "style": "t-shirt"
+  // NO exclude - user wants t-shirts!
+}
 
 User: "shorts for men"
 {
@@ -512,7 +797,8 @@ User: "women's dress"
   "query": "women's dress",
   "category": "CLOTHING",
   "style": "dress",
-  "gender": "women"
+  "gender": "women",
+  "exclude": ["shoes", "shirt"]
 }
 
 User: "black dress"
@@ -520,7 +806,8 @@ User: "black dress"
   "query": "black dress",
   "category": "CLOTHING",
   "color": "black",
-  "style": "dress"
+  "style": "dress",
+  "exclude": ["shoes"]
 }
 
 User: "sateen lace top"
@@ -622,12 +909,88 @@ User: "backpack"
   "query": "backpack",
   "category": "ACCESSORIES",
   "style": "backpack"
+}
+
+User: "navy blue polo shirt"
+{
+  "query": "navy blue polo shirt",
+  "category": "CLOTHING",
+  "style": "shirt",
+  "color": "navy",
+  "exclude": ["t-shirt"]
+}
+
+User: "burgundy sweater with crew neck"
+{
+  "query": "burgundy sweater with crew neck",
+  "category": "CLOTHING",
+  "style": "sweater",
+  "color": "burgundy",
+  "neckline": "crew"
+}
+
+User: "geometric pattern blouse"
+{
+  "query": "geometric pattern blouse",
+  "category": "CLOTHING",
+  "style": "blouse",
+  "pattern": "geometric"
+}
+
+User: "distressed ankle jeans"
+{
+  "query": "distressed ankle jeans",
+  "category": "CLOTHING",
+  "style": "jeans",
+  "detail": "distressed",
+  "length": "ankle"
+}
+
+User: "off-shoulder maxi dress in cream"
+{
+  "query": "off-shoulder maxi dress in cream",
+  "category": "CLOTHING",
+  "style": "dress",
+  "neckline": "off-shoulder",
+  "length": "maxi",
+  "color": "cream"
 }`;
 
 const TECH_ACCESSORIES_LOGIC = `
 **═══════════════════════════════════════════════════════════════════════**
 **🔌 TECH ACCESSORIES-SPECIFIC RULES**
 **═══════════════════════════════════════════════════════════════════════**
+
+**⚠️ CRITICAL: ACCESSORIES Category Ambiguity**
+
+The "ACCESSORIES" category can be EITHER tech accessories OR fashion accessories.
+You MUST determine which type based on query context.
+
+**TECH ACCESSORIES Indicators (use category: "ACCESSORIES" for electronics):**
+Keywords: case, charger, cable, adapter, screen protector, stand, mount, holder, 
+power bank, USB, lightning, magsafe
+
+Device mentions: iPhone, Samsung, Galaxy, MacBook, iPad, AirPods, laptop, phone, 
+tablet, computer
+
+Examples:
+- "iPhone case" → TECH accessory
+- "laptop bag" → TECH accessory (context: laptop)
+- "phone charger" → TECH accessory
+- "USB cable" → TECH accessory
+
+**FASHION ACCESSORIES Indicators (use category: "ACCESSORIES" for fashion):**
+Items: bag, backpack, handbag, wallet, belt, scarf, hat, sunglasses, jewelry, 
+necklace, ring, bracelet, watch
+
+Examples:
+- "backpack" → FASHION accessory
+- "leather bag" → FASHION accessory
+- "sunglasses" → FASHION accessory
+
+**DECISION RULE:**
+If query contains tech device names OR tech accessory types → TECH
+Otherwise → FASHION
 
 **ACCESSORY TYPE DISAMBIGUATION:**
 When user asks for tech accessories, add style filter to avoid fashion items:

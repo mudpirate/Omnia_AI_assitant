@@ -63,7 +63,7 @@ const DEEPFASHION_API_URL = process.env.DEEPFASHION_API_URL;
 
 const app = express();
 const PORT = process.env.PORT || 4000;
-const LLM_MODEL = process.env.OPENAI_MODEL || "gpt-4o-mini";
+const LLM_MODEL = process.env.OPENAI_MODEL || "gpt-4.1-mini";
 const VISION_MODEL = "gpt-4o-mini";
 const MODAL_CLIP_URL = process.env.MODAL_CLIP_URL;
 const MODAL_CLIP_BATCH_URL = process.env.MODAL_CLIP_BATCH_URL;
@@ -244,8 +244,8 @@ async function getCategoryType(category, query = "") {
   if (categoryTypeCache.has(categoryKey)) {
     console.log(
       `   💾 Cache hit for category: ${categoryKey} → ${categoryTypeCache.get(
-        categoryKey
-      )}`
+        categoryKey,
+      )}`,
     );
     return categoryTypeCache.get(categoryKey);
   }
@@ -413,6 +413,12 @@ const TOOLS = [
               "Order of results. Use 'price_asc' for 'cheapest/budget/affordable', 'price_desc' for 'best/premium/expensive/high-end', 'newest' for 'latest/new/recent'. Default is 'relevance' (hybrid search ranking).",
             enum: ["price_asc", "price_desc", "newest", "relevance"],
           },
+          exclude: {
+            type: "array",
+            items: { type: "string" },
+            description:
+              "Keywords to EXCLUDE from results. Use this to filter out unwanted product types. Examples: ['t-shirt'] when searching for formal shirts, ['case', 'charger'] when searching for phones, ['bag', 'stand'] when searching for laptops. The AI should intelligently determine what to exclude based on user intent.",
+          },
           megapixels: { type: "string", description: "Camera megapixels." },
           screen_size: { type: "string", description: "Screen size." },
           refresh_rate: {
@@ -482,7 +488,7 @@ async function getClipImageEmbedding(imageBase64) {
   // 🔥 FIX #1: Validate MODAL_CLIP_URL is configured
   if (!MODAL_CLIP_URL) {
     const error = new Error(
-      "MODAL_CLIP_URL is not configured. Please add MODAL_CLIP_URL to your .env file."
+      "MODAL_CLIP_URL is not configured. Please add MODAL_CLIP_URL to your .env file.",
     );
     console.error("   ❌ Configuration error:", error.message);
     throw error;
@@ -533,7 +539,7 @@ async function visualProductSearch(imageEmbedding, filters = {}, limit = 15) {
   }
   if (filters.brand) {
     whereConditions.push(
-      `LOWER("brand") ILIKE '%${filters.brand.toLowerCase()}%'`
+      `LOWER("brand") ILIKE '%${filters.brand.toLowerCase()}%'`,
     );
     console.log("   🏷️ Brand filter:", filters.brand);
   }
@@ -565,7 +571,7 @@ async function visualProductSearch(imageEmbedding, filters = {}, limit = 15) {
       results.slice(0, 3).forEach((r, i) => {
         console.log(`      ${i + 1}. ${r.title}`);
         console.log(
-          `         Similarity: ${(parseFloat(r.similarity) * 100).toFixed(1)}%`
+          `         Similarity: ${(parseFloat(r.similarity) * 100).toFixed(1)}%`,
         );
       });
     }
@@ -585,7 +591,7 @@ async function extractFashionAttributesFromImage(imageBase64) {
 
   if (!DEEPFASHION_API_URL) {
     console.log(
-      "   ⚠️  DeepFashion API URL not configured, skipping attribute extraction"
+      "   ⚠️  DeepFashion API URL not configured, skipping attribute extraction",
     );
     return { success: false, attributes: {} };
   }
@@ -747,10 +753,10 @@ async function enhancedVisualSearchWithAttributes(
   imageEmbedding,
   fashionAttributes,
   filters = {},
-  limit = 15
+  limit = 15,
 ) {
   console.log(
-    "\n🔍 [ENHANCED VISUAL SEARCH] Combining CLIP + DeepFashion attributes"
+    "\n🔍 [ENHANCED VISUAL SEARCH] Combining CLIP + DeepFashion attributes",
   );
 
   const vectorLiteral =
@@ -788,7 +794,7 @@ async function enhancedVisualSearchWithAttributes(
       categoryMap[fashionAttributes.category.toLowerCase()] || "CLOTHING";
     whereConditions.push(`"category" = '${dbCategory}'`);
     console.log(
-      `   📂 Category filter: ${fashionAttributes.category} → ${dbCategory}`
+      `   📂 Category filter: ${fashionAttributes.category} → ${dbCategory}`,
     );
   }
 
@@ -810,7 +816,7 @@ async function enhancedVisualSearchWithAttributes(
   if (fashionAttributes.sleeveLength) {
     const sleeveLower = fashionAttributes.sleeveLength.toLowerCase();
     whereConditions.push(
-      `LOWER("specs"->>'sleeveLength') ILIKE '%${sleeveLower}%'`
+      `LOWER("specs"->>'sleeveLength') ILIKE '%${sleeveLower}%'`,
     );
     console.log(`   👕 Sleeve filter: ${sleeveLower}`);
   }
@@ -818,7 +824,7 @@ async function enhancedVisualSearchWithAttributes(
   // Apply user-provided filters
   if (filters.brand) {
     whereConditions.push(
-      `LOWER("brand") ILIKE '%${filters.brand.toLowerCase()}%'`
+      `LOWER("brand") ILIKE '%${filters.brand.toLowerCase()}%'`,
     );
     console.log("   🏷️ Brand filter:", filters.brand);
   }
@@ -924,10 +930,10 @@ async function enhancedVisualSearchWithAttributes(
         console.log(`      ${i + 1}. ${r.title}`);
         console.log(
           `         Visual: ${(r.similarity * 100).toFixed(
-            1
+            1,
           )}% | Attributes: ${(r.attributeScore * 100).toFixed(
-            1
-          )}% | Combined: ${(r.combinedScore * 100).toFixed(1)}%`
+            1,
+          )}% | Combined: ${(r.combinedScore * 100).toFixed(1)}%`,
         );
       });
 
@@ -975,11 +981,10 @@ app.post("/visual-search", upload.single("image"), async (req, res) => {
 
     // Step 1: Extract fashion attributes using DeepFashion
     console.log(
-      "\n🚀 Step 1: Extracting fashion attributes with DeepFashion..."
+      "\n🚀 Step 1: Extracting fashion attributes with DeepFashion...",
     );
-    const attributeResult = await extractFashionAttributesFromImage(
-      imageBase64
-    );
+    const attributeResult =
+      await extractFashionAttributesFromImage(imageBase64);
     const fashionAttributes = attributeResult.success
       ? attributeResult.attributes
       : {};
@@ -998,12 +1003,12 @@ app.post("/visual-search", upload.single("image"), async (req, res) => {
         imageEmbedding,
         fashionAttributes,
         filters,
-        20
+        20,
       );
     } else {
       // Fallback to standard visual search
       console.log(
-        "   ⚠️  No attributes extracted, using standard visual search"
+        "   ⚠️  No attributes extracted, using standard visual search",
       );
       results = await visualProductSearch(imageEmbedding, filters, 20);
     }
@@ -1119,7 +1124,7 @@ function buildModelNumberFilter(modelNumber) {
     .filter(
       (word) =>
         word.length > 1 &&
-        !["the", "and", "for", "with", "from", "a", "an"].includes(word)
+        !["the", "and", "for", "with", "from", "a", "an"].includes(word),
     );
 
   if (words.length === 0) return null;
@@ -1135,7 +1140,9 @@ function buildModelNumberFilter(modelNumber) {
 }
 
 async function buildPushDownFilters(filters = {}, rawQuery = "") {
-  console.log("\n🔍 [FILTER BUILDER] Building WHERE clause (Scalable Mode)");
+  console.log(
+    "\n🔍 [FILTER BUILDER] Building WHERE clause (LLM-Driven Exclusion Mode)",
+  );
   console.log("   📥 Input filters:", JSON.stringify(filters, null, 2));
 
   const conditions = [];
@@ -1143,41 +1150,28 @@ async function buildPushDownFilters(filters = {}, rawQuery = "") {
   conditions.push(`"stock" = 'IN_STOCK'`);
   console.log("   📦 Stock filter: ENABLED");
 
-  // 🔥 FIX: Exclude accessories when searching for main products
-  const queryLower = rawQuery.toLowerCase();
-  const isHeadphoneSearch =
-    queryLower.includes("headphone") ||
-    queryLower.includes("earphone") ||
-    queryLower.includes("earbud");
-  const isLaptopSearch =
-    queryLower.includes("laptop") || queryLower.includes("notebook");
-  const isPhoneSearch =
-    queryLower.includes("phone") && !queryLower.includes("case");
-
-  if (isHeadphoneSearch && filters.category === "AUDIO") {
-    // Exclude adapters, cables, transmitters when searching for headphones
-    conditions.push(
-      `LOWER("title") NOT LIKE '%adapter%' AND LOWER("title") NOT LIKE '%cable%' AND LOWER("title") NOT LIKE '%transmitter%' AND LOWER("title") NOT LIKE '%connector%'`
-    );
+  // 🔥 LLM-DRIVEN NEGATIVE FILTERING
+  // Instead of hardcoding exclusions, the LLM decides what to exclude via the 'exclude' parameter
+  if (
+    filters.exclude &&
+    Array.isArray(filters.exclude) &&
+    filters.exclude.length > 0
+  ) {
     console.log(
-      "   🎧 Headphone search: Excluding adapters, cables, and transmitters"
+      "   🚫 [LLM-DRIVEN EXCLUSION] Processing exclude list:",
+      filters.exclude,
     );
-  }
 
-  if (isLaptopSearch && filters.category === "LAPTOPS") {
-    // Exclude bags, cases, stands when searching for laptops
-    conditions.push(
-      `LOWER("title") NOT LIKE '%bag%' AND LOWER("title") NOT LIKE '%case%' AND LOWER("title") NOT LIKE '%stand%' AND LOWER("title") NOT LIKE '%sleeve%'`
-    );
-    console.log("   💻 Laptop search: Excluding bags, cases, and stands");
-  }
+    const excludeConditions = filters.exclude.map((keyword) => {
+      const sanitized = keyword.toLowerCase().trim().replace(/'/g, "''");
+      return `LOWER("title") NOT ILIKE '%${sanitized}%'`;
+    });
 
-  if (isPhoneSearch && filters.category === "MOBILEPHONES") {
-    // Exclude cases, chargers when searching for phones
-    conditions.push(
-      `LOWER("title") NOT LIKE '%case%' AND LOWER("title") NOT LIKE '%charger%' AND LOWER("title") NOT LIKE '%cable%' AND LOWER("title") NOT LIKE '%screen protector%'`
-    );
-    console.log("   📱 Phone search: Excluding cases, chargers, and cables");
+    const excludeClause = excludeConditions.join(" AND ");
+    conditions.push(excludeClause);
+
+    console.log(`   ✅ Excluding keywords: ${filters.exclude.join(", ")}`);
+    console.log(`   📜 Exclusion clause: ${excludeClause}`);
   }
 
   for (const key of Object.keys(filters)) {
@@ -1219,8 +1213,8 @@ async function buildPushDownFilters(filters = {}, rawQuery = "") {
         conditions.push(modelFilter);
         console.log(`   🔢 Model (word-based): ${modelFilter}`);
       }
-    } else if (key !== "query" && key !== "sort") {
-      // All other keys are specs (ignore 'sort' here)
+    } else if (key !== "query" && key !== "sort" && key !== "exclude") {
+      // All other keys are specs (ignore 'query', 'sort', and 'exclude' here)
       let specValue = value.toString().toLowerCase().replace(/'/g, "''");
 
       if (key === "gender") {
@@ -1243,7 +1237,7 @@ async function buildPushDownFilters(filters = {}, rawQuery = "") {
         const condition = `(LOWER("title") ILIKE '%${stemmed}%' OR LOWER("specs"->>'detail') ILIKE '%${stemmed}%')`;
         conditions.push(condition);
         console.log(
-          `   ✨ DETAIL filter (stemmed "${specValue}" -> "${stemmed}"): ${condition}`
+          `   ✨ DETAIL filter (stemmed "${specValue}" -> "${stemmed}"): ${condition}`,
         );
       } else if (key === "sleeveLength") {
         // Fashion spec: sleeve length (critical for fashion queries)
@@ -1305,7 +1299,7 @@ function applySorting(results, sortType = "relevance") {
       console.log(
         `   ✅ Sorted by price (ascending): ${sorted[0]?.price} KWD → ${
           sorted[sorted.length - 1]?.price
-        } KWD`
+        } KWD`,
       );
       break;
 
@@ -1314,7 +1308,7 @@ function applySorting(results, sortType = "relevance") {
       console.log(
         `   ✅ Sorted by price (descending): ${sorted[0]?.price} KWD → ${
           sorted[sorted.length - 1]?.price
-        } KWD`
+        } KWD`,
       );
       break;
 
@@ -1336,7 +1330,7 @@ async function vectorSearch(
   vectorLiteral,
   filters = {},
   limit = 100,
-  rawQuery = ""
+  rawQuery = "",
 ) {
   console.log("\n🎯 [VECTOR SEARCH] Starting vector search");
   console.log("   🔢 Limit:", limit);
@@ -1365,7 +1359,7 @@ async function vectorSearch(
       results.slice(0, 3).forEach((r, i) => {
         console.log(`      ${i + 1}. ${r.title}`);
         console.log(
-          `         Price: ${r.price} KWD | Store: ${r.storeName} | Category: ${r.category}`
+          `         Price: ${r.price} KWD | Store: ${r.storeName} | Category: ${r.category}`,
         );
         console.log(`         Similarity: ${r.similarity?.toFixed(4)}`);
       });
@@ -1381,10 +1375,10 @@ async function vectorSearch(
 async function fulltextSearchElectronics(
   searchQuery,
   filters = {},
-  limit = 100
+  limit = 100,
 ) {
   console.log(
-    "\n📝 [FULLTEXT - ELECTRONICS] Starting electronics fulltext search"
+    "\n📝 [FULLTEXT - ELECTRONICS] Starting electronics fulltext search",
   );
   console.log("   🔍 Search term:", searchQuery);
 
@@ -1422,7 +1416,7 @@ async function fulltextSearchElectronics(
         .filter(
           (word) =>
             word.length > 2 &&
-            !["the", "and", "for", "with", "from"].includes(word)
+            !["the", "and", "for", "with", "from"].includes(word),
         );
 
       if (words.length > 0) {
@@ -1491,7 +1485,7 @@ async function fulltextSearchFashion(searchQuery, filters = {}, limit = 100) {
         .filter(
           (word) =>
             word.length > 2 &&
-            !["the", "and", "for", "with", "from"].includes(word)
+            !["the", "and", "for", "with", "from"].includes(word),
         );
 
       if (words.length > 0) {
@@ -1543,10 +1537,10 @@ async function fulltextSearchFashion(searchQuery, filters = {}, limit = 100) {
 function reciprocalRankFusionElectronics(
   vectorResults,
   fulltextResults,
-  k = 60
+  k = 60,
 ) {
   console.log(
-    "\n🔀 [RRF - ELECTRONICS] Electronics-optimized fusion (Dynamic Weighting)"
+    "\n🔀 [RRF - ELECTRONICS] Electronics-optimized fusion (Dynamic Weighting)",
   );
   console.log("   📊 Vector results:", vectorResults.length);
   console.log("   📊 Fulltext results:", fulltextResults.length);
@@ -1585,11 +1579,11 @@ function reciprocalRankFusionElectronics(
   });
 
   const fulltextMatches = Array.from(scores.values()).filter(
-    (item) => item.fulltextRank !== null
+    (item) => item.fulltextRank !== null,
   );
 
   const vectorOnlyMatches = Array.from(scores.values()).filter(
-    (item) => item.fulltextRank === null
+    (item) => item.fulltextRank === null,
   );
 
   console.log("   📊 Fulltext matches:", fulltextMatches.length);
@@ -1622,7 +1616,7 @@ function reciprocalRankFusionElectronics(
   console.log(
     `   ⚖️  Weights: Fulltext ${(fulltextWeight * 100).toFixed(0)}% / Vector ${(
       vectorWeight * 100
-    ).toFixed(0)}%`
+    ).toFixed(0)}%`,
   );
 
   const scoredFulltext = fulltextMatches.map((item) => ({
@@ -1688,11 +1682,11 @@ function reciprocalRankFusionFashion(vectorResults, fulltextResults, k = 60) {
   });
 
   const fulltextMatches = Array.from(scores.values()).filter(
-    (item) => item.fulltextRank !== null
+    (item) => item.fulltextRank !== null,
   );
 
   const vectorOnlyMatches = Array.from(scores.values()).filter(
-    (item) => item.fulltextRank === null
+    (item) => item.fulltextRank === null,
   );
 
   console.log("   📊 Fulltext matches:", fulltextMatches.length);
@@ -1751,7 +1745,7 @@ async function electronicsHybridSearch(
   searchQuery,
   vectorLiteral,
   filters = {},
-  limit = 50
+  limit = 50,
 ) {
   console.log("\n⚡ [ELECTRONICS SEARCH] Using electronics-optimized pipeline");
   console.log("   🔍 Query:", searchQuery);
@@ -1766,13 +1760,13 @@ async function electronicsHybridSearch(
   if (vectorResults.length > 0 || fulltextResults.length > 0) {
     const fusedResults = reciprocalRankFusionElectronics(
       vectorResults,
-      fulltextResults
+      fulltextResults,
     );
     const finalResults = fusedResults.slice(0, limit);
     console.log(
       "   ✅ Electronics Stage 1 (strict):",
       finalResults.length,
-      "results"
+      "results",
     );
     return finalResults;
   }
@@ -1795,19 +1789,19 @@ async function electronicsHybridSearch(
   if (vectorResults.length > 0 || fulltextResults.length > 0) {
     const fusedResults = reciprocalRankFusionElectronics(
       vectorResults,
-      fulltextResults
+      fulltextResults,
     );
     const finalResults = fusedResults.slice(0, limit);
     console.log(
       "   ✅ Electronics Stage 2 (no variant/color):",
       finalResults.length,
-      "results"
+      "results",
     );
     return finalResults;
   }
 
   console.log(
-    "   ⚠️  Stage 2 failed. Trying Stage 3 (drop one spec at a time)..."
+    "   ⚠️  Stage 2 failed. Trying Stage 3 (drop one spec at a time)...",
   );
 
   // Stage 3: Try dropping specs one at a time to find partial matches
@@ -1824,7 +1818,7 @@ async function electronicsHybridSearch(
         "max_price",
         "storeName",
         "store_name",
-      ].includes(key)
+      ].includes(key),
   );
 
   for (const specToDrop of specKeys) {
@@ -1845,20 +1839,20 @@ async function electronicsHybridSearch(
     if (vectorResults.length > 0 || fulltextResults.length > 0) {
       const fusedResults = reciprocalRankFusionElectronics(
         vectorResults,
-        fulltextResults
+        fulltextResults,
       );
       const finalResults = fusedResults.slice(0, limit);
       console.log(
         `   ✅ Electronics Stage 3 (dropped ${specToDrop}):`,
         finalResults.length,
-        "results"
+        "results",
       );
       return finalResults;
     }
   }
 
   console.log(
-    "   ⚠️  Stage 3 failed. Trying Stage 4 (category + brand only)..."
+    "   ⚠️  Stage 3 failed. Trying Stage 4 (category + brand only)...",
   );
 
   // Stage 4: Last resort - category and brand only
@@ -1878,13 +1872,13 @@ async function electronicsHybridSearch(
 
   const fusedResults = reciprocalRankFusionElectronics(
     vectorResults,
-    fulltextResults
+    fulltextResults,
   );
   const finalResults = fusedResults.slice(0, limit);
   console.log(
     "   ✅ Electronics Stage 4 (relaxed):",
     finalResults.length,
-    "results"
+    "results",
   );
 
   return finalResults;
@@ -1894,7 +1888,7 @@ async function fashionHybridSearch(
   searchQuery,
   vectorLiteral,
   filters = {},
-  limit = 50
+  limit = 50,
 ) {
   console.log("\n👗 [FASHION SEARCH] Using fashion-optimized pipeline");
   console.log("   🔍 Query:", searchQuery);
@@ -1908,13 +1902,13 @@ async function fashionHybridSearch(
   if (vectorResults.length >= 10 || fulltextResults.length >= 10) {
     const fusedResults = reciprocalRankFusionFashion(
       vectorResults,
-      fulltextResults
+      fulltextResults,
     );
     const finalResults = fusedResults.slice(0, limit);
     console.log(
       "   ✅ Fashion Stage 1 (strict):",
       finalResults.length,
-      "results"
+      "results",
     );
     return finalResults;
   }
@@ -1948,13 +1942,13 @@ async function fashionHybridSearch(
   if (vectorResults.length >= 5 || fulltextResults.length >= 5) {
     const fusedResults = reciprocalRankFusionFashion(
       vectorResults,
-      fulltextResults
+      fulltextResults,
     );
     const finalResults = fusedResults.slice(0, limit);
     console.log(
       "   ✅ Fashion Stage 2 (no color/pattern):",
       finalResults.length,
-      "results"
+      "results",
     );
     return finalResults;
   }
@@ -1985,19 +1979,19 @@ async function fashionHybridSearch(
   if (vectorResults.length >= 5 || fulltextResults.length >= 5) {
     const fusedResults = reciprocalRankFusionFashion(
       vectorResults,
-      fulltextResults
+      fulltextResults,
     );
     const finalResults = fusedResults.slice(0, limit);
     console.log(
       "   ✅ Fashion Stage 3 (no detail/neckline/fit):",
       finalResults.length,
-      "results"
+      "results",
     );
     return finalResults;
   }
 
   console.log(
-    "   🔄 Fashion Stage 4 (drop material + length, keep sleeveLength)..."
+    "   🔄 Fashion Stage 4 (drop material + length, keep sleeveLength)...",
   );
 
   // Stage 4: Drop material and length
@@ -2022,19 +2016,19 @@ async function fashionHybridSearch(
   if (vectorResults.length >= 5 || fulltextResults.length >= 5) {
     const fusedResults = reciprocalRankFusionFashion(
       vectorResults,
-      fulltextResults
+      fulltextResults,
     );
     const finalResults = fusedResults.slice(0, limit);
     console.log(
       "   ✅ Fashion Stage 4 (keep sleeveLength):",
       finalResults.length,
-      "results"
+      "results",
     );
     return finalResults;
   }
 
   console.log(
-    "   🔄 Fashion Stage 5 (final fallback - gender + category + style only)..."
+    "   🔄 Fashion Stage 5 (final fallback - gender + category + style only)...",
   );
 
   const stage5Filters = {
@@ -2052,13 +2046,13 @@ async function fashionHybridSearch(
 
   const fusedResults = reciprocalRankFusionFashion(
     vectorResults,
-    fulltextResults
+    fulltextResults,
   );
   const finalResults = fusedResults.slice(0, limit);
   console.log(
     "   ✅ Fashion Stage 5 (final vibe check):",
     finalResults.length,
-    "results"
+    "results",
   );
 
   return finalResults;
@@ -2068,7 +2062,7 @@ async function hybridSearch(
   searchQuery,
   vectorLiteral,
   filters = {},
-  limit = 50
+  limit = 50,
 ) {
   console.log("\n🚀 [HYBRID SEARCH] Starting hybrid search");
   console.log("   🔍 Query:", searchQuery);
@@ -2082,14 +2076,14 @@ async function hybridSearch(
       searchQuery,
       vectorLiteral,
       filters,
-      limit
+      limit,
     );
   } else if (categoryType === "electronics") {
     return await electronicsHybridSearch(
       searchQuery,
       vectorLiteral,
       filters,
-      limit
+      limit,
     );
   } else {
     console.log("   ⚠️  Unknown category, using electronics pipeline");
@@ -2097,7 +2091,7 @@ async function hybridSearch(
       searchQuery,
       vectorLiteral,
       filters,
-      limit
+      limit,
     );
   }
 }
@@ -2123,7 +2117,7 @@ function deduplicateProducts(products) {
       unique.push(product);
     } else {
       console.log(
-        `   ⏭️  Skipped variant: ${product.title} - ${product.price} KWD`
+        `   ⏭️  Skipped variant: ${product.title} - ${product.price} KWD`,
       );
     }
   }
@@ -2179,7 +2173,7 @@ async function searchWebTool(query) {
         `INSERT INTO "WebSearchCache" (id, query, response, "embedding", "createdAt")
           VALUES (gen_random_uuid(), $1, $2::jsonb, '${vectorLiteral}'::vector, NOW())`,
         query,
-        JSON.stringify(data)
+        JSON.stringify(data),
       );
     }
 
@@ -2337,7 +2331,7 @@ app.post("/analyze-image", upload.single("image"), async (req, res) => {
 
     const analysisResult = await analyzeProductImage(
       req.file.buffer,
-      req.file.mimetype
+      req.file.mimetype,
     );
 
     if (!analysisResult.success) {
@@ -2419,7 +2413,7 @@ app.post("/chat", async (req, res) => {
     console.log("📥 OpenAI response received");
     console.log(
       "   Tool calls:",
-      responseMessage.tool_calls ? responseMessage.tool_calls.length : 0
+      responseMessage.tool_calls ? responseMessage.tool_calls.length : 0,
     );
 
     if (responseMessage.tool_calls) {
@@ -2522,7 +2516,7 @@ app.listen(PORT, () => {
   console.log("   ⚡ Electronics: Precision matching (dynamic RRF)");
   console.log("   👗 Fashion: Vibe-based search (60/40 or 70% vector)");
   console.log(
-    "   🔢 Sorting: AI-controlled (cheapest, best, newest, relevance)"
+    "   🔢 Sorting: AI-controlled (cheapest, best, newest, relevance)",
   );
   console.log("   🎯 Category: Soft bias (prevents semantic drift)");
   console.log("   🗑️  Deduplication: Model variety (not color clutter)");

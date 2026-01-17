@@ -726,8 +726,6 @@ function ProductModal({ product, onClose, onAsk }) {
   const handleSayMoreSubmit = (e) => {
     e.preventDefault();
     if (sayMoreInput.trim()) {
-      // Build a context-rich query with product details
-      // This helps the AI understand what product the user is asking about
       const productContext = {
         title: product.title,
         brand: product.brand,
@@ -736,32 +734,18 @@ function ProductModal({ product, onClose, onAsk }) {
         specs: product.specs || {},
       };
 
-      // Extract key identifiers for better filtering
       const contextParts = [];
+      if (product.brand) contextParts.push(product.brand);
 
-      // Add brand + model for electronics
-      if (product.brand) {
-        contextParts.push(product.brand);
-      }
+      if (product.category === "MOBILEPHONES") contextParts.push("phone");
+      else if (product.category === "LAPTOPS") contextParts.push("laptop");
+      else if (product.category === "CLOTHING") contextParts.push("clothing");
+      else if (product.category === "FOOTWEAR") contextParts.push("shoes");
 
-      // Add category context
-      if (product.category === "MOBILEPHONES") {
-        contextParts.push("phone");
-      } else if (product.category === "LAPTOPS") {
-        contextParts.push("laptop");
-      } else if (product.category === "CLOTHING") {
-        contextParts.push("clothing");
-      } else if (product.category === "FOOTWEAR") {
-        contextParts.push("shoes");
-      }
-
-      // Add model number if available
       if (product.specs?.model || product.specs?.variant) {
-        const modelPart = product.specs.model || product.specs.variant;
-        contextParts.push(modelPart);
+        contextParts.push(product.specs.model || product.specs.variant);
       }
 
-      // Build the enhanced query
       const contextString = contextParts.join(" ");
       const enhancedQuery = `I'm looking at ${product.title}. ${sayMoreInput}. Show me similar ${contextString} products.`;
 
@@ -776,13 +760,17 @@ function ProductModal({ product, onClose, onAsk }) {
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8 bg-white/50 backdrop-blur-sm animate-fade"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-white border border-gray-200 max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col md:flex-row shadow-2xl animate-rise">
-        {/* Image Section */}
-        <div className="w-full md:w-1/2 bg-gray-50 relative group flex items-center justify-center p-8 border-r border-gray-100">
+      {/* FIX APPLIED: Changed `max-h-[90vh]` to `h-[90vh]`. 
+         This fixed height forces the internal flex areas to calculate available space correctly, 
+         ensuring the scrollbar appears and the checkout link stays pinned to the bottom.
+      */}
+      <div className="bg-white border border-gray-200 max-w-5xl w-full h-[90vh] overflow-hidden flex flex-col md:flex-row shadow-2xl animate-rise">
+        {/* Image Section - Adjusted for Mobile/Desktop Split */}
+        <div className="w-full h-[40%] md:w-1/2 md:h-full bg-gray-50 relative group flex items-center justify-center p-8 border-b md:border-b-0 md:border-r border-gray-100">
           <img
             src={product.imageUrl}
             alt={product.title}
-            className="max-h-[60vh] object-contain mix-blend-multiply filter grayscale hover:grayscale-0 transition-all duration-700"
+            className="w-full h-full object-contain mix-blend-multiply filter grayscale hover:grayscale-0 transition-all duration-700"
           />
 
           {/* Say More Button */}
@@ -822,8 +810,10 @@ function ProductModal({ product, onClose, onAsk }) {
         </div>
 
         {/* Details Section */}
-        <div className="w-full md:w-1/2 flex flex-col h-full bg-white">
-          <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-start">
+        {/* FIX APPLIED: Using flex-col and explicit heights to manage scrolling area */}
+        <div className="w-full h-[60%] md:w-1/2 md:h-full flex flex-col bg-white relative">
+          {/* Header (Pinned Top) */}
+          <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-start flex-shrink-0">
             <div className="pr-8">
               <span className="inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mb-2">
                 {product.brand}
@@ -840,6 +830,7 @@ function ProductModal({ product, onClose, onAsk }) {
             </button>
           </div>
 
+          {/* Scrollable Content (Fills Middle) */}
           <div className="flex-1 overflow-y-auto p-8 space-y-8 no-scrollbar">
             <div>
               <div className="flex items-baseline gap-2 mb-2">
@@ -911,7 +902,8 @@ function ProductModal({ product, onClose, onAsk }) {
             )}
           </div>
 
-          <div className="p-8 border-t border-gray-100 bg-gray-50">
+          {/* Footer (Pinned Bottom) */}
+          <div className="p-8 border-t border-gray-100 bg-gray-50 flex-shrink-0">
             <a
               href={product.productUrl}
               target="_blank"

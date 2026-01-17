@@ -1,5 +1,6 @@
 // runner.js - Optimized for Large-Scale Multi-Store Scraping
 // Enhanced with URL-based progress tracking (allows same category, different URLs)
+// Modified: Gender parameter added to job configuration
 import puppeteer from "puppeteer";
 import { PrismaClient } from "@prisma/client";
 import pLimit from "p-limit";
@@ -72,60 +73,112 @@ const SCRAPING_JOBS = {
     priority: 1, // Lower number = higher priority
     jobs: [
       {
-        url: "https://www.bershka.com/kw/men/sale/shirts-c1010747933.html",
+        url: "https://www.bershka.com/kw/men/sale/bershka/shirts-c1010747953.html",
         category: "CLOTHING",
+        gender: "men", // ✅ Gender specified here
       },
       {
-        url: "https://www.bershka.com/kw/men/sale/t-shirts-and-polo-shirts-c1010747937.html",
+        url: "https://www.bershka.com/kw/men/sale/bershka/jackets-and-coats-c1010747951.html",
         category: "CLOTHING",
+        gender: "men",
       },
       {
-        url: "https://www.bershka.com/kw/men/sale/trousers-and-jeans-c1010747956.html",
+        url: "https://www.bershka.com/kw/men/sale/bershka/trousers-and-jeans-c1010747949.html",
         category: "CLOTHING",
+        gender: "men",
       },
       {
-        url: "https://www.bershka.com/kw/women/sale/t-shirts-and-tops-c1010850199.html",
+        url: "https://www.bershka.com/kw/men/sale/bershka/sweatshirts-and-sweaters-c1010747950.html",
         category: "CLOTHING",
+        gender: "men",
+      },
+      {
+        url: "https://www.bershka.com/kw/men/sale/bershka/t-shirts-and-polo-shirts-c1010747952.html",
+        category: "CLOTHING",
+        gender: "men",
+      },
+      {
+        url: "https://www.bershka.com/kw/men/sale/bershka/shorts-c1010849658.html",
+        category: "CLOTHING",
+        gender: "men",
+      },
+      {
+        url: "https://www.bershka.com/kw/women/sale/bershka/jackets-and-coats-c1010850211.html",
+        category: "CLOTHING",
+        gender: "women",
+      },
+      {
+        url: "https://www.bershka.com/kw/women/sale/bershka/trousers-and-jeans-c1010850210.html",
+        category: "CLOTHING",
+        gender: "women",
+      },
+      {
+        url: "https://www.bershka.com/kw/women/sale/bershka/sweaters-and-sweatshirts-c1010850214.html",
+        category: "CLOTHING",
+        gender: "women",
+      },
+      {
+        url: "https://www.bershka.com/kw/women/sale/bershka/t-shirts-and-tops-c1010850212.html",
+        category: "CLOTHING",
+        gender: "women",
+      },
+      {
+        url: "https://www.bershka.com/kw/women/sale/bershka/dresses-and-jumpsuits-c1010850213.html",
+        category: "CLOTHING",
+        gender: "women",
+      },
+      {
+        url: "https://www.bershka.com/kw/women/sale/bershka/skirts-and-shorts-c1010850215.html",
+        category: "CLOTHING",
+        gender: "women",
+      },
+      {
+        url: "https://www.bershka.com/kw/women/sale/bershka/lencer%C3%ADa-c1010859174.html",
+        category: "CLOTHING",
+        gender: "women",
       },
     ],
   },
 
-  primark: {
-    scraper: scrapePrimarkProducts,
-    priority: 2, // Lower number = higher priority
-    jobs: [
-      {
-        url: "https://www.primark.com.kw/en/shop-men/clothing/shirts/--physical_stores_codes-ra1_q737_prm",
-        category: "CLOTHING",
-      },
-      {
-        url: "https://www.primark.com.kw/en/shop-men/clothing/trousers/--physical_stores_codes-ra1_q737_prm",
-        category: "CLOTHING",
-      },
-      {
-        url: "https://www.primark.com.kw/en/shop-women/clothing/tops-t-shirts/--physical_stores_codes-ra1_q737_prm",
-        category: "CLOTHING",
-      },
-    ],
-  },
-
-  // EUREKA STORE
-  // eureka: {
-  //   scraper: scrapeProductsEureka,
+  // primark: {
+  //   scraper: scrapePrimarkProducts,
   //   priority: 1, // Lower number = higher priority
   //   jobs: [
   //     {
-  //       url: "https://www.eureka.com.kw/products/browse/phones/mobile-phones",
-  //       category: "mobilephones",
+  //       url: "https://www.primark.com.kw/en/shop-men/clothing/--physical_stores_codes-ra1_q737_prm",
+  //       category: "CLOTHING",
+  //       gender: "men", // ✅ Gender specified here
   //     },
   //     {
-  //       url: "https://www.eureka.com.kw/products/browse/computers-tablets/laptops",
-  //       category: "laptops",
+  //       url: "https://www.primark.com.kw/en/shop-women/clothing/--physical_stores_codes-ra1_q737_prm",
+  //       category: "CLOTHING",
+  //       gender: "women",
+  //     },
+  //     {
+  //       url: "https://www.primark.com.kw/en/shop-kids/girls/--physical_stores_codes-ra1_q737_prm",
+  //       category: "CLOTHING",
+  //       gender: "girls",
+  //     },
+  //     {
+  //       url: "https://www.primark.com.kw/en/shop-kids/boys/--physical_stores_codes-ra1_q737_prm",
+  //       category: "CLOTHING",
+  //       gender: "boys",
   //     },
   //   ],
   // },
 
-  // Add more stores...
+  // EUREKA STORE (example - gender might not apply to electronics)
+  // eureka: {
+  //   scraper: scrapeProductsEureka,
+  //   priority: 1,
+  //   jobs: [
+  //     {
+  //       url: "https://www.eureka.com.kw/products/browse/phones/mobile-phones",
+  //       category: "mobilephones",
+  //       gender: null, // No gender for electronics
+  //     },
+  //   ],
+  // },
 };
 
 // ============================================================================
@@ -285,7 +338,7 @@ class ProgressTracker {
     }
   }
 
-  markJobComplete(storeName, url, category, success) {
+  markJobComplete(storeName, url, category, gender, success) {
     if (!this.progress.stores[storeName]) {
       this.progress.stores[storeName] = {
         completed: {},
@@ -301,6 +354,7 @@ class ProgressTracker {
       this.progress.stores[storeName].completed[jobHash] = {
         url: url,
         category: category,
+        gender: gender,
         completedAt: timestamp,
       };
       // Remove from failed if it was there
@@ -309,6 +363,7 @@ class ProgressTracker {
       this.progress.stores[storeName].failed[jobHash] = {
         url: url,
         category: category,
+        gender: gender,
         failedAt: timestamp,
       };
     }
@@ -363,7 +418,7 @@ class ProgressTracker {
 }
 
 // ============================================================================
-// STORE SCRAPER CLASS - Enhanced with URL-based tracking
+// STORE SCRAPER CLASS - Enhanced with gender parameter support
 // ============================================================================
 
 class StoreScraper {
@@ -414,11 +469,11 @@ class StoreScraper {
             job.url
           );
           console.log(
-            `⏭️  [${this.storeName}] Skipping ${
-              job.category
-            } (URL already completed at ${new Date(
+            `⏭️  [${this.storeName}] Skipping ${job.category} (${
+              job.gender || "no gender"
+            }) - URL already completed at ${new Date(
               jobInfo.completedAt
-            ).toLocaleString()})`
+            ).toLocaleString()}`
           );
           console.log(`    URL: ${job.url.substring(0, 80)}...`);
           this.stats.skipped++;
@@ -475,7 +530,9 @@ class StoreScraper {
       try {
         if (attempt > 0) {
           console.log(
-            `🔄 [${this.storeName}] Retry attempt ${attempt}/${this.config.maxRetries} for ${job.category}`
+            `🔄 [${this.storeName}] Retry attempt ${attempt}/${
+              this.config.maxRetries
+            } for ${job.category} (${job.gender || "no gender"})`
           );
           console.log(`    URL: ${job.url.substring(0, 80)}...`);
           await sleep(this.config.retryDelay);
@@ -490,6 +547,7 @@ class StoreScraper {
           this.storeName,
           job.url,
           job.category,
+          job.gender,
           true
         );
         await this.progressTracker.save();
@@ -498,13 +556,16 @@ class StoreScraper {
 
         if (attempt > this.config.maxRetries) {
           console.error(
-            `❌ [${this.storeName}] ${job.category} FAILED after ${this.config.maxRetries} retries`
+            `❌ [${this.storeName}] ${job.category} (${
+              job.gender || "no gender"
+            }) FAILED after ${this.config.maxRetries} retries`
           );
           console.error(`    URL: ${job.url}`);
           this.stats.failed++;
 
           const errorInfo = {
             category: job.category,
+            gender: job.gender,
             url: job.url,
             message: error.message,
             attempts: attempt,
@@ -516,6 +577,7 @@ class StoreScraper {
             this.storeName,
             job.url,
             job.category,
+            job.gender,
             false
           );
           await this.progressTracker.save();
@@ -530,30 +592,32 @@ class StoreScraper {
     console.log(
       `\n--- 🚀 [${this.storeName}] Job ${jobNumber}/${
         this.stats.total
-      }: ${job.category.toUpperCase()}${attemptLabel} ---`
+      }: ${job.category.toUpperCase()} (${
+        job.gender || "no gender"
+      })${attemptLabel} ---`
     );
     console.log(`    URL: ${job.url.substring(0, 80)}...`);
 
     const jobStartTime = Date.now();
 
     try {
-      // Call the store-specific scraper function
-      await this.scraper(this.browser, job.url, job.category);
+      // ✅ Call the store-specific scraper function with gender parameter
+      await this.scraper(this.browser, job.url, job.category, job.gender);
 
       const duration = Date.now() - jobStartTime;
       this.stats.success++;
 
       console.log(
-        `✅ [${this.storeName}] ${job.category} completed in ${Math.floor(
-          duration / 1000
-        )}s`
+        `✅ [${this.storeName}] ${job.category} (${
+          job.gender || "no gender"
+        }) completed in ${Math.floor(duration / 1000)}s`
       );
     } catch (error) {
       const duration = Date.now() - jobStartTime;
       console.error(
-        `⚠️ [${this.storeName}] ${job.category} error after ${Math.floor(
-          duration / 1000
-        )}s: ${error.message}`
+        `⚠️ [${this.storeName}] ${job.category} (${
+          job.gender || "no gender"
+        }) error after ${Math.floor(duration / 1000)}s: ${error.message}`
       );
       throw error; // Re-throw for retry logic
     }
@@ -579,9 +643,9 @@ class StoreScraper {
       this.stats.errors.forEach((err, idx) => {
         if (err.category) {
           console.log(
-            `      ${idx + 1}. ${err.category}: ${err.message} (${
-              err.attempts
-            } attempts)`
+            `      ${idx + 1}. ${err.category} (${
+              err.gender || "no gender"
+            }): ${err.message} (${err.attempts} attempts)`
           );
           console.log(`         URL: ${err.url.substring(0, 60)}...`);
         } else {
@@ -643,6 +707,7 @@ async function runAllScrapers() {
   console.log(
     `   🔗 Progress Tracking: URL-based (allows duplicate categories)`
   );
+  console.log(`   👤 Gender Support: Enabled (passed from job config)`);
   console.log(
     `\n📦 Stores to process (by priority): ${storeNames.join(", ")}\n`
   );
@@ -785,7 +850,11 @@ async function printFinalReport(results, startTime, progressTracker) {
         console.log(`      Failed Categories:`);
         store.stats.errors.forEach((err) => {
           if (err.category) {
-            console.log(`         - ${err.category}: ${err.message}`);
+            console.log(
+              `         - ${err.category} (${err.gender || "no gender"}): ${
+                err.message
+              }`
+            );
             console.log(`           URL: ${err.url.substring(0, 60)}...`);
             failedCategories.push(`${store.storeName}/${err.category}`);
           }
